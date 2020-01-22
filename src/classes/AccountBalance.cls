@@ -8,7 +8,7 @@
  * Coverage:
  *	2019-02-01	88%	(22/25)
  *
- * Modifications: comment added by matt here
+ * Modifications:
  *
 **/
 public with sharing class AccountBalance {
