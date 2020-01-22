@@ -1,0 +1,82 @@
+<apex:page showHeader="false" sidebar="false" doctype="html-5.0" standardController="dealer__Parts_Inventory__c" extensions="partRegister_EXT">
+<!-- Part register example; uses the KendoUI to display a grid of relevant data -->
+
+<!--  jQuery CDN -->
+<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+<!-- Pre-requisite-->
+<script src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js"></script>
+
+<!-- INclude Namespaced Bootstrap 3.0 -->
+<apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+
+<!-- KENDO 2015.1.429 -->
+<apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/kendo.all.min.js')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.bootstrap.min.css')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.min.css')}"/>
+
+<body>
+    <div id="force"> 
+        <div id="grid"></div>
+    </div>
+    <script type="text/javascript">
+        var $dt = jQuery.noConflict();
+        var recordId = '{!dealer__Parts_Inventory__c.Id}';
+        var register = {!register};
+
+        $dt(document).ready(function () {
+            $dt("#grid").kendoGrid({
+                toolbar: ["excel"],
+                excel: {
+                    fileName: "partsregister.xlsx",
+                    filterable: true
+                },
+                dataSource: {
+                    data: register,
+                    // pageSize: 20,
+                    // group: { field: "transactionDateTime", dir: "desc" }
+                },
+                height: 475,
+                groupable: true,
+                sortable: true,
+                pageable: {
+                    refresh: true,
+                    pageSizes: true,
+                    buttonCount: 5
+                },
+                columns: [{
+                    field: "transactionDate",
+                    title: "Transaction Date"
+                },{
+                    field: "transactionEvent",
+                    title: "Event"
+                },{
+                    field: "transactionNotes",
+                    title: "Notes"
+                },{
+                    template: "<a href='/#: transactionId #' target='_blank'> #: transactionNumber # </a>",
+                    field: "transactionNumber",
+                    title: "Transaction Number"
+                },{ 
+                    field: "adjusted",
+                    title: "Adjustment"
+                },{
+                    field: "postAdjustOnHand",
+                    title: "On-Hand"
+                },{
+                    field: "transactionValue",
+                    title: "Value",
+                    format:"{0:c2}" 
+                },{
+                    field: "totalValue",
+                    title: "Total Value",
+                    format:"{0:c2}" 
+                }]
+            });
+        });        
+    </script>
+</body>
+</apex:page>

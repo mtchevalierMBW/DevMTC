@@ -1,0 +1,17 @@
+.THIS.hidden {
+	display: none !important;
+}
+.THIS th {
+	font-weight:bold;
+}
+.THIS .right {
+	text-align:right;
+}
+.THIS table th {
+	word-wrap: break-word;	
+	white-space: normal;
+}
+.THIS table td {
+	word-wrap: break-word;	
+	white-space: normal;
+}

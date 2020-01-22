@@ -1,0 +1,4 @@
+<apex:page controller="InventoryItemZPL" renderAs="pdf" showHeader="false" applyHtmlTag="false" applyBodyTag="false">
+            
+    <img style="width:75%" src="{!barcode}" /> 
+</apex:page>

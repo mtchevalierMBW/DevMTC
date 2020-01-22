@@ -1,0 +1,371 @@
+<!-- 
+    2016-05-02  B. Leaman   BLL1 IT#24266 - Add owner with change owner link
+    2016-05-17  B. Leaman   BLL2 IT#24070 - Support for total per diem tax
+    2016-09-21  B. Leaman   BLL3 - Add goodwill amount
+    2016-11-21	B. Leaman	BLL3 - Move goodwill to the right-hand column to make it harder to use by mistake.
+	2017-01-05  J. Pritt    JRP! IR0004863 - Removew Goodwill
+	2018-12-06	B. Leaman	W-000513 BLL4 - add vehicle, mileage, # days, allow on lightning pages.
+	2019-07-23	B. Leaman	W-000723 BLL5 - remove mileage, it's causing issues because it's not being
+							updated prior to posting.
+ -->
+<apex:page standardController="dealer__Rental_Agreements__c" extensions="RentalAgreementMW_EXT" lightningStylesheets="true">
+    <apex:form >
+        <apex:pageBlock title="Edit Rental Agreement" rendered="{!Mode=='edit'}"> 
+    
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!Save}" value="Save"/>
+                <apex:commandButton action="{!displayMode}" value="Cancel" immediate="true" html-formnovalidate="formnovalidate" />
+            </apex:pageBlockButtons>
+
+    <apex:pageMessages id="messages"/> 
+            
+            <apex:pageBlockSection columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >Rental agreement</apex:outputLabel>
+                    <apex:outputText value="{!dealer__Rental_Agreements__c.Name}"/>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem />
+                <apex:inputField required="true" value="{!dealer__Rental_Agreements__c.Rentcentric_Contract__c}" tabOrderHint="1"/>
+                <apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Agreement_Status__c}"/>
+            </apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" id="accountReference">
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel >Customer Account</apex:outputLabel>
+				<apex:actionRegion >
+                <apex:inputField value="{!dealer__Rental_Agreements__c.Account__c}" label="Customer Account" required="true" tabOrderHint="2">
+                    <apex:actionSupport event="onchange" action="{!changeAccount}" reRender="accountReference,messages"/>
+                </apex:inputField>
+                </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel >Customer contact</apex:outputLabel>
+                <apex:actionRegion >
+                <apex:inputField value="{!dealer__Rental_Agreements__c.CustomerContact__c}" label="Customer Contact" tabOrderHint="3" id="contactReference" required="true">
+                    <apex:actionSupport event="onchange" action="{!changeContact}" reRender="accountReference,messages"/>
+                </apex:inputField>
+                </apex:actionRegion>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2">
+                <apex:inputField required="true" value="{!dealer__Rental_Agreements__c.dealer__Return_Date__c}" tabOrderHint="4"/>
+                <apex:inputField required="true" value="{!dealer__Rental_Agreements__c.Location__c}" tabOrderHint="5"/>
+
+				<apex:inputField required="true" value="{!dealer__Rental_Agreements__c.Rental_Vehicle__c}" tabOrderHint="6"/>
+				<!-- BLL5 -->
+				<!-- apex:inputField required="true" value="{!dealer__Rental_Agreements__c.dealer__Return_Mileage__c}" tabOrderHint="7"/ -->
+				<apex:outputText />
+				<!-- BLL5 end -->
+
+                <apex:inputField value="{!dealer__Rental_Agreements__c.Promotion__c}" tabOrderHint="8"/>
+				<apex:inputField required="false" value="{!dealer__Rental_Agreements__c.ThirdPartyPayor__c}" tabOrderHint="21"/>
+				<apex:pageBlockSectionItem />
+                <apex:inputField required="false" value="{!dealer__Rental_Agreements__c.Other_payor__c}" tabOrderHint="22"/>
+                <!-- JRP1
+                <apex:inputField html-data-id="goodwill" value="{!dealer__Rental_Agreements__c.GoodwillAmount__c}" tabOrderHint="21"> 
+                      <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalDueSection"/>
+                </apex:inputField> -->
+                <!-- apex:pageBlockSectionItem ></apex:pageBlockSectionItem>
+                <!-- apex : inputField required="true" 
+                value="{ ! dealer__Rental_Agreements__c.dealer__Return_Mileage__c } " 
+                / -->
+            </apex:pageBlockSection>
+
+
+			<apex:pageBlockSection columns="2">
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Rental Fee"/>
+					<apex:actionRegion >
+						<apex:inputField html-data-id="rentalfee" required="true" value="{!dealer__Rental_Agreements__c.Rental_fee__c}" tabOrderHint="9">
+						  <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+						</apex:inputField> 
+					</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+			
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Number of Days"/>
+					<apex:actionRegion >
+							<apex:inputField required="true" value="{!dealer__Rental_Agreements__c.Number_of_Days__c}" tabOrderHint="10"/>
+					</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Pickup/Delivery Fee"/>
+					<apex:actionRegion >
+						<apex:inputField html-data-id="pickupfee" required="false" value="{!dealer__Rental_Agreements__c.Pickup_Delivery_Fee__c}" tabOrderHint="11"> 
+                    	  <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                		</apex:inputField> 
+                	</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<!-- BLL2a -->
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Total Per Diem Tax"/>
+					<apex:actionRegion >
+						<apex:inputField html-data-id="perdiemtax" value="{!dealer__Rental_Agreements__c.TotalPerDiemTax__c}" tabOrderHint="16"> 
+							  <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+						</apex:inputField>
+					</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+				<!-- BLL2a end -->
+						
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Excess Miles Charge"/>
+					<apex:actionRegion >
+    		            <apex:inputField html-data-id="excessmileschg" required="true" value="{!dealer__Rental_Agreements__c.Excess_Miles_Charge__c}" tabOrderHint="12"> 
+            	        	<apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                		</apex:inputField> 
+                	</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Sales Tax"/>
+					<apex:actionRegion >
+            		    <apex:inputField html-data-id="salestax" required="true" value="{!dealer__Rental_Agreements__c.Sales_Tax__c}" label="State Sales Tax" tabOrderHint="17"> 
+        	              <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+		                </apex:inputField>
+                	</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Refueling Fee"/>
+					<apex:actionRegion >
+                	<apex:inputField html-data-id="refuelfee" required="true" value="{!dealer__Rental_Agreements__c.dealer__Refueling_Fee__c}" tabOrderHint="13"> 
+            	          <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+        	        </apex:inputField> 
+    	            </apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="County Sales Tax"/>
+	                <apex:actionRegion >
+	                <apex:inputField html-data-id="countytax" required="true" value="{!dealer__Rental_Agreements__c.CountySalesTax__c}" tabOrderHint="18"> 
+    	                  <apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+        	        </apex:inputField>
+    	            </apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Adjustment Charges"/>
+					<apex:actionRegion >
+                	<apex:inputField html-data-id="miscfee" required="false" value="{!dealer__Rental_Agreements__c.dealer__Adjustment_Charges__c}" tabOrderHint="14"> 
+                    	<apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                	</apex:inputField> 
+                	</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="City Sales Tax"/>
+					<apex:actionRegion >
+                	<apex:inputField html-data-id="citytax" required="true" value="{!dealer__Rental_Agreements__c.CitySalesTax__c}" tabOrderHint="19"> 
+                    	<apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                	</apex:inputField>
+                	</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Discount"/>
+					<apex:actionRegion >
+                		<apex:inputField html-data-id="discount" required="false" value="{!dealer__Rental_Agreements__c.dealer__Discount__c}" tabOrderHint="15"> 
+                    		<apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                	</apex:inputField> 
+					</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Third Tier Rental Tax"/>
+					<apex:actionRegion >
+		                <apex:inputField html-data-id="rentaltax" required="true" value="{!dealer__Rental_Agreements__c.ThirdTierRentalTax__c}" tabOrderHint="20"> 
+                    		<apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalChargesSection,totalDueSection"/>
+                		</apex:inputField>
+					</apex:actionRegion>
+				</apex:pageBlockSectionItem>
+
+		</apex:pageBlockSection>
+				
+
+                <apex:pageBlockSection id="totalChargesSection" columns="1">
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel >Total charges</apex:outputLabel>
+                <apex:outputText html-data-id="TotalField" style="font-weight:bold;font-size:14pt;" value="{!Total_Charges}" />
+                </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+
+                <apex:actionRegion >
+                <apex:pageBlockSection columns="1">
+                <apex:outputField html-data-id="deposit" value="{!dealer__Rental_Agreements__c.dealer__Deposit_Amount__c}"> 
+                      <!--apex:actionSupport event="onchange" action="{!updateTotals}" reRender="totalDueSection"/ -->
+                </apex:outputField> 
+                </apex:pageBlockSection>
+                </apex:actionRegion>
+
+                <apex:pageBlockSection id="totalDueSection" columns="1">
+
+				<apex:pageBlockSectionItem >
+	                <apex:outputLabel >Amount due</apex:outputLabel>
+    	            <apex:outputText html-data-id="TotalDueField" style="font-weight:bold;font-size:14pt;" value="{!Total_Amount_Due}"/>
+				</apex:pageBlockSectionItem>
+
+				<apex:inputField html-data-id="CustomerPortionField" style="font-weight:bold;font-size:14pt;" value="{!dealer__Rental_Agreements__c.Customer_portion__c}"
+				   	rendered="{!OR(dealer__Rental_Agreements__c.ThirdPartyPayor__c!=null,dealer__Rental_Agreements__c.Other_payor__c!=null)}"/>
+
+                <apex:pageBlockSectionItem >
+    	            <apex:outputLabel >Payor Amount Due</apex:outputLabel>
+    	            <apex:outputText html-data-id="PayorPayAmountField" style="font-weight:bold;font-size:14pt;" value="{!dealer__Rental_Agreements__c.Payor_Pay_Amount__c}"/>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem >
+    	            <apex:outputLabel >Client Amount due</apex:outputLabel>
+    	            <apex:outputText html-data-id="CustomerPayAmountField" style="font-weight:bold;font-size:14pt;" value="{!dealer__Rental_Agreements__c.dealer__Customer_Pay_Amount__c}"/>
+				</apex:pageBlockSectionItem>
+				
+                </apex:pageBlockSection>
+                
+    
+        </apex:pageBlock>
+
+        <apex:pageBlock title="{!IF($User.UITheme=='Theme4d', ' ', 'Rental Agreement')}" rendered="{!Mode!='edit'}" mode="maindetail"> 
+
+        <apex:actionFunction name="post" action="{!post}"/>
+    
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!editMode}" value="Edit" rendered="{!canEdit}"/>
+				<!-- BLL4 -->
+				<!-- BLL4d apex:commandButton action="{!backToList}" value="Back"/ -->
+				<apex:commandButton action="{!URLFOR($Action.dealer__Rental_Agreements__c.List, $ObjectType.dealer__Rental_Agreements__c)}" value="Back" rendered="{!IF($User.UITheme=='Theme4d',false,true)}"/>
+				<!-- BLL4 end -->
+                <apex:commandButton onclick="disableBtn(this,'Processing...');post();" value="Post" rendered="{!canPost}"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageMessages /> 
+
+            <apex:pageBlockSection columns="2">
+               <apex:outputField value="{!dealer__Rental_Agreements__c.Name}"/>
+			   <apex:outputField value="{!dealer__Rental_Agreements__c.Rentcentric_Contract__c}"/>
+			   <apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Agreement_Status__c}"/>
+			   <apex:pageBlockSectionItem />
+
+                <apex:outputText />
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Owner"/>
+                    <apex:outputPanel layout="none">
+                        <apex:outputField value="{!dealer__Rental_Agreements__c.OwnerId}"/>&nbsp;
+                        <apex:outputLink value="/{!dealer__Rental_Agreements__c.Id}/a?retURL=%2F{!dealer__Rental_Agreements__c.Id}">[Change]</apex:outputLink>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:outputField value="{!dealer__Rental_Agreements__c.Account__c}"/>
+                <apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Contact__c}" label="Customer"/>
+
+                <apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Return_Date__c}"/>
+                <apex:outputField value="{!dealer__Rental_Agreements__c.Location__c}"/>
+				<apex:outputField value="{!dealer__Rental_Agreements__c.Rental_Vehicle__c}"/>
+				<!-- BLL5 -->
+				<!-- apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Return_Mileage__c}"/ -->
+				<apex:outputText />
+				<!-- BLL5 -->
+
+                <apex:outputField value="{!dealer__Rental_Agreements__c.Promotion__c}"/>
+				<apex:outputField value="{!dealer__Rental_Agreements__c.ThirdPartyPayor__c}"/>
+                <apex:outputText />
+                <apex:outputField value="{!dealer__Rental_Agreements__c.Other_payor__c}"/>
+                <!-- JRP1
+                <apex:outputField value="{!dealer__Rental_Agreements__c.GoodwillAmount__c}"/> -->  <!-- BLL3a -->
+                <!-- apex:pageBlockSectionItem ></apex:pageBlockSectionItem>
+
+                <!-- apex : outputField value=" { !dealer__Rental_Agreements__c.dealer__Return_Mileage__c}"/ -->
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="2">
+                <apex:outputField html-data-id="rentalfee" value="{!dealer__Rental_Agreements__c.Rental_fee__c}"/>
+				<apex:outputField value="{!dealer__Rental_Agreements__c.Number_of_Days__c}"/>
+
+				<apex:outputField html-data-id="pickupfee" value="{!dealer__Rental_Agreements__c.Pickup_Delivery_Fee__c}"/>
+                <apex:outputField html-data-id="perdiem" value="{!dealer__Rental_Agreements__c.TotalPerDiemTax__c}"/><!-- BLL2a -->
+
+				<apex:outputField html-data-id="excessmileschg" value="{!dealer__Rental_Agreements__c.Excess_Miles_Charge__c}"/>
+                <apex:outputField html-data-id="salestax" value="{!dealer__Rental_Agreements__c.Sales_Tax__c}" label="State Sales Tax"/>
+
+				<apex:outputField html-data-id="refuelfee" value="{!dealer__Rental_Agreements__c.dealer__Refueling_Fee__c}"/>
+                <apex:outputField html-data-id="countytax" value="{!dealer__Rental_Agreements__c.CountySalesTax__c}"/>
+
+				<apex:outputField html-data-id="miscfee" value="{!dealer__Rental_Agreements__c.dealer__Adjustment_Charges__c}"/>
+                <apex:outputField html-data-id="citytax" value="{!dealer__Rental_Agreements__c.CitySalesTax__c}"/>
+
+                <apex:outputField html-data-id="discount" value="{!dealer__Rental_Agreements__c.dealer__Discount__c}"/>
+                <apex:outputField html-data-id="rentaltax" value="{!dealer__Rental_Agreements__c.ThirdTierRentalTax__c}"/>
+
+                <apex:outputField html-data-id="TotalField" style="font-weight:bold;font-size:14pt;" value="{!dealer__Rental_Agreements__c.Total_charges__c}" />
+                <apex:outputText />
+
+                <apex:outputField html-data-id="deposit" value="{!dealer__Rental_Agreements__c.dealer__Deposit_Amount__c}"/>
+                <apex:outputText />
+
+                <apex:outputField html-data-id="TotalDue" style="font-weight:bold;" value="{!dealer__Rental_Agreements__c.Total_Amount_Due__c}" />
+				<apex:outputField html-data-id="CustomerPortionField" style="font-weight:bold;font-size:14pt;" value="{!dealer__Rental_Agreements__c.Customer_portion__c}"
+					rendered="{!OR(dealer__Rental_Agreements__c.ThirdPartyPayor__c!=null,dealer__Rental_Agreements__c.Other_payor__c!=null)}"/>
+                <apex:outputText />
+                
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="2">
+               <apex:outputField value="{!dealer__Rental_Agreements__c.dealer__Customer_Pay_Amount__c}" label="Customer/Other amount due"/>
+               <apex:outputField value="{!dealer__Rental_Agreements__c.Payor_Pay_Amount__c}"/>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="2" title="System information">
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel >Created by</apex:outputLabel>
+                <apex:outputPanel >
+                    <apex:outputField value="{!dealer__Rental_Agreements__c.CreatedById}"/>
+                    &nbsp;<apex:outputField value="{!dealer__Rental_Agreements__c.CreatedDate}"/>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel >Last modified by</apex:outputLabel>
+                <apex:outputPanel >
+                    <apex:outputField value="{!dealer__Rental_Agreements__c.LastModifiedById}"/>
+                    &nbsp;<apex:outputField value="{!dealer__Rental_Agreements__c.LastModifiedDate}"/>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+    
+        </apex:pageBlock>
+
+
+    </apex:form>
+
+    <apex:relatedList list="Journals__r"   rendered="{!$ObjectType.c2g__codaJournal__c.accessible}"/>
+    <apex:relatedList list="Transactions__r"   rendered="{!$ObjectType.c2g__codaTransaction__c.accessible}"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+		//function disableThenPost(event,elem) {
+		//	event = event || window.event;
+		//	disableBtn(elem,'Processing...');
+		//	post();
+		//	event.preventDefault();
+		//	//return true;
+		//}
+        function disableBtn(btn, newText) {
+            $jq(btn).prop('disabled',true).addClass('btnDisabled');
+            if (newText.length>0) $jq(btn).val(newText);     
+        }
+        //jQuery('body').on('keydown','input',noenterkey);
+        jQuery(document).ready(function () {
+            jQuery("input").keydown(function(event) {
+            	event = event || window.event;
+                if (event.which == 13) {
+                    jQuery(this).next('input').focus();
+                    jQuery(this).blur();
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+
+</apex:page>

@@ -1,0 +1,1 @@
+<apex:page sidebar="false"> <wave:dashboard dashboardId="0FK50000000XamHGAS" openLinksInNewWindow="false" height="1500px"></wave:dashboard> </apex:page>

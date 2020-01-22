@@ -1,0 +1,4 @@
+<apex:page standardController="dealer__Deal__c" extensions="FormControl_EXT,FormControlDeal_EXT"
+			showHeader="false" sidebar="false" id="fdfData" contentType="text/plain">
+    <apex:dynamicComponent componentValue="{!fdf}" />
+</apex:page>

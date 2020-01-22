@@ -1,0 +1,78 @@
+<apex:page renderAs="PDF">
+<html>
+<head>
+<title>AckSerCont PDF</title>
+</head>
+
+<body>
+<div>
+<table>
+<tr>
+<td>
+<div>
+<table align="center">
+<tr>
+<td style="align:center"><img src="{!$Resource.NWAN2}" width="500px" height="150px"/></td>
+</tr>
+<tr>
+<td style="align:center;padding-left:60px;"><h2>Acknowledgment of Avaliability of<br /> Vehicle Service Contract Coverage</h2></td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div style="padding-top:30px">
+<table>
+<tr>
+<td style="text-align: justify;">By signing below, you acknowledge that Vehicle Service Contract Coverage has been presented to you,
+    and that the coverage is optional and will not be provided unless you
+   (a) elect on a separate application to receive coverage and
+   (b) have purchased an eligible vehicle and 
+   (c) agree to pay the purchase price for such coverage. 
+</td>
+</tr>
+<tr>
+<td style="text-align: justify;padding-top:10px;">I also understand that I am responsible for any repair costs necessary after the manufacturer's warranty has expired. </td>
+</tr>
+<tr>
+<td style="padding-top:30px;padding-left:50px;"><img src="{!$Resource.Uncheck}" width="30px" height="20px" style="padding-right:10px"/>I want to apply for Vehicle Service Contract Coverage</td>
+</tr>
+<tr>
+<td style="padding-top:10px;padding-left:50px;"><img src="{!$Resource.Uncheck}" width="30px" height="20px" style="padding-right:10px"/>I decline Vehicle Service Contract Coverage </td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div style="padding-top:70px">
+<table align="left">
+<tr>
+<td valign="top" align="center" width="300px" height="100px" style="border-top:0.5px solid;">Signature of Vehicle Purchaser</td><td width="100px"></td><td valign="top" align="center" width="200px" style="border-top:0.5px solid;">Date</td>
+</tr>
+<tr>
+<td valign="top" align="center" width="300px" height="100px"  style="border-top:0.5px solid;">Dealership Witness</td><td width="100px"></td><td valign="top" align="center" style="border-top:0.5px solid;">Date</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div style="padding-top:120px;">
+<table align="center" style="font-size:0.8em;">
+<tr style="display:none;"><!-- BLL don't show this, it's a laser-printed form -->
+<td>Dealer Copy-White</td><td width="50px"></td><td>Customer Copy-Yellow</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
+</apex:page>

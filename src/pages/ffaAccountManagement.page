@@ -1,0 +1,820 @@
+<!-- Page: ffaAccountManagement -->
+<apex:page id="mainPage"
+           showHeader="true"
+           sidebar="false"
+           standardStylesheets="true"
+           tabStyle="Account"
+           controller="ffaAccountManagementController">
+
+<!--
+  Modifications:
+  2018-11-21  B. Leaman   W-000328  BLL1 - eliminate unnecessary SLDS static resource (4 Mb static storage)
+  2019-02-21  B. Leaman				BLL2 - replace static resource with cdns
+  2019-04-22  B. Leaman	  W-000642	BLL3 - Space items out so pop-ups do not cover up detail lines
+-->
+
+    <!--
+        Include lightning design, fa icons...
+    -->
+
+    <!-- BLL1 -->
+    <apex:slds />
+    <!-- BLL1 -->
+
+    <head>
+<!-- BLL1 -->
+  <!-- link rel="stylesheet" href=" { ! URLFOR($Resource.SLDS0121,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" / -->
+<!-- BLL1 end -->
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css"/>
+
+    <!-- font awesome css -->
+	<!--BLL2d link rel="stylesheet" href="{!URLFOR($Resource.FFAJquery,'vendor/css/font-awesome.min.css')}" /-->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+        <!-- table sorting fun ! -->
+        <!-- BLL2d script src="{!URLFOR($Resource.FFAJquery, 'vendor/libs/jquery.tablesorter.min.js')}"></script -->
+        <!--BLL2a--><script src="{!URLFOR($Resource.FFAjQuery2, 'vendor/libs/jquery.tablesorter.min.js')}"></script>
+
+</head>
+<!--BLL1 -->
+<body>
+  <div class="slds-scope">
+<!--BLL1 end -->
+
+<!-- disable sfdc auto-focus on page load-->
+    <script>function setFocusOnLoad(){ return;}
+    jQuery.noConflict();
+    </script>
+
+
+<style>
+        td.rich-tabhdr-side-cell {
+            height:34px;
+            line-height:28px;
+        }
+
+        /* grey page out ... */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9001;
+        }
+
+        /* big spinner box*/
+        .overlay-spinner-box {
+            font-size: 10.2em;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            margin-top: -50px;
+        }
+
+
+        .slds .cursor-pointer {
+            cursor: pointer
+        }
+
+        /* when added to the body */
+        .maximized-app-position {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            z-index: 100;
+
+            height: 100%;
+            width: 100%;
+            overflow: auto;
+            padding:0;
+            background-color: #fff;
+            border:3px solid;
+        }
+
+        /* MIN MAX ICON STUFF !!! */
+
+        .maximized-app-position .slds-card {
+          margin:6px;
+        }
+
+        /*
+          fa-rotate-45
+        */
+        .slds .fa.fa-rotate-45 {
+            filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        /*
+          fa-rotate-230
+        */
+        .slds .fa.fa-rotate-230 {
+            filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+            -webkit-transform: rotate(230deg);
+            -ms-transform: rotate(230deg);
+            transform: rotate(230deg);
+        }
+
+
+        .slds .min-max-icon {
+          font-size:24px;
+          /*color:#54698d*/
+        }
+
+    /* exmpale: apex:inputField value="{ . }" styleClass="slds-input" */
+        /* lookup field override styling */
+        .slds .lookupInput a {
+          display:block;
+          position: absolute;
+          top:0px;
+          padding: 6px 12px;
+        }
+        .slds  .lookupInput img {
+          float:right;
+        }
+        .slds span.lookupInput {
+          position: relative;
+          display: block;
+        }
+        .slds .lookupInput a, .lookupInput a {
+          border:none !important;
+          background: none !important;
+        }
+        /* end lookup field override */
+
+
+      /* jquery tablesorter for MAIN tab tables
+        -- inject font-awesome arrow icons for indicating the column sorting
+      */
+
+
+
+      .slds table#card-transaction-table thead tr th.headerSortUp:after,
+      .slds table#card-transaction-table thead tr th.headerSortDown:after,
+      .slds table#card-transaction-table thead tr th.header:after {
+        font-family: FontAwesome;
+      }
+
+      .slds table#card-transaction-table thead tr th.header:after {
+        content: "\f0dc";
+      }
+      .slds table#card-transaction-table thead tr th.headerSortUp:after {
+        content: "\f0de";
+      }
+      .slds table#card-transaction-table thead tr th.headerSortDown:after {
+        content: "\f0dd";
+      }
+      /* end jquery tablesorter- font awesome icon setting*/
+
+    /* style up the tabs a little*/
+    .slds .slds-tabs--scoped__item {
+        border-left:1px solid #eee;
+    }
+
+
+.slds .slds-tabs--scoped__item:hover {
+    background: #fff;
+
+/*    background-image: linear-gradient(
+        45deg,
+        rgba(0,0,0,0.030) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(0,0,0,0.030) 50%,
+        rgba(0,0,0,0.030) 75%,
+        transparent 75%,
+        transparent);
+
+    background-size: 64px 64px;*/
+}
+
+/** BLL3 **/
+#tab-readme-container, #transfer-credit-content, #transfer-debit-content {
+	margin-top:30px;
+}
+
+</style>
+
+<apex:form >
+
+    <!--
+        **************
+        Credit Transfer action functions
+        **************
+    -->
+
+    <!--
+      Action function for loading more transfer payment transactions
+      loadMoreTransferTransactions(startingAtOffset)
+    -->
+    <apex:actionFunction name="loadMoreTransferCreditTransactions"
+                         action="{!loadMoreTransferCreditTransactions}"
+                         rerender="page-alert-panel,
+                                   transfer-credit-component,
+                                   set-tablesorter-script">
+                            <apex:param name="nextOffset" assignTo="{!transferCreditTransactionPaginator.nextOffset}" value=""/>
+    </apex:actionFunction>
+    <!--
+            transferTransactionModalFields
+      Action function for rendering the create credit modal popup
+    -->
+    <apex:actionFunction name="showTransferCreditPanel"
+                         action="{!showTransferCreditPanel}"
+                         rerender="page-alert-panel,
+                                   transfer-credit-trans-panel,
+                                   credit-trans-account-lookup-field">
+
+                    <apex:param name="selectedTransId" assignTo="{!transferCreditTransactionModalFields.selectedTransId}" value=""/>
+                    <apex:param name="selectedCreditTransAmount" assignTo="{!transferCreditTransactionModalFields.selectedTransAmount}" value=""/>
+                    <apex:param name="selectedCreditTransLineReference" assignTo="{!transferCreditTransactionModalFields.selectedTransLineReference}" value=""/>
+
+    </apex:actionFunction>
+
+    <!--
+          addTransferCreditTransactionRow
+          Action function for adding a new row to the transfer payment modal window table
+    --> 
+    <apex:actionFunction name="addTransferCreditTransactionRow"
+                         action="{!addTransferCreditTransRow}"
+                         rerender="page-alert-panel,
+                                   transferCreditTablePanel"
+                         oncomplete="bindEventsCredit();"/>
+
+
+    <!--
+          resetTransferTransactionList
+          Action function to reset the controller list of cash transfer payments when the user clicks "cancel" in the modal 
+    --> 
+    <apex:actionFunction name="resetTransferCreditTransactionList"
+                         action="{!resetTransferCreditTransactionModalFieldList}"
+                         rerender="page-alert-panel,
+                                   transferCreditTablePanel"
+                         oncomplete="bindEventsCredit();"/>
+
+    <!--
+      Action function for saving transfer payment records
+      * saveTransferPayment //(feedId, description, date, amount)
+    -->
+    <apex:actionFunction name="saveNewCreditTransfer"
+                         action="{!saveNewTransfer}"
+                         rerender="page-alert-panel,
+                                   transfer-credit-trans-panel,
+                                   credit-trans-account-lookup-field"
+                         oncomplete="resetTransferCreditTransactionList();bindEventsCredit();">
+
+                <apex:param name="selectedTransId" assignTo="{!transferCreditTransactionModalFields.selectedTransId}" value=""/>
+                <apex:param name="originalTransactionNumber" assignTo="{!transferCreditTransactionModalFields.originalTransactionNumber}" value=""/>
+                <apex:param name="inputDate" assignTo="{!transferCreditTransactionModalFields.inputDate}" value=""/>
+                <apex:param name="inputDescription" assignTo="{!transferCreditTransactionModalFields.inputDescription}" value=""/>
+    </apex:actionFunction>
+
+    <!--
+        **************
+        Debit Transfer action functions
+        **************
+    -->
+
+    <!--
+      Action function for loading more transfer payment transactions
+      loadMoreTransferTransactions(startingAtOffset)
+    -->
+    <apex:actionFunction name="loadMoreTransferDebitTransactions"
+                         action="{!loadMoreTransferDebitTransactions}"
+                         rerender="page-alert-panel,
+                                   transfer-debit-component,
+                                   set-tablesorter-script">
+                            <apex:param name="nextOffset" assignTo="{!transferDebitTransactionPaginator.nextOffset}" value=""/>
+    </apex:actionFunction>
+    <!--
+            transferTransactionModalFields
+      Action function for rendering the create Debit modal popup
+    -->
+    <apex:actionFunction name="showTransferDebitPanel"
+                         action="{!showTransferDebitPanel}"
+                         rerender="page-alert-panel,
+                                   transfer-debit-trans-panel,
+                                   debit-trans-account-lookup-field">
+
+                    <apex:param name="selectedDebitTransId" assignTo="{!transferDebitTransactionModalFields.selectedTransId}" value=""/>
+                    <apex:param name="selectedDebitTransAmount" assignTo="{!transferDebitTransactionModalFields.selectedTransAmount}" value=""/>
+                    <apex:param name="selectedDebitTransLineReference" assignTo="{!transferDebitTransactionModalFields.selectedTransLineReference}" value=""/>
+
+    </apex:actionFunction>
+
+    <!--
+          addTransferDebitTransactionRow
+          Action function for adding a new row to the transfer payment modal window table
+    --> 
+    <apex:actionFunction name="addTransferDebitTransactionRow"
+                         action="{!addTransferDebitTransRow}"
+                         rerender="page-alert-panel,
+                                   transferDebitTablePanel"
+                         oncomplete="bindEventsDebit();"/>
+
+
+    <!--
+          resetTransferTransactionList
+          Action function to reset the controller list of cash transfer payments when the user clicks "cancel" in the modal 
+    --> 
+    <apex:actionFunction name="resetTransferDebitTransactionList"
+                         action="{!resetTransferDebitTransactionModalFieldList}"
+                         rerender="page-alert-panel,
+                                   transferDebitTablePanel"
+                         oncomplete="bindEventsDebit();"/>
+
+    <!--
+      Action function for saving transfer payment records
+      * saveTransferPayment //(feedId, description, date, amount)
+    -->
+    <apex:actionFunction name="saveNewDebitTransfer"
+                         action="{!saveNewTransferDebit}"
+                         rerender="page-alert-panel,
+                                   transfer-debit-trans-panel,
+                                   debit-trans-account-lookup-field"
+                         oncomplete="resetTransferDebitTransactionList();bindEventsDebit();">
+
+                <apex:param name="selectedDebitTransId" assignTo="{!transferCreditTransactionModalFields.selectedTransId}" value=""/>
+                <apex:param name="originalTransactionNumber" assignTo="{!transferCreditTransactionModalFields.originalTransactionNumber}" value=""/>
+                <apex:param name="inputDate" assignTo="{!transferCreditTransactionModalFields.inputDate}" value=""/>
+                <apex:param name="inputDescription" assignTo="{!transferCreditTransactionModalFields.inputDescription}" value=""/>
+    </apex:actionFunction>
+
+
+    <!-- lightning design is realized under our slds class-->
+    <div class="slds">
+
+      <!-- container for our refresh spinner -->
+      <div id="overlay-spinner" class="overlay" style="display:none">
+          <div class="overlay-spinner-box slds-spinner--large">
+            <!-- BLL1 -->
+            <!-- img src=" { ! URLFOR($Resource.SLDS0121,'/assets/images/spinners/slds_spinner_brand.gif')}"
+                 alt="Loading..."
+                 style="max-width: inherit;"/ -->
+                 <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large">
+                    <span class="slds-assistive-text">Loading</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                 </div>
+            <!-- BLL1 end -->
+          </div>
+      </div>
+
+      <!--
+          Page Header
+      -->
+      <div class="slds-page-header slds-theme--alt-inverse" role="banner">
+        <!--
+          Page header title
+        -->
+        <div class="slds-media">
+          <div class="slds-media__figure">
+            <svg aria-hidden="true" class="slds-icon slds-icon--large"
+                  style="">
+
+              <!-- BLL1 -->
+              <!-- use xmlns:xlink="http://www.w3.org/1999/xlink"
+                   xlink:href=" { ! URLFOR($Resource.SLDS0121,
+                    '/assets/icons/standard-sprite/svg/symbols.svg#environment_hub')}"
+                   >
+              </use -->
+              <use xmlns:xlink="http://www.w3.org/1999/xlink"
+                   xlink:href=" { ! URLFOR($Asset.SLDS,
+                    'assets/icons/standard-sprite/svg/symbols.svg#environment_hub')}"
+                   >
+              </use>
+              <!-- BLL1 end -->
+            </svg>
+          </div>
+        <div class="slds-media__body">
+
+        <nav class="slds-m-bottom--xx-small" role="navigation">
+          <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+          <ol class="slds-list--verticle" aria-labelledby="bread-crumb-label">
+            <li class="slds-list__item slds-text-heading--label">
+                <a href="/{!account.id}">
+                  Account : {!account.name}
+                </a>
+            </li>
+            <li class="slds-list__item slds-text-heading">
+                Current Company = {!companyName}
+            </li>
+          </ol>
+        </nav>
+
+
+          <div class="slds-grid" style="padding: 8px 0 8px 0;">
+            <div class="slds-col slds-size--1-of-4">
+              <h1 class="slds-text-heading--medium slds-truncate">
+                Account Management
+              </h1>
+              <!--
+                message updated based on number of transactions displayed
+               -->
+              <p class="slds-text-body--small slds-m-top--x-small">
+                <span id="heading-message">
+
+                </span>
+              </p>
+            </div>
+
+
+
+            <div class="slds-col slds-size--1-of-6 " style="text-align: right" >
+
+                <!-- back to project -->
+                <div class="slds-button-group" style="display:inline">
+                    <a href="/{!account.id}" class="slds-button slds-button--neutral">
+                      <i class="fa fa-reply"/> Back To Account
+                    </a>
+
+                </div>
+
+                <!--
+                  ** <vlds-maximize-page/>
+                -->
+                <span onclick="setTimeout(function(){jQuery(window).trigger('resize');}, 5);"
+                    class=" slds-size--1-of-6 slds-align-top pull-right ">
+                  <span class="pull-right cursor-pointer"
+                        onclick="toggleMaxMinApp();"
+                        title="Maxime / Minimize page">
+                    <i class="fa fa-arrow-circle-down fa-rotate-230 min-max-icon"></i>
+                  </span>
+                  <script>
+                    var toggleMaxMinApp = function() {
+                      var maxAppClassName    = "maximized-app-position";
+                      var maxAppSelector     = ".noSidebarCell";
+                      var minMaxIconSelector = ".min-max-icon";
+
+                      // classes/icons to display when page is maxed/not-maxed...
+                      var maxIcon = "fa-rotate-230";
+                      var minIcon = "fa-rotate-45";
+
+                      // The page is maximized when the app selector contains the max app class name
+                      var isMaxed = jQuery(maxAppSelector).hasClass(maxAppClassName);
+
+                      // remove any existing min/max icon classes, which will be set
+                      // accordingly below.
+                      jQuery(minMaxIconSelector).removeClass(maxIcon).removeClass(minIcon);
+
+                      if (isMaxed) {
+                        // when the app is maxed, we will reset it:
+                        // * removes the max app class and sets the max icon for display
+                        jQuery(maxAppSelector).first().removeClass(maxAppClassName);  // minimize....
+                        jQuery(minMaxIconSelector).addClass(maxIcon);                 // add maxed icon to display
+                      }
+                      else {
+                        // when the app is NOT maxed, we will maximize it:
+                        // * add the max app class and sets the min icon for display
+                        jQuery(maxAppSelector).first().addClass(maxAppClassName); // minimize....
+                        jQuery(minMaxIconSelector).addClass(minIcon);             // add min icon to display
+                      }
+                    }
+                  </script>
+
+
+                </span>
+                <!--
+                  ** end <vlds-maximize-page/>
+                -->
+
+
+
+
+            </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end page header -->
+
+      <div style="clear:both ; padding-bottom:30px" /><!--BLL3 was 15px-->
+
+
+<!-- alerts -->
+        <!--
+          page alert panels.
+
+          VF panel rerendered from action functions
+          contains the logic for displaying error or success messages from
+          VF controller actions
+        -->
+        <apex:outputPanel id="page-alert-panel">
+          <!--
+            success container
+          -->
+          <div class="successContainer" style="display:none">
+            <div class="slds-notify-container" style="position:initial" >
+              <div class="slds-notify slds-notify--toast slds-theme--success" role="alert"   style="min-height:60px;width:85%;">
+                <span class="slds-assistive-text">Success</span>
+                <button class="slds-button slds-button--icon-inverse slds-notify__close"
+                        onclick='jQuery(".successContainer").css({"display":"none"}); return false;'>
+                        <i class="fa fa-times" style="font-size: 24px; color: white;"></i>
+
+                        <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid" >
+
+
+                  <i class="fa fa-bell" style="font-size: 24px; padding-right:15px;"></i>
+
+                  <div class="slds-col slds-align-middle">
+                    <h2 class="slds-text-heading--small"     style="text-align:center;">
+                      <apex:outputText value="{!pageSuccessMessage}" escape="false" />
+                    </h2>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div style="clear:both ; padding-bottom:15px"></div>
+          </div>
+
+          <!--
+            error container
+          -->
+          <div class="errorContainer" style="display:none">
+            <div class="slds-notify-container" style="position:initial" >
+              <div class="slds-notify slds-notify--toast slds-theme--error" role="alert" style="min-height:60px;width:85%;">
+                <span class="slds-assistive-text">Error</span>
+                <button class="slds-button slds-button--icon-inverse slds-notify__close"
+                        onclick='jQuery(".errorContainer").css({"display":"none"}); return false;'>
+                        <i class="fa fa-times" style="font-size: 24px; color: white;"></i>
+
+                        <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid" >
+                  <i class="fa fa-exclamation-triangle" style="font-size: 24px; padding-right:15px;"></i>
+                  <div class="slds-col slds-align-middle">
+                    <h2 class="slds-text-heading--small"     style="text-align:center;">
+                      <apex:outputText value="{!pageErrorMessage}" escape="false" />
+                    </h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="clear:both ; padding-bottom:15px"></div>
+          </div>
+          <script>
+            jQuery(function() {
+              // hide or show error
+              var errorDisplay = ("{! hasPageError }".toLowerCase() === 'true') ? "initial" :"none";
+              jQuery(".errorContainer").css({"display":errorDisplay});
+              // hide or show success
+              var successDisplay = ("{! hasPageSuccess }".toLowerCase() === 'true') ? "initial" :"none";
+              jQuery(".successContainer").css({"display":successDisplay});
+            });
+
+            // -- displays the specific errmsg (single) within the error container, render it if it doesnet exist!
+            var showError = function(errmsg){
+              jQuery(".errorContainer h2.slds-text-heading--small").html(errmsg);
+              jQuery(".errorContainer").css({"display":"initial"});
+            }
+		
+			jQuery('#transfer-credit-content').draggable();
+			jQuery('#transfer-debit-content').draggable();
+		  </script>
+        </apex:outputPanel>
+        <!-- ** end page alert ** -->
+
+
+
+        <apex:outputPanel rendered="{!hasAccount}">
+
+<!-- tabs -->
+            <div class="slds-tabs--scoped">
+                <ul class="slds-tabs--scoped__nav" role="tablist">
+
+                    <!--
+                        Read Me tab
+                    -->
+                    <apex:outputPanel id="tab-readme" rendered="true">
+
+                        <li class="slds-tabs--scoped__item slds-text-heading--label {!tabPageControl.readMeTabItemClass}"
+                            title="Read Me"
+                            role="presentation">
+
+                            <a class="slds-tabs--scoped__link"
+                               onclick="changeTab('readme-tab');return false;"
+                               role="tab"
+                               tabindex="0"
+                               aria-selected="false"
+                               aria-controls="readme-tab"
+                               id="readme-tab__item">
+
+                               <i class="fa fa-info-circle"></i>
+                               Read Me
+
+                            </a>
+                        </li>
+
+                    </apex:outputPanel>
+
+                    <!--
+                        Transfer Credits tab
+                    -->
+                    <apex:outputPanel id="tab-two">
+                        <li class="slds-tabs--scoped__item slds-text-heading--label {!tabPageControl.transferCreditTabItemClass}"
+                            title="Transfer Credit Transactions"
+                            role="presentation">
+                            <a class="slds-tabs--scoped__link"
+                               onclick="changeTab('trans-credit-trans-tab');return false;"
+                               role="tab"
+                               tabindex="-1"
+                               aria-selected="false"
+                               aria-controls="trans-credit-trans-tab"
+                               id="trans-credit-trans-tab__item">
+
+                                <i class="fa fa-exchange"></i>
+
+                               Transfer Credits
+                            </a>
+                        </li>
+                    </apex:outputPanel>
+                    <!--
+                        Transfer Debit tab
+                    -->
+                    <apex:outputPanel id="tab-three">
+                        <li class="slds-tabs--scoped__item slds-text-heading--label {!tabPageControl.transferCreditTabItemClass}"
+                            title="Transfer Debit Transactions"
+                            role="presentation">
+                            <a class="slds-tabs--scoped__link"
+                               onclick="changeTab('trans-debit-trans-tab');return false;"
+                               role="tab"
+                               tabindex="-2"
+                               aria-selected="false"
+                               aria-controls="trans-debit-trans-tab"
+                               id="trans-debit-trans-tab__item">
+
+                                <i class="fa fa-exchange"></i>
+
+                               Transfer Debits
+                            </a>
+                        </li>
+                    </apex:outputPanel>
+                </ul>
+
+                <!--
+                    tab contents
+                -->
+
+                <!--
+                    read me tab
+                -->
+                <apex:outputPanel id="tab-readme-container" rendered="true">
+                    <div id="readme-tab"
+                       class="slds-tabs--scoped__content {!tabPageControl.readMeTabContentClass}"
+                       role="tabpanel"
+                       aria-labelledby="readme-tab__item">
+
+                       
+                       <apex:outputPanel id="tab-readme-component">
+
+                            <c:ffaAccountManagement_ReadMe ctrl="{!pageController}"/>
+
+                       </apex:outputPanel>
+
+                    </div>
+                </apex:outputPanel>
+
+                <!--
+                    transfer credit tab
+                -->
+                <apex:outputPanel id="transfer-credit-content" rendered="true">
+                    <div id="trans-credit-trans-tab"
+                         class="slds-tabs--scoped__content {!tabPageControl.transferCreditTabContentClass}"
+                         role="tabpanel"
+                         aria-labelledby="trans-credit-trans-tab__item">
+
+                         <!-- render transfer payment transaction component -->
+                         <apex:outputPanel id="transfer-credit-component">
+                            <c:ffaAccountManagement_TransferTrans ctrl="{!pageController}"/>
+                         </apex:outputPanel>
+
+                    </div>
+                </apex:outputPanel>
+
+                 <!--
+                    transfer debit tab
+                -->
+                <apex:outputPanel id="transfer-debit-content" rendered="true">
+                    <div id="trans-debit-trans-tab"
+                         class="slds-tabs--scoped__content {!tabPageControl.transferDebitTabContentClass}"
+                         role="tabpanel"
+                         aria-labelledby="trans-debit-trans-tab__item">
+
+                         <!-- render transfer payment transaction component -->
+                         <apex:outputPanel id="transfer-debit-component">
+                            <c:ffaAccountManagement_TransferDebit ctrl="{!pageController}"/>
+                         </apex:outputPanel>
+
+                    </div>
+                </apex:outputPanel>
+
+
+            </div>
+
+        </apex:outputPanel>
+
+    </div> <!-- end slds -->
+
+    <!-- should be included when loading more items, to ensure we setup tablesorting -->
+    <apex:outputPanel id="set-tablesorter-script">
+        <script>
+            var _setupTableSorter = function() {
+              // -- configure table sorter to  sort the Amount/Currency column numerically
+              // -- by stripping non-numeric characters (such as the USD currency)
+              // -- and sorting by floating point values only
+              jQuery.tablesorter.addParser({
+                 id: 'currencySorter',
+                 is: function(s) {
+                   return false;
+                 },
+                 format: function(text, table, cell) {
+                    //console.log('text > ' + text + ' >>> ' + text.replace(/[^\d.]/g, ''));
+                   return parseFloat(text.replace(/[^\d.]/g, ''));
+                 },
+                 type: 'numeric'
+               });
+
+              // for tweaking the jquery tablesorter based on the users selected locale context
+              var dateFormatForSort = (window.UserContext.locale == 'en_US') ? 'us' : 'uk';
+
+              // set up table sorter for our tables..
+
+            ["card-transaction-table"].forEach(function(tblId){
+
+                jQuery("table#" + tblId).tablesorter({
+                    dateFormat : dateFormatForSort,
+                    // headers: { 0: { sorter: false},
+                    //            4: { sorter: false} },
+                    headers: { 0: { sorter: false},
+                            },
+
+                    textExtraction: function(node) {
+                        var attr = jQuery(node).attr('data-sort-value');
+                        if (typeof attr !== 'undefined' && attr !== false) {
+                            return attr;
+                        }
+                        return jQuery(node).text();
+                    }
+                });
+
+             });
+            }
+                // document ready....
+            jQuery(function() {
+                _setupTableSorter();
+            });
+        </script>
+    </apex:outputPanel>
+
+<script>
+    // -- when a tab is clicked
+    var changeTab = function(tabSelector) {
+        // inactivate and hide all tabs
+        jQuery(".slds-tabs--scoped__item").removeClass('slds-active');
+        jQuery(".slds-tabs--scoped__content").removeClass('slds-show');
+        jQuery(".slds-tabs--scoped__content").removeClass('slds-hide').addClass('slds-hide');
+
+        // active and show selected tab
+        jQuery("#" + tabSelector + "__item").parent().addClass('slds-active');
+        jQuery("#" + tabSelector).removeClass('slds-hide').addClass('slds-show');
+    }
+
+    /*convenient method to show big page spinner*/
+    var _showSpinner = function(){
+        jQuery("#overlay-spinner").css({"display":"initial"});
+    }
+    // - convenient method to hide big page spinner
+    var _hideSpinner = function(){
+        jQuery("#overlay-spinner").css({"display":"none"});
+    }
+
+
+    // document ready....
+    jQuery(function() {
+        _hideSpinner(); //ensure the spinner is hidden
+
+    });
+
+</script>
+
+</apex:form>
+
+<!--BLL1 -->
+</div>    
+</body>
+<!--BLL1 end -->
+
+</apex:page>

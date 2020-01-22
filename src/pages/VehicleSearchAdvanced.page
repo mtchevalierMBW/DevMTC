@@ -1,0 +1,701 @@
+<!--
+    2016-03-23  B. Leaman   BLL8 - Add division, year range, multiple regions and locations and type (new/used/other); Fix kendo grid render;
+    2016-08-23  B. Leaman   BLL10 IT#29752 add VIN to result table; IT#27819 add VIN to search criteria;
+    2017-02-17  B. Leaman   BLL11 Return to default page for object, rather than forced to quotemanager page.
+    2018-04-18	B. Leaman	BLL12 - include Tracking column in results.
+    2019-04-18  A. Miller   AMM13 - W-000646 - Update to remove cost and days in stock columns
+    2019-04-19  A. Miller   AMM14 - W-000657 - Update to let Featured Vans to be multiselect
+ -->
+<apex:page showHeader="true" sidebar="false" title="Advanced Vehicle Search" controller="VehicleAdvancedSearch" docType="html-5.0" tabStyle="Vehicle_Search_Advanced__tab">
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+    <!-- Bootsrap Includes -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+
+    <apex:stylesheet value="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" />
+    <!-- jQuery UI -->
+    <apex:stylesheet value="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css" />
+    <apex:includeScript value="//code.jquery.com/ui/1.11.4/jquery-ui.js" loadOnReady="false" />
+    <!-- KENDO 2015.1.429 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/jszip.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.min.css')}"/>
+    <apex:slds />
+<!-- Select2 BLL8 -->
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css" rel="stylesheet" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/js/select2.min.js"></script>
+
+    <style>
+        .select2-container .select2-selection--multiple {
+            min-height: 26px;
+        }
+        .select2-container .select2-search--inline {
+            margin-left: 0;
+        }
+        ul.select2-selection__rendered li {
+            margin-left: 0;
+        }
+        ol.select2-selection__rendered li {
+            margin-left: 0;
+        }
+        span.select2-selection__clear {
+            min-height:20px;
+        }
+    </style>
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__MomentJS)}" />
+
+    <apex:sectionHeader description="Vehicle Inventory Advanced Search" subtitle="Vehicle Search" title="Vehicle" id="vehicleSectionHeader"/>
+
+    <apex:form id="force">
+        <apex:pageMessages id="messages" />
+        <apex:pageBlock mode="maindetail" id="vPB">
+
+<!-- BLLxa -->
+<apex:actionFunction name="selectVeh" action="{!selectVehicle}"/>
+<!-- BLLxa end -->
+
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton id="doSearch" value="Search" action="{!doSearch}">
+                    <apex:actionStatus id="ajaxStatus" onstart="startSearch();" onstop="completeSearch();" />
+                </apex:commandButton>
+                <apex:commandButton value="Reset" action="{!reset}" ></apex:commandButton>
+                <apex:commandButton action="{!returnToDeal}" value="Return To Proposal" rendered="{!NOT(ISBLANK(proposalId))}" />
+                <!--apex:commandButton id="statusCheck" value="Status Check" action="{!statusCheckSearch}" rerender="vehTableWrap,messages" /-->
+                <apex:commandButton id="doStatusCheck" value="Status Check" action="{!statusCheckSearch}" status="ajaxStatus1">
+                    <apex:actionStatus id="ajaxStatus1" onstart="startCheck();" onstop="completeCheck();" />
+                </apex:commandButton> <!--1209 -->
+                    <apex:commandButton id="doStatusCheckErrorReport" value="Status Check Error Report" action="{!statusCheckErrorReportSearch}" status="ajaxStatus2">
+                    <apex:actionStatus id="ajaxStatus2" onstart="startErrorCheck();" onstop="completeErrorCheck();" />
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection id="fieldSection" title="Search Vehicle Inventory" columns="2" collapsible="false">
+                <!-- <apex:pageBlockSectionItem /> -->
+                <apex:selectList label="Year" id="year" value="{!year}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                    <apex:selectOptions value="{!years}" />
+                </apex:selectList>
+                <apex:selectList label="Make" id="make" value="{!make}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                    <apex:selectOptions value="{!makes}" />
+                </apex:selectList>
+
+                <apex:inputText label="Model" id="model"  value="{!model}" size="30"/>
+                <apex:inputText label="Trim" id="trim"  value="{!trim}" size="30"/>
+
+                <apex:input label="Stock Number" id="stockNum" value="{!stockNum}"/>
+                <apex:selectList label="Status" id="status"  value="{!status}" size="1" styleclass="select" style="width:20em;" multiselect="true">
+                    <apex:selectOptions value="{!StatusCodes}" />
+                </apex:selectList>
+
+                <apex:selectList label="Region" id="region" value="{!region}" size="1" styleclass="select" multiselect="true" style="width: 15em;">
+                    <apex:selectOptions value="{!Regions}"/>
+                </apex:selectList>
+
+                <apex:selectList label="Store Location" id="storeLocation" value="{!storeLocation}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                    <apex:selectOptions value="{!BranchLocations}"/>
+                </apex:selectList>
+
+                <apex:selectList label="Vehicle Type" id="vehType" value="{!vehType}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                    <apex:selectOptions value="{!VehTypes}"/>
+                </apex:selectList>
+                <!--apex:selectList label="Record Type" id="recordType" value="{!recordType}" size="1" styleclass="select" style="width:15em;">
+                    <apex:selectOptions value="{!RecordTypes}"/>
+                </apex:selectList-->
+                <apex:selectList label="Type: New/Used/Other" id="newUsedOther" value="{!newUsedOther}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                    <apex:selectOptions value="{!newUsedOthers}"/>
+                </apex:selectList>
+                <apex:outputText value=""/><!-- BLL8a -->
+                <apex:selectList label="Division" id="businessDivision" value="{!businessDivision}" size="1" styleclass="select" style="width:15em;"><!-- BLL8a -->
+                    <apex:selectOptions value="{!divisionOptions}"/><!-- BLL8a -->
+                </apex:selectList><!-- BLL8a -->
+                <apex:input label="Min Price" id="minPrice" value="{!minPrice}" />
+                <apex:input label="Max Price" id="maxPrice" value="{!maxPrice}" />
+                
+                <apex:inputText label="Search All:" id="searchAll"  value="{!searchAll}" size="40" />
+                 <apex:selectList style="width: 100px;" styleClass="maxrowscount" label="Items Per Page" size="1">
+                  <apex:selectOption itemValue="50" itemLabel="50"/>
+                  <apex:selectOption itemValue="100" itemLabel="100"/>
+                  <apex:selectOption itemValue="200" itemLabel="200"/>
+                  <apex:selectOption itemValue="500" itemLabel="500"/>
+                </apex:selectList> 
+
+<!-- BLLxa -->
+<apex:inputHidden value="{!vehidstr}" id="vehidstr"/>
+<!-- BLLxa end -->
+
+            </apex:pageBlockSection>
+
+            <!-- Advanced Fields -->
+            <apex:pageBlockSection id="fieldSection2" title="Advanced Fields" columns="2" collapsible="true">
+
+                <apex:pageBlockSectionItem dataStyleClass="secondary_separator" labelStyleClass="secondary_separator">
+                    <strong>Chassis Fields</strong>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyleClass="secondary_separator" labelStyleClass="secondary_separator">&nbsp;</apex:pageBlockSectionItem>
+
+                    <apex:input label="Exterior Color" id="extColor" value="{!extColor}" />
+                    <apex:input label="Interior Color" id="intColor" value="{!intColor}" />
+
+                    <apex:selectList label="Interior" id="interior" value="{!interior}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!Interiors}"/>
+                    </apex:selectList>
+                    <!-- <apex:input label="Interior Type" id="interior" value="{!interior}" /> -->
+                    <!-- BLL10d apex:pageBlockSectionItem / -->
+                    <apex:input label="VIN" id="VIN" value="{!VIN}" /><!-- BLL10a -->
+
+                    <apex:input label="Min Odometer" id="minOdometer" value="{!minOdometer}" />
+                    <apex:input label="Max Odometer" id="maxOdometer" value="{!maxOdometer}" />
+
+                    <!-- <apex:input label="Min Chassis Cost" id="minChassis" value="{!minChassis}" /> -->
+                    <!-- <apex:input label="Max Chassis Cost" id="maxChassis" value="{!maxChassis}" /> -->
+
+                <apex:pageBlockSectionItem dataStyleClass="secondary_separator" labelStyleClass="secondary_separator">
+                    <strong>Conversion Fields</strong>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyleClass="secondary_separator" labelStyleClass="secondary_separator">&nbsp;</apex:pageBlockSectionItem>
+
+                    <apex:selectList label="Conv MFG" id="convMfg" value="{!convMfg}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!Conversions}"/>
+                    </apex:selectList>
+                    <apex:selectList label="Conv Model" id="convModel" value="{!convModel}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!ConversionModels}"/>
+                    </apex:selectList>
+
+                    <apex:selectList label="Ramp Type" id="rampType" value="{!rampType}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!RampTypes}"/>
+                    </apex:selectList>
+                    <apex:selectList label="Ramp Operation" id="rampOperation" value="{!rampOperation}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!RampOperationItems}"/>
+                    </apex:selectList>
+
+                    <apex:selectList label="Ramp Location" id="rampLoc" value="{!rampLoc}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!RampLocations}"/>
+                    </apex:selectList>
+                    <apex:selectList label="Kneeling" id="kneel" value="{!kneel}" size="1" styleclass="select" style="width: 8em;">
+                        <apex:selectOption itemValue="All" itemLabel="All"/>
+                        <apex:selectOption itemValue="Yes" itemLabel="Yes"/>
+                        <apex:selectOption itemValue="No" itemLabel="No"/>
+                    </apex:selectList>
+
+                    <!-- BLL8a -->
+                    <apex:selectList label="Floor type" id="floortype" value="{!floortype}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!FloorTypes}"/>
+                    </apex:selectList>
+                    <apex:selectList label="Floor cut" id="floorcut" value="{!floorcut}" size="1" styleclass="select" style="width:15em;">
+                        <apex:selectOptions value="{!FloorCuts}"/>
+                    </apex:selectList>
+                    <!-- BLL8a end -->
+                    <!-- AMM14 -->
+                    <!-- <apex:selectList label="Featured Van" id="FeaturedVan" value="{!FeaturedVan}" size="1" styleclass="select" style="width:15em;"> --><!-- BLL8a -->
+                    <apex:selectList label="Featured Van" id="FeaturedVan" value="{!FeaturedVan}" size="1" styleclass="select" style="width:15em;" multiselect="true">
+                        <apex:selectOptions value="{!FeatVanOptions}"/><!-- BLL8a -->
+                    </apex:selectList>           
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+
+    <!-- 1223  Grid Initialization -->
+    <div id="grid"/>
+
+    <script type="text/javascript">
+        $dt = jQuery.noConflict();
+        var count = 0;
+        var timer = null;
+        var proposalId = '{!proposalId}';
+        var isStatusSearch;
+        var urlSect = '#sec_chassis';
+    
+     	if({!statusCheckErrorReportBoolean} || {!statusCheckBoolean}) {
+     	       isStatusSearch=true;
+     	} else {
+     	       isStatusSearch=false;
+     	}
+
+        var getdata = function(page, pageSize, callback) {
+        	//var filter = " { ! filter } ";
+        	var vehResult = "{!vehResult}";
+        	console.log('scb: ' + {!statusCheckBoolean}+' scerb: '+{!statusCheckErrorReportBoolean});
+	        console.log("{!finalQuery}");
+	        callback({!GetJSON});
+       	}
+    	//}
+    	
+        $dt(document).ready(function() {
+            var isIE10 = !!navigator.userAgent.match(/MSIE 10/i);   // BLL8.1a
+            var isIE11 = !!navigator.userAgent.match(/Trident.*rv\:11\./);  // BLL8.1a
+            var placeholderAll = (isIE10 || isIE11) ? '' : 'All';
+            var maxRows = $dt(".maxrowscount").val();
+
+            $dt('select').select2({placeholder:placeholderAll, allowClear:true});   // BLL8a
+
+            // default close
+            $dt('.hideListButton[id$="fieldSection2"]').trigger('click');
+
+            // Manipulate DOM with range fields
+            var price_field = new range_field('minPrice','maxPrice');
+            var odom_field = new range_field('minOdometer','maxOdometer');
+            var conv_field = new range_field('minConv','maxConv');
+            var chassis_field = new range_field('minChassis','maxChassis');
+
+            $dt("#grid").kendoGrid({
+                toolbar:["excel"],
+                excel: {
+                fileName: 'VehicleInventoryExport-{!todaysDate}.xlsx',
+                allPages: true
+            },
+                dataSource: new kendo.data.DataSource({
+                pageSize: maxRows,
+                schema: {
+                     data: "vehResult",
+                    total: "total"
+                },
+                transport: {
+                    read: function(options) {
+                        getdata(options.data.page, options.data.pageSize, function(data) {
+                         options.success(data);
+                        });
+                    }
+                },
+            }),
+            scrollable: false,
+            sortable: true,
+            pageable: {
+                input: true,
+                numeric: false
+            },
+            columns: [
+             {
+                //field: "Select",
+                //BLLxd template: '<a class="slds-button_brand" href="/#:proposalId#?v=#:vehicle.Id##:urlSect#">Select<a/>',
+                template: '<a class="slds-button_brand" onclick="selectVehicle(\'#:proposalId#\',\'#:vehicle.Id#\');">Select</a>',
+                hidden: !proposalId
+            },
+            {
+                field: "vehicle.Name",
+                title: "Description",
+                template: '<a href="/#:vehicle.Id#" target="_blank">#:vehicle.Name#<a/>'
+            },
+            {
+                field: "vehicle.dealer__Trim_Level__c",
+                title: "Trim Level"
+            },
+            {
+                field: "vehicle.dealer__Mileage__c",
+                title: "Mileage"
+            },
+            {
+                field: "vehicle.dealer__Exterior_Color__c",
+                title: "EXT Color"
+            },
+            {
+                field: "vehicle.Conversion_Model__c",
+                title: "Conv. Model",
+            },
+            {
+                field: "vehicle.dealer__Store_Location__r.Name",
+                title: "Location"
+            },
+            {
+                field: "vehicle.SuggestedRetailPrice__c",
+                title: "Retail Price",
+                format: "{0:c2}",
+                attributes : {style: "text-align: right;"}
+            },
+			// AMM13
+			<apex:outputPanel layout="none" rendered="{!$Permission.Can_see_Vehicle_Cost_and_Age}">
+            {
+                field: "vehicle.Total_Vehicle_Cost__c",
+                title: "Total Cost",
+                format: "{0:c2}",
+                attributes : {style: "text-align: right;"}
+			},
+			</apex:outputPanel>
+            // AMM13
+            {
+                field: "vehicle.dealer__Status_Code__c",
+                title: "Status",
+                width: 150
+            },
+            {
+                field: "vehicle.Division__c",
+                title: "Division"
+            },
+            {
+                field: "vehicle.New_Used_Other__c",
+                title: "Type"
+            },
+            // AMM13
+			<apex:outputPanel layout="none" rendered="{!$Permission.Can_see_Vehicle_Cost_and_Age}">
+            {
+                field: "vehicle.dealer__Days_in_Stock__c",
+                title: "Days In-Stock"
+            },
+			</apex:outputPanel>
+            // AMM13
+            {
+                field: "vehicle.MV_Ramp_Type__c",
+                title: "Ramp Type",
+                hidden: isStatusSearch
+            },
+            {
+                field: "vehicle.MV_Ranp_Operation__c",
+                title: "Ramp Operation",
+                hidden: isStatusSearch                
+            },
+            {
+                field: "vehicle.Ramp_Location__c",
+                title: "Ramp Location",
+                hidden: isStatusSearch
+            },
+            {
+                field: "vehicle.FloorType__c",
+                title: "Floor Type",
+                hidden: isStatusSearch
+            },
+            {
+                field: "vehicle.FloorCut__c",
+                title: "Floor Cut",
+                hidden: isStatusSearch
+            },
+            {
+                field: "vehicle.FeaturedVan__c",
+                title: "Featured Van"
+            },
+			// BLL12a insert new column 
+            { 
+                field: "vehicle.Tracking__c",
+                title: "Tracking"
+            },
+            // BLL12a end
+            {
+                field: "Quote",
+                title: "Proposal #:",
+                template: '<a href="/#:QuoteId#"target="_blank">#:Quote#<a/>',
+                hidden: !isStatusSearch
+                   // template: '#= {!statusCheckErrorReportBoolean} ? "true":"false" #'
+               },
+               {
+                field: "CustomerName",
+                title: "Customer Name",
+                hidden: !isStatusSearch
+
+            },
+            {
+                field: "ProposalQuoteStatus",
+                title: "Proposal Status", 
+                hidden: !isStatusSearch
+            },
+            {
+                field: "ProposedDeliveryDate",
+                title: "Proposed Delivery Date",
+                hidden: !isStatusSearch
+
+            },                
+            {
+                field: "vehicle.dealer__VIN__c",
+                title: "VIN",
+                template: "# if (vehicle.dealer__VIN__c == 'N/A') { #" +
+            "<span data-content=' '></span>" +
+            "# } else { #" +
+            "<span>#: vehicle.dealer__VIN__c#</span>" +
+            "# } #"
+            },
+
+            ]
+        });
+})
+        // Range Field Object Contructor
+        var range_field = function(minId,maxId){
+            this.$_minObj = $dt('[id$="'+minId+'"]');
+            this.$_maxObj = $dt('[id$="'+maxId+'"]');
+            var _parent = this;
+
+            // Instantiate slider on the range field
+            this._slider = $dt('<div class="range"></div>').insertAfter( this.$_minObj ).slider({
+                range: true,
+                min: 5000,
+                max: 85000,
+                step: 500,
+                values: [ 0, 100000 ],
+                slide: function( event, ui ) {
+                    _parent.$_minObj.val( ui.values[ 0 ] );
+                    _parent.$_maxObj.val( ui.values[ 1 ] );
+                }
+            }).wrap('<div class="slide_wrap"></div>');
+
+
+            // Bind slider to field values
+            this.$_minObj.keyup(function(){
+                _parent._slider.slider( "values", 0, $dt(this).val() );
+            });
+
+            this.$_maxObj.keyup(function(){
+                _parent._slider.slider( "values", 1, _parent.$_maxObj.val() );
+            });
+        }
+
+        function startSearch() {
+            timer = setInterval(function(){
+                count++;
+                var dots = new Array(count % 4).join('.');
+                $dt('[id$="doSearch"]').val('Searching.' + dots);
+              }, 1000);
+        }
+
+        function completeSearch() {
+            isStatusSearch = false;
+            clearInterval(timer);
+            $dt('[id$="doSearch"]').val('Search');
+
+            render_table();
+        }
+
+        function renderVehicleTable(){
+            $dt('[id$="result_table"]').kendoGrid('destroy').empty();
+            render_table();
+        }
+
+        function startCheck() {
+            timer = setInterval(function(){
+                count++;
+                var dots = new Array(count % 4).join('.');
+                $dt('[id$="doStatusCheck"]').val('Checking.' + dots);
+              }, 1000);
+        }
+
+        function completeCheck() {
+            isStatusSearch = true;
+            clearInterval(timer);
+            $dt('[id$="doStatusCheck"]').val('Status Check');
+
+            render_table();
+        }
+            function startErrorCheck() {
+            timer = setInterval(function(){
+                count++;
+                var dots = new Array(count % 4).join('.');
+                $dt('[id$="doStatusCheckErrorReport"]').val('Checking.' + dots);
+              }, 1000);
+        }
+<!-- 1209 -->
+        function completeErrorCheck() {
+            isStatusSearch = true;
+            clearInterval(timer);
+            $dt('[id$="doStatusCheckErrorReport"]').val('Status Check Error Report');
+
+            render_table();
+        }
+
+
+        function strip_span(str) {
+            if (str=='N/A') return str;
+            // var span = $dt(str).find('span');
+            var span = $dt(str);
+            var text = ( span.length > 0 ? span.text() : str);
+            // var text = span.text();
+            return text;
+        }
+
+        function checkQuoteStatus(statusVal,fieldVal,stripSpan,isDate) {
+            var text = '';
+
+            statusVal = strip_span(statusVal);
+
+            if(statusVal!='Pending' && statusVal!='Lost' && stripSpan){
+                var span = $dt(fieldVal);
+                text = span.text();
+            }
+            else if(statusVal!='Pending' && statusVal!='Lost' && !stripSpan){
+                text = fieldVal;
+            }
+            
+            if(isDate){
+                text = moment( strip_span(text) ).format('MM/DD/YYYY');
+            }
+
+            // console.log(text);
+            return text;
+        }
+
+        function strip_anchor(str) {
+            var span = $dt(str);
+            var text = span.text();
+            return text;
+        }
+
+        function parse_currency(str) {
+            if ( typeof str != undefined ) {
+                if ( str.length > 0 ) {
+                    return parseFloat( $dt(str).text().replace(/[^0-9-.]/g, '') );
+                }
+            }
+            return '';
+        }
+
+        function destroy_table() {
+            var grid = $dt('[id$="result_table"]').data("kendoGrid");
+            grid.destroy();
+        }
+
+        function compare_text(a,b){
+            console.log(a);
+            console.log(b);
+
+            var aVal = $dt(a).find('span').text();
+            var bVal = $dt(b).find('span').text();
+
+            console.log(aVal);
+            console.log(bVal);
+
+            return aVal - bVal;
+        }
+
+        function compare_currency(a,b){
+
+        }
+
+
+// BLLxa
+function selectVehicle(objid, vehid) {
+	console.log('selectVehicle('+objid+','+vehid+')');
+	// objid is already available in controller as "proposalId"
+	$dt('input[id$="vehidstr"]').val(vehid);
+	selectVeh();
+}
+// BLLxa end
+
+        /*
+            ,
+            sortable: {
+                compare: function(a, b) {
+                    compare_text(a,b);
+                }
+            }
+
+            Chassis: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id42">$23,058.43</span>"
+            Color: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id39">Redline 2 Coat Pearl</span>"
+            ConvMfg: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id40">BraunAbility</span>"
+            ConvModel: ""
+            Conversion: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id41">$17,434.50</span>"
+            Description: "<a href="https://cs13.salesforce.com/a2PW00000007T29MAE">(670B) 2014 Dodge Grand Caravan</a>"
+            Location: ""
+            Mileage: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id38">288</span>"
+            RetailPrice: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id37">$49,550.00</span>"
+            TrimLevel: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id36">SXT</span>"
+            Type: "<span id="j_id0:force:vPB:j_id15:result_table:0:j_id43">Used</span>"
+        */
+    </script>
+
+    <style type="text/css">
+        /*
+            [id$="fieldSection"] .pbSubsection {
+                max-width: 600px
+            }
+        */
+
+        .dataCol {
+            position: relative;
+        }
+        .btn{
+            color: white;
+            background-color: blue;
+        }
+        .body, td {
+            font-weight: bold;
+            color:Black;
+        }
+         .k-grid-content td {
+          text-align: center;
+      }
+        .k-grid td
+        {
+            padding-top: 8px;
+            padding-bottom: 5px;
+            padding-left: 5px;
+            padding-right: 5px;
+            text-align: left;
+        }
+        .slide_wrap {
+            position: relative;
+            width: 226%;
+            left: 0;
+            display: block;
+            margin: 7px 5px;
+        }
+        .k-grid .text-box {
+            color: black !important;
+            font-weight: bold;
+        }
+
+        .headerRow.k-header a > span {
+            float: right;
+        }
+
+        .headerRow.k-header a > div {
+            float: left;
+        }
+
+        .bPageBlock .detailList .dataCol {
+            width: auto;
+        }
+        .bPageBlock .detailList .labelCol {
+            width: auto;
+        }
+
+        [id$="force"] .secondary_separator {
+            /*text-align: center;*/
+            background-color: #f4f4f4;
+            padding: 3px 3px 3px 20px;
+        }
+
+        .empty {
+            border-bottom: 1px solid #e3deb8;
+        }
+
+        .k-grid-header th.k-header, .k-filter-row th {
+            padding-left: .2em;
+            padding-right: .2em;
+        }
+
+        .redColor{
+            background-color:#FADBD8  ;
+        }
+        .k-alt{
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        @media screen and (min-width: 861px) and (max-width: 1300px) {
+            .slide_wrap {
+                position: relative;
+                width: 150%;
+                left: 30%;
+                display: inline-block;
+                margin: 5px 2px 0px;
+            }
+        }
+        @media screen and (min-width: 1301px) and (max-width: 1600px)  {
+            .slide_wrap {
+                position: absolute;
+                width: 62%;
+                left: 58%;
+                display: inline-block;
+                margin-top: 3px;
+            }
+        }
+
+        @media screen and (min-width: 1601px) {
+            .slide_wrap {
+                position: absolute;
+                width: 75%;
+                left: 49%;
+                display: inline-block;
+                margin-top: 3px;
+            }
+        }
+
+    </style>
+</apex:page>

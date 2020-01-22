@@ -1,0 +1,72 @@
+<aura:documentation>
+	<aura:description>Documentation</aura:description>
+	<aura:example name="ExampleName" ref="exampleComponentName" label="Label">
+ToDo:
+	- sync FICO score - maintain on Sol Opp only, others become formulas
+	- F and I enters fico score, store on sol.opp and change proposal field to formula, same
+	  with credit app?
+	- Saving deal - set overall credit application status from credit applications
+
+New fields and other metadata:
+Global value set "Credit Application Status"
+
+dealer__Credit_Application__c:
+	Application_Received__c
+	Application_initial_receipt__c
+	// no: Credit_App_Completed__c
+	Credit_App_Nbr__c
+	Credit_App_Submitted__c
+	Status__c (Credit app status)
+	Credit_Score__c (FICO Score) !!! Restrict access !!!
+	// no: DaysToCompleted__c
+	DaysToDecision__c
+	DaysToSubmitted__c
+	Decision_Received__c
+	Finance_Company__c
+	General_Manager_Name__c
+	// no: Items_Missing__c
+	Notes__c
+	Proposal__c
+	Solution_Opportunity__c
+	Unique_key__c
+	VIN__c
+	Offer_Payment__c	Offer Payment
+	Offer_APR__c		Offer APR
+	Offer_Buy_Rate__c	Offer Buy Rate
+	Offer_Term__c		Offer Term (months)
+	Offer_Principle__c	Offer Amt Financed
+	Offer_Down_Pmt__c	Offer Down Pmt
+	Counter_Offer__c	Countered
+	Different_VIN
+
+
+dealer__Deal__c:
+	Credit_Application_Status__c
+	Credit_Score__c (formula) !!! Restrict access !!!
+	Contract_Buy_Rate__c !!! Restrict access !!!
+	remove FICO_Score__c (replace with Credit_Score__c) !!! Restrict authority !!!
+	/* dealer__F_I_Manager__c */
+	CIT_Reviewed_Archive__c (Date)
+	CIT_Lender_Funded__c (Date)
+	Days_To_CIT_Funding__c (formula)
+	Days_To_CIT_Review__c (formula)
+	Credit_Application__c
+	Credit_App_Missing_Items__c
+	Credit_App_Incomplete__c (checkbox)
+	Credit_App_Initial_Receipt
+	Credit_App_Submitted
+	Credit_Application_Received
+	Credit_Offer_Accepted
+	My_F_I_Proposal
+
+dealer__Sales_Up__c:
+	Credit_Score__c !!! Restrict access !!!
+
+Workflow:
+	Credit App System Fields -> CreditApp Set Unique Key, Credit App Name
+
+Credit Application:
+	Page layout (Credit Application MW)
+
+	</aura:example>
+</aura:documentation>

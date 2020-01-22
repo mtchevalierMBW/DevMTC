@@ -1,0 +1,142 @@
+<apex:page standardController="dealer__Deal__c" extensions="Deal_MBW2" showHeader="false" sidebar="false"
+	title="Proposal {!dealer__Deal__c.Name}">
+<!-- 
+	2017-01-14	B. Leaman	Written.
+ -->
+<style>
+	.nondisplay {display:none;}
+	.number {text-align:right;}
+	.number span {text-align:right}
+	.dataTable td {padding:8px;}
+</style>
+
+<apex:form >
+
+	<apex:pageBlock title="Commercial Proposal Recap">
+
+		<apex:pageBlockButtons location="top">
+		<apex:commandButton onclick="window.print(); return false;" action="noaction" value="Print"/>
+		</apex:pageBlockButtons>
+	
+		<apex:pageBlockSection columns="1" title="Proposal {!dealer__Deal__c.Name} for {!dealer__Deal__c.dealer__Buyer__r.Name}" collapsible="false">
+			
+			<apex:pageBlockSectionItem >
+			<apex:outputPanel layout="block">
+			<table class="dataTable">
+			
+				<tr>
+				<th><apex:outputText >Consultant</apex:outputText></th>
+				<td style="min-width: 5em;"><apex:outputText value="{!dealer__Deal__c.dealer__Salesperson_1__r.Name}"/></td>
+				<td style="min-width: 5em;">&nbsp;</td>
+				</tr>
+			
+				<tr>
+				<th><apex:outputText /></th>
+				<th class="number"><apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}">Quote/Order</apex:outputText></th>
+				<th class="number"><apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}">Actual</apex:outputText></th>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Total Amount</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.OEM_Chassis_Price__c + dealer__Deal__c.OEM_Conversion_Price__c + dealer__Deal__c.Total_Additional_Equipment__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Chassis_Price__c + dealer__Deal__c.Conversion_Price__c + dealer__Deal__c.Total_Additional_Equipment__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Total Cost</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.OEM_Chassis_Cost__c + dealer__Deal__c.OEM_Conversion_Cost__c + dealer__Deal__c.Total_Internal_Local_Equipment__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Chassis_Cost__c + dealer__Deal__c.Conversion_Cost__c + dealer__Deal__c.Total_Internal_Local_Equipment__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Chassis Gross</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.OEM_Chassis_Price__c - dealer__Deal__c.OEM_Chassis_Cost__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Chassis_Gross__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Commissionable Gross</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Quoted_Commissionable_GP__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Commissionable_Gross__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Freight Profit</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Freight_Amount__c - dealer__Deal__c.Freight_Cost__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Freight_Amount__c - dealer__Deal__c.Freight_Cost__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Percent (0%=No commission or Flat only)</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.0%}">
+						<apex:param value="{!dealer__Deal__c.Commission_Rate__c/100}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.0%}">
+						<apex:param value="{!dealer__Deal__c.Commission_Rate__c/100}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Flat</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Flat__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Flat__c}"/>
+					</apex:outputText></td>
+				</tr>
+				
+				<tr>
+				<th><apex:outputText >Total</apex:outputText></th>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(isVehicleSale,'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!(dealer__Deal__c.Commission_Rate__c/100) * dealer__Deal__c.Quoted_Commissionable_GP__c}"/>
+					</apex:outputText></td>
+				<td class="number">
+					<apex:outputText styleClass="{!IF(AND(isVehicleSale,dealer__Deal__c.dealer__Vehicle__c!=null),'','nondisplay')}" value="{0,number,0.00}">
+						<apex:param value="{!dealer__Deal__c.Commission__c}"/>
+					</apex:outputText></td>
+				</tr>
+			</table>
+			</apex:outputPanel>
+			</apex:pageBlockSectionItem>
+			
+		</apex:pageBlockSection>
+	
+	</apex:pageBlock>
+</apex:form>
+</apex:page>

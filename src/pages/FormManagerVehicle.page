@@ -1,0 +1,464 @@
+<!-- Modifications: -->
+<!-- 
+2016-04-20	B. Leaman	Copied from FormManagerCQ and changed for vehicle inventory (via transient deal instance)
+2017-12-04	B. Leaman	BLL6 - impact form debug info and prevent html entity conversions. 
+-->
+<apex:page title="Forms" showHeader="true" sidebar="true" standardController="dealer__Vehicle_Inventory__c" 
+			extensions="FormControlVehicleInventory_EXT,FormManager_EXT">
+	
+	<head>
+        <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+
+       <!-- Include JS Notify and Moment -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/notify.min.js')}" />
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/moment.min.js')}" />
+
+       <!-- Include datepicker -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/bootstrap-datepicker.js')}" />
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources, '/css/datepicker.css')}" />
+
+       <!-- Include Checkbox -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/bootstrap-checkbox.js')}" />
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources, '/css/bootstrap-checkbox.css')}" />
+
+       <!-- Include Select Box -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/bootstrap-select.min.js')}" />
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources, '/css/bootstrap-select.css')}" />
+
+       <!-- Include Tipr-->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources, '/js/jquery.tooltipster.min.js')}" />
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources, '/css/tooltip/tooltipster.css')}" />
+
+       <!-- Alertify -->
+       <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js" />
+       <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.min.css" />
+       <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.bootstrap.min.css" />
+
+        <!-- KENDO 2015.1.429 -->
+        <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/jszip.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/kendo.all.min.js')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.min.css')}"/>
+ 
+<style>
+#qz-status {
+    display:inline-block;
+    vertical-align:middle;
+    background-color:#FAFAA0;
+    border-radius:8px; 
+    height:16px;
+    width:16px;
+    margin-left:.3em;
+    margin-right:.3em;
+}
+</style>
+
+        <script type="text/javascript">
+            $dt = jQuery.noConflict();
+            
+            /* Cookie routines */
+            function setCookie(cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + (exdays*24*60*60*1000));
+                var expires = "expires="+d.toUTCString();
+                document.cookie = cname + "=" + cvalue + "; " + expires;
+            }
+
+            function getCookie(cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                for(var i=0; i<ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0)==' ') c = c.substring(1);
+                    if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+                }
+                return "";
+            }
+
+            /* BLL1a begin */
+            /**
+             * Automatically gets called when applet has loaded.
+             */
+            var localPrinters = [];
+            var printerNameText = 'FORMS';
+
+            function setLocalPrinters(printers) {
+               var ptrselect = $dt('#localPrinter');
+               var option = null;
+               try {
+                 option = ptrselect[0].options;
+               } catch(e) {}
+               if (option!=null) option.length = 0;
+               var pname = getCookie('FormPrinter');
+               var setDefault = false;
+               for(i=0; i<printers.length; i++) {
+                   var ptr = printers[i].split('\\');
+                   if (ptr[ptr.length-1].indexOf(printerNameText)>=0) {
+                       localPrinters[localPrinters.length] = {'printer':printers[i], 'name':ptr[ptr.length-1]};
+                       var sel = (printers[i]==pname);
+                       var o = new Option(ptr[ptr.length-1], printers[i], sel, sel);
+                       ptrselect.append($dt(o));
+                       setDefault = setDefault | sel;
+                   } 
+               }
+               //if (setDefault==false) {  // set first printer as default until changed
+                  changePrinter();
+               //}
+            }
+
+            function changePrinter() {
+               printerName = $dt('#localPrinter').val();
+               if (console) console.log('Set printer to: ' + printerName);
+               setCookie('FormPrinter', $dt('#localPrinter').val(), 91);
+               //window['qzDoneFinding'] = null;
+               //qz.findPrinter(printerName);
+            }
+
+            function findlocalPrinters() {
+			   var status = document.getElementById("qz-status"); // BLL tweak 2015-12-17
+               window['qzDoneFinding'] = function() {
+                  var printers = qz.getPrinters();
+                  if (printers) {
+                     setLocalPrinters(printers.split(','));
+			         if (status) status.style.background = "#09FF09"; // BLL tweak 2015-12-17
+                  } else {
+                     alert('No printers found');
+                  }
+                  window['qzDoneFinding'] = null;
+               }
+			   if (status) status.style.background = "#FAFAA0"; // BLL tweak 2015-12-17
+               qz.findPrinter(printerNameText);
+            }
+
+            function qzReady() {
+                if (console) console.log('qzReady running');
+                // If the qz object hasn't been created, fallback on the <applet> tags
+                if (!qz) {
+                    window["qz"] = document.getElementById('qz');
+                }
+                var title = document.getElementById("title");
+                var status = document.getElementById("qz-status");
+                if (qz) {
+                    try {
+                        var qzVer = qz.getVersion();
+                        if (title) title.innerHTML = title.innerHTML + " " + qzVer;
+                        if (status) status.style.background = "#A0FAA0";
+                        qzInstalled = true;
+                        if (console) console.log('Finding printer ' + printerName);
+                        findlocalPrinters();
+                    } catch(err) { // LiveConnect error, display a detailed message
+                        if (status) status.style.background = "#F5A0A0";
+                        alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
+                                "applet has failed, likely caused by Java Security Settings.  \n\n" +
+                                "CAUSE:  \nJava 7 update 25 and higher block LiveConnect calls " +
+                                "once Oracle has marked that version as outdated, which " +
+                                "is likely the cause.  \n\nSOLUTION:  \n  1. Update Java to the latest " +
+                                "Java version \n          (or)\n  2. Lower the security " +
+                                "settings from the Java Control Panel.");
+                    }
+                } else {
+                        alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
+                                "applet has failed, likely caused by Java Security Settings.  \n\n" +
+                                "CAUSE:  \nJava 7 update 25 and higher block LiveConnect calls " +
+                                "once Oracle has marked that version as outdated, which " +
+                                "is likely the cause.  \n\nSOLUTION:  \n  1. Update Java to the latest " +
+                                "Java version \n          (or)\n  2. Lower the security " +
+                                "settings from the Java Control Panel.");
+                }
+            }
+            /* BLL1a end */
+
+            var JavaInstalled=false;
+            //var printerName     = 'EPSON_Impact_Class';
+            var printerEnabled  = 'true';
+            var objId = '{!objId}';
+            
+            var printerName = getCookie('FormPrinter');
+            var qzInstalled=false;
+			//var qzArchiveRoot = ' { ! URLFOR($Resource.qzResources)}';
+			var qzArchiveRoot = '{!URLFOR($Resource.dealer__QZtrayResources)}';
+            
+
+            var printerEnabled  = true;   // '{ ! userConfig.Enable_Impact_Forms__c}';  // BLL1c           
+
+              
+            function getPrinterDefaults() {
+                var dft = '';
+                dft += '\x1B\x40';	// Initialize
+                dft += "\x1B\x78\x31";	// NLQ
+                dft += "\x1B\x6B\x30";	// Set Font  HEX
+                dft += "\x1B\x4D";	// 12 CPI (x50=10 cpi, x67=15 cpi)
+                dft += "\x1B\x30";	// 8 LPI
+                return dft;
+            }       
+                 
+
+            function printForm(lineCode) {
+                var data = ''; 
+                
+                /********** QZ Activated? **********/
+                if(!isLoaded()) {
+                    return;
+                }
+                
+                qz.append(getPrinterDefaults()); // BLLa
+
+                /********** CONFIGURATION **********/
+                var spaceValue      = '\x20'; // Should be dash or space for debugging, and \x20 for production.
+                var lineBreakValue  = '\r\n'; // Should be <br /> for debugging and \r\n for production.
+
+                // Funciton to grab a printer command at the beginning of the form and appening it before processing code. - Thes command must be wrapped in double percent signs i.e. %%\x1B\x32%%
+                function _replacer(match) {
+                    // %%6lpi%% = %%\x1B\x32%%
+                    var _code = match.replace(/%%/gi,'');
+                    console.log(_code);
+                    if(_code == "6lpi") {
+                        qz.append("\x1B\x32");
+                        return '';
+                    } else if(_code == 'payment_exluding') {
+                        return prompt('Installment Payment EXCLUDING Items');
+                    } else if (_code == 'payment_including') {
+                        return prompt('Installment Payment INCLUDING Items');
+                    // BLL3a - %%advance:10%% to move the paper 10/180 of an inch up (print further down)
+                    // BLL3a - or %%down:10%%
+                    } else if (_code.startsWith('advance:') || _code.startsWith('down:')) {
+                    	var vertStr = _code.substring(_code.indexOf(':'));
+                    	if (vertStr.length>0) vertStr = vertStr.substring(1)
+                    	var vertInt = parseInt(vertStr);
+                    	return "\x1B\x4a" + String.fromCharCode(vertInt);
+                    // BLL3a end
+                    } else {
+                        return '';
+                    }
+
+                    // Prompt For Values
+
+                }
+                
+                var sourceString = lineCode.replace(/%%.*?%%/gi, _replacer);
+                //sourceString = jQuery.base64.decode(sourceString);
+                var lines = sourceString.split("|");
+                
+                console.log(lines);
+                
+                var lineCount = 0;
+                var buffer = '';
+                
+                lines.forEach(function(line) {
+    
+                    var columnCount = 0;
+    
+                    var columns = line.split("~");
+                    
+                    columns.forEach(function(column) {
+                    
+                        if(column) { // <-- This is required to prevent javascript errors.
+                            
+                            var pieces = column.split("^");
+                            if(pieces.length>=3) {
+                                
+                                var contentLength = pieces[2].length;
+                                var spacesToInject = pieces[1] - columnCount;
+                                
+                                var newColumnLength = contentLength + spacesToInject + columnCount;
+                                columnCount = newColumnLength;
+                                
+                                var toAppend = '';
+                                
+                                for(var i = 0; i < spacesToInject;  i++) {
+                                    toAppend+=spaceValue;
+                                }
+                                
+                                toAppend+=pieces[2];
+                                
+                                buffer+=toAppend;
+                                data += toAppend; 
+                            }
+                        
+                        }
+                    }); 
+                    
+                    buffer+=lineBreakValue;
+                    data += lineBreakValue;  
+                    lineCount+1;  
+                       
+                });
+
+                console.log(buffer);
+                data += '\f';  
+                qz.append(data);  
+                qz.print();             
+            }   
+
+            function fire_print() {
+              var line_code = $dt('[id$="compiled_src"]').val();	// BLL6a
+              if (console) console.log(line_code);	// BLL6a
+              // BLL added 2015-12-17
+              var ptrselect = $dt('#localPrinter');
+              var option = null;
+              try {
+                option = ptrselect[0].options;
+              } catch(e) {};
+              if (option!=null && option.length>0) {
+              // BLL end added 2015-12-17
+	            if (console) console.log('Printer name='+printerName);
+              	qz.findPrinter(printerName);  // BLL add because qzReady is not being fired
+              	// BLL6d var line_code = $dt('[id$="compiled_source"]').html();
+              	var r = confirm("Send print job to line printer?");
+              	if (r == true) {
+              	    printForm(line_code);
+              	}
+	          } else { // BLL added 2015-12-17
+	          	alert('Printer not specified. You may need to wait for the printer selection to be ready.');
+	          } // BLL end 2015-12-17
+
+            }        
+             
+            function printGridLong() {
+                var data = '';
+                data = getPrinterDefaults(); 
+                
+                for(i=0; i<=110; i++) {
+                    var myString = i.toString();
+                    var lastChar = myString.substr(myString.length - 1); 
+                    data += lastChar;  
+                }
+
+                data += "\r\n";  
+
+                var lines = prompt('How Many Lines?');
+
+                if(!isNaN(lines) ) {
+
+                    for(i=1; i<=lines; i++) {
+                        var lastChar = i.toString();
+                        if(lastChar.charAt(lastChar.length - 1) == 0) {
+                            for(n=0; n<=117; n++) {
+                                var myString = n.toString();
+                                var lastChar = myString.substr(myString.length - 1); 
+                                data += lastChar;  
+                            }
+                            data += "\r\n"; 
+                        } else {
+                            data += i;  
+                            data += "\r\n";  
+                        }
+                    }
+
+                    data += "\f";  
+                    qz.append(data);
+                    qz.print();
+
+                } else {
+                    alert('Retry and Enter a number.');
+                }
+            }
+
+        function printPDF_FDF(f, dcid, flatten, name) {
+        	console.log(f);
+        	console.log(dcid);
+        	console.log(flatten);
+        	console.log(name);
+			FormControlVehicleInventory_EXT.compileFDF('{"form" : "'+f+'", "obj" : "'+objId+'"}', function(result, event){ 
+				$dt('#fdf').val($dt('<textarea/>').html(result).text());
+				$dt('#f').val(f);
+				$dt('#DocumentContentId').val(dcid);
+				$dt('#Flatten').val(flatten);
+				$dt('#DocumentName').val(name);
+				$dt('#fdfForm').attr('action', 'https://apsv1.dealerteam.com/docgen/fill/'+encodeURIComponent(dcid));
+				$dt('#fdfForm').submit();
+			});
+        }        
+        
+        </script>        
+	</head>
+
+	<apex:sectionHeader title="Forms" description="Print forms and documents for {!SobjectName}"
+	     subtitle="Forms Printing and Document Preparation"/>
+<!--BLL1a-->
+    <div style="margin:3px;">Forms Printer:
+       <select name="localPrinter" id="localPrinter"
+               onchange="javascript:changePrinter();">
+          <!-- option value="">-- please select --</option -->
+       </select>
+       <div id="qz-status">&nbsp;</div>
+    </div>
+<!--BLL1a end-->
+<!-- BLL4a -->
+<form id="fdfForm" method="post" action="https://apsv1.dealerteam.com/docgen/fill/" target="_blank"
+	style="display:none;">
+<input type="hidden" id="fdf" name="fdf" value="'+result+'" />
+<input type="hidden" id="f" name="f" value="'+f+'" />
+<input type="hidden" id="DocumentContentId" name="DocumentContentId" value="'+dcid+'" />
+<input type="hidden" id="Flatten" name="Flatten" value="'+flatten+'" />
+<input type="hidden" id="DocumentName" name="DocumentName" value="'+name+'" />
+</form>    
+<!-- BLL4a end -->
+
+	<apex:form >
+	<apex:pageBlock >
+		<apex:pageBlockButtons >
+			<apex:commandButton action="{!returnToDocument}" value="Return to {!objName}" />
+		</apex:pageBlockButtons>
+
+    <apex:outputPanel id="compiled_source" style="display:none;">
+    	<!-- BLL6c add textarea so that ampersand is not translated to html entity -->
+        <textarea id="compiled_src"><apex:dynamicComponent componentValue="{!compiled_form}" /></textarea>
+    </apex:outputPanel>
+
+			<div id="force">
+			<!-- BLL6a -->
+			<apex:dynamicComponent componentValue="{!FormsTableRows}"/><!-- BLLxa -->
+			<!-- BLL6d removed old table -->
+			<!-- table class="table table-hover" --> 
+			<!-- tr>	
+				<th>Name</th>
+				<th>Form ID</th>
+				<th>Revision Date</th>
+				<th>Action</th>
+			</tr -->
+			<!-- apex:repeat value="{!formList}" var="f" -->
+				<!-- tr>
+					<td><apex:outputField value="{!f.Name}" /></td>
+					<td><apex:outputField value="{!f.dealer__Form_ID__c}" /></td>
+					<td><apex:outputField value="{!f.dealer__Revision_Date__c}" /></td>
+					<td>
+						<apex:outputText rendered="{!IF(f.dealer__Print_Type__c=='Laser',true,false)}">
+							<button class="btn btn-primary btn-xs" onclick="window.open('/apex/{!f.dealer__Page_Name__c}?id={!objId}')">Print Laser Document</button>
+						</apex:outputText>
+
+						<apex:outputText rendered="{!IF(f.dealer__Print_Type__c=='Impact',true,false)}">
+							<apex:commandButton styleclass="btn btn-primary btn-xs" value="Print Impact Form" action="{!selectImpactForm}" reRender="compiled_source" oncomplete="fire_print();">
+                				<apex:param value="{!f.Id}" assignTo="{!formId}" name="formId" />
+             				</apex:commandButton>
+						</apex:outputText>
+				-->
+            <!-- FDF Support (JVK1) -->
+            <!-- apex : outputText rendered="{!IF(f.dealer__Print_Type__c=='FDF', true, false)}" >
+                <button type="button" id="printPDFButton" onclick="printPDF_FDF('{!f.Id}', '{!f.dealer__DocumentContentId__c}', '{!f.dealer__Flatten__c}', '{!f.Name}')"
+                    class="btn btn-primary btn-xs">Print Laser Form</button>
+            </apex:outputText -->
+                       
+					<!-- /td>
+				</tr -->
+			<!-- /apex : repeat -->
+			<!-- /table -->
+			</div>
+
+	</apex:pageBlock>
+	</apex:form>
+
+	<!-- QZ JAVA --> 
+    <script type="text/javascript" src="{!URLFOR($Resource.dealer__QZtrayResources,'js/qz-websocket.js')}"></script><!-- BLL1a -->
+    <script type="text/javascript" src="{!URLFOR($Resource.dealer__QZtrayResources,'js/QZmethods.js')}"></script><!-- BLL1a -->
+
+<script type="text/javascript">
+deployQZ();
+</script>
+
+</apex:page>

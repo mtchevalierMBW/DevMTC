@@ -1,0 +1,14 @@
+<aura:component implements="flexipage:availableForAllPageTypes" controller="CustomLinks">
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:attribute name="GroupNames" type="String[]"/>
+
+	<lightning:card title="Custom Links" class="slds-p-around_small">
+		<div>
+			<aura:iteration items="{!v.GroupNames}" var="g">
+				<c:CustomLinksDetail groupName="{!g}"/>
+			</aura:iteration>
+		</div>
+	</lightning:card>
+
+</aura:component>

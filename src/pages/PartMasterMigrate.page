@@ -1,0 +1,17 @@
+<apex:page standardController="dealer__Parts_Master__c" extensions="PartMigrateOnHand_EXT">
+    <apex:sectionHeader title="Parts Master" subtitle="Migrate Parts On-Hand to new Master" description="Migration of parts with on-hand quantities to new master records."/>
+	<apex:form >
+        <apex:pageMessages />
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton action="{!movePart}" value="Migrate On-Hand"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSEction >
+                <apex:outputField value="{!dealer__Parts_Master__c.dealer__Manufacturer__c }"/>
+                <apex:outputText />
+            	<apex:outputField value="{!dealer__Parts_Master__c.Name}"/>
+				<apex:inputField value="{!newInvMaster.dealer__Parts_Master__c}"/>
+			</apex:pageBlockSEction>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,386 @@
+<apex:page standardController="dealer__Purchase_Order__c"  extensions="PurchaseOrderPrint_EXT"
+showHeader="false" renderAs="PDF" applyHtmlTag="false">
+<head>
+<style>
+    body {
+        font-family: Tahoma, Geneva, sans-serif;
+    }
+    td {
+        font-family: Tahoma, Geneva, sans-serif;
+        padding: 5px;
+    }
+    th {
+        font-family: Tahoma, Geneva, sans-serif;
+        text-align: left;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    form {
+        margin:0px;
+        padding:0px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 100%;
+        margin:0px;
+        display:inline;
+    }
+
+    textarea {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 100%;
+     }
+
+    img { border:0; }
+
+    .plHead {
+        background-color: #09F;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+    }
+    .plDetailHead {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+    }
+    .plDetailHeadLeft {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+        text-align:left;
+    }
+    .plDetailHeadRight {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+        text-align:right;
+    }
+    .plHeadLeft {
+        background-color: #09F;
+        padding: 4px;
+        color: #FFF;
+        text-align:left;    
+    }
+    .plHeadRight {
+        background-color: #09F;
+        padding: 4px;
+        color: #FFF;
+        text-align:right;   
+    }
+    .blueBack {
+        background-color: #09F;
+    }
+    .plEve {
+        font-size: 12px;
+        text-align: left;
+    }
+    .plValue {
+        text-align: right;
+        color: #000;
+        padding: 4px;
+    }
+    .plLabel {
+        text-align: left;
+        color: #000;
+        padding: 4px;
+    }
+
+    .pLT {
+        font-size:14px;
+        text-align: left;
+        color: #000;
+        padding: 2px;
+    }
+
+    .pLV {
+        font-size: 14px;
+        text-align: right;
+        color: #000;
+        padding: 2px;
+    }
+
+    .bLeft {
+        border-left: 1px solid #999;
+    }
+    .bRight {
+        border-right: 1px solid #999;
+    }
+    .bTop { 
+        border-top: 1px solid #999;
+    }
+    .bBottom { 
+        border-bottom: 1px solid #999;
+    }
+
+
+    .odd {
+     background-color: #EEE;
+     padding: 1px 1px 2px 2px;
+    }
+
+    .even {
+     padding: 1px 1px 2px 2px;
+    }
+
+    .quoteTag {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 95px;
+        height: 95px;
+        /* background-image:url(' { ! $ Resource.QuoteTag}'); */
+    }
+    .col1 {width:25%; text-align:left;}
+    .col2 {width:25%; text-align:left;}
+    .col3 {width:25%; text-align:left;}  
+    .col4 {width:25%; text-align:left;}  
+    @page {
+    /* Landscape orientation */
+    size:portrait;
+    margin: 0.25in;
+
+        /* Put page numbers in the top right corner of each
+        page in the pdf document. */
+        @bottom-left {
+            width: 600px;
+            font-size: 12px;
+            content: "This purchase order is valid for 30 days of issue date.";
+        }
+        @bottom-right {
+        width: 200px;
+        font-size: 12px;
+        content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+</style>
+</head>
+
+<table cellpadding="0" cellspacing="0">
+    <tr>
+        <td colspan="2" style="height:55px;"></td>
+    </tr>
+    <tr>
+        <td width="500px" valign="top">
+            <div id="orgDetails" class="plEve">
+                <!-- Org Defaults -->
+                <apex:outputText rendered="{!ISBLANK(dealer__Purchase_Order__c.dealer__Company__r.Name)}">
+                    <apex:outputText value="{!$Organization.Name}" style="font-size:18px;font-weight:bold;" /><br />
+                    <apex:outputText value="{!$Organization.Street}" /><br />
+                    <apex:outputText value="{!$Organization.City}" />,&nbsp;<apex:outputText value="{!$Organization.State}" />&nbsp;<apex:outputText value="{!$Organization.PostalCode}" /><br />   
+                    <apex:outputText value="www.mobilityworks.com" rendered="{!dealer__Purchase_Order__c.dealer__Company__r.NoLogoOnForms__c!=true}"/><!-- " { ! DMSDefaults.dealer__Corporate_Website__c}" /--><br />
+                    <apex:outputText value=""  rendered="{!dealer__Purchase_Order__c.dealer__Company__r.NoLogoOnForms__c!=true}"/><!-- "{ ! DMSDefaults.dealer__Corporate_Facebook_Page__c}" /-->
+                </apex:outputText>
+
+                <!-- Dealer Defaults -->
+                <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Company__r.Name))}">
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.Name}" style="font-size:18px;font-weight:bold;" /> <br />
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__Address__c}" /><br />
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__City__c}" />&nbsp;
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__State__c}" />&nbsp;
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__Postal_Code__c}" /><br />
+                    <!-- Website -->
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__Website__c}" /><br />
+                    <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Company__r.dealer__Main_Phone__c}" />
+
+                </apex:outputText>
+            </div>
+        </td>
+        <td width="500px">
+            <div style="float:right;">
+                <apex:image id="businessLogo" value="{!$Resource.FormLogo}"  style="height:65px;" 
+                    rendered="{!dealer__Purchase_Order__c.dealer__Company__r.NoLogoOnForms__c!=true}"/>
+            </div>
+            <div style="clear:both"></div>
+            <div style="float:right;">
+            <table style="" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td colspan="2" align="center">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT">PO#</td>
+                    <td class="pLV">
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__PO_Number__c}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT">Purchase Order Date</td>
+                    <td class="pLV"><apex:outputText value="{0,date,MM/dd/yyyy}" ><apex:param value="{!dealer__Purchase_Order__c.CreatedDate}" /></apex:outputText></td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT blueBack" style="color: #FFF;">Purchase Order Amount</td>
+                    <td class="pLV blueBack" style="color: #FFF;"><apex:outputText value="{0,number, $###,##0.00}"><apex:param value="{!dealer__Purchase_Order__c.dealer__PO_Amount__c}" /></apex:outputText></td>
+                </tr>   
+                <tr>
+                    <td width="175px"></td>
+                    <td style="font-size:10px">Printed&nbsp; 
+                        <apex:outputText value="{!printedAtDT}"/> 
+                    </td>
+                </tr>           
+            </table>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td width="525px" valign="top" colspan="2">
+            <div id="customerNameBlock">
+                <div style="font-weight:bold;">Purchase Order</div>
+                <div id="CustomerName"><apex:outputText value="{!dealer__Purchase_Order__c.dealer__Vendor_Name__c}" /></div> 
+                <div id="CustomerStreet"><apex:outputText value="{!dealer__Purchase_Order__c.dealer__Vendor_Street__c}" /></div>  
+                <div id="CustomerCityStateZip">
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Vendor_City__c}" /><apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Vendor_City__c))}">,</apex:outputText>&nbsp;
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Vendor_State__c}" />&nbsp;
+                    <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Vendor_Postal_Code__c}"/>
+                </div>
+                <div id="CustomerPhoneNumber">
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Vendor_Phone__c))}" value="Phone:{0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Vendor_Phone__c}" />
+                    </apex:outputText>
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Vendor__c))}" value=" Fax:{0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Vendor__r.Fax}" />
+                    </apex:outputText>                     
+                </div>  
+                <div id="CustomerInformation" class="plEve" style="font-size:12px;">
+                    <!--apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.Carrier__c))}" value=" Carrier: {0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Carrier__c}"/>
+                    </apex:outputText> <br/>
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.VIN__c))}" value=" VIN/Serial Number: {0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__VIN__c}"/>
+                    </apex:outputText><br/> 
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Service_Repair_Order__c))}" value=" RO Reference#: {0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name}"/><br/> 
+                    </apex:outputText>
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.Shipping_Method__c))}" value=" Shipping Method: {0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Shipping_Method__c}"/>
+                    </apex:outputText><br/>
+                    <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.Tracking__c))}" value=" Tracking#: {0}">
+                        <apex:param value="{!dealer__Purchase_Order__c.dealer__Tracking__c}"/>
+                    </apex:outputText 
+                    
+                    -->  <br/>
+                    <apex:panelGrid columnClasses="col1,col2,col3,col4" columns="4" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <apex:outputText rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name))}">RO Reference#</apex:outputText>
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name}" style="text-align:left;" rendered="{!NOT(ISBLANK(dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name))}">                            
+                        </apex:outputText>
+
+                        <!-- Blank PO column -->
+                        <apex:outputText rendered="{!ISBLANK(dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name)}" />
+                        <apex:outputText rendered="{!ISBLANK(dealer__Purchase_Order__c.dealer__Service_Repair_Order__r.Name)}" />
+                        
+                        <apex:outputText >Carrier</apex:outputText>
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Carrier__c}">                         
+                        </apex:outputText>
+                        <apex:outputText >VIN/Serial Number</apex:outputText>
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__VIN__c}">                            
+                        </apex:outputText>
+                        <apex:outputText >Tracking#</apex:outputText>
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Tracking__c}">                           
+                        </apex:outputText>
+                        <apex:outputText ></apex:outputText><apex:outputText ></apex:outputText>
+                        <apex:outputText >Shipping Method</apex:outputText>
+                        <apex:outputText value="{!dealer__Purchase_Order__c.dealer__Shipping_Method__c}">                            
+                        </apex:outputText>
+                        
+                    </apex:panelGrid>                                                      
+                </div>  
+            </div>          
+        </td>        
+     </tr>
+     <tr>
+        <td colspan="2">
+            <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td width="175px" class="plHead" valign="top">
+                        <div style="font-size: 10px;color: #EEE;">Written By:</div>
+                        <div style="font-size: 12px;"><apex:outputField value="{!dealer__Purchase_Order__c.CreatedBy.Name}" /></div>
+                    </td>
+                    <td width="175px" class="plHead" valign="top">
+                    </td>   
+                    <td width="175px" class="plHead" valign="top">
+                    </td>               
+                    <td width="175px" class="plHead" valign="top">
+                    </td>               
+                    <td width="175px" class="plHead" valign="top">
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td colspan="2">
+<!-- Parts Lines -->    
+<!-- apex : repeat value=" { ! pageBrokenOrderLines}" var="aPageOfLineItems" id="partsList" -->
+    <div> 
+        <apex:dataTable value="{!aPageOfLineItems}" var="l" id="partsLines" headerClass="plDetailHead" rowClasses="odd,even" style="font-size: 80%;" columnsWidth="50px, 200px, 250px, 400px">
+            <apex:column >
+                <apex:facet name="header">QTY</apex:facet>
+                <apex:outputText value="{0, number, 0}" rendered="{!NOT(ISBLANK(l.dealer__Part_Quantity__c))}">
+                    <apex:param value="{!l.dealer__Part_Quantity__c}" />
+                </apex:outputText>
+                <apex:outputText value="1" rendered="{!ISBLANK(l.dealer__Part_Quantity__c)}" />
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Item</apex:facet>
+                <apex:outputText value="{!l.dealer__Part__r.Name}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Description</apex:facet>
+                <apex:outputText value="{!l.dealer__Part__r.dealer__Description__c}" rendered="{!NOT(ISBLANK(l.dealer__Part__r.dealer__Description__c))}"/>
+                <apex:outputText value="{!l.dealer__Description__c}" rendered="{!NOT(ISBLANK(l.dealer__Description__c))}" />
+            </apex:column>
+            <apex:column style="text-align: right;" headerClass="plDetailHeadRight">
+                <apex:facet name="header">Total</apex:facet>
+                <apex:outputText value="{0,number, $###,##0.00}">
+                    <apex:param value="{!l.dealer__Amount__c}" />
+                </apex:outputText>
+            </apex:column> 
+            
+            <!-- Add Support for RO on the line Level -->
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;" breakBefore="true" >
+                <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__Service_Job_Line__c))}"/>
+            </apex:column>
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;">
+                <apex:outputText value="Service Repair Order#" rendered="{!NOT(ISBLANK(l.dealer__Service_Job_Line__c))}"/>
+            </apex:column>            
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;">
+                <apex:outputText value="{!l.dealer__Service_Job_Line__r.Name}"  rendered="{!NOT(ISBLANK(l.dealer__Service_Job_Line__c))}"/>
+            </apex:column>
+
+            <!-- Special Instructions / Comments -->
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;" breakBefore="true" >
+                <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__Special_Instructions__c))}"/>
+            </apex:column>            
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;">
+                <apex:outputText value="Special Instructions / Notes:" rendered="{!NOT(ISBLANK(l.dealer__Special_Instructions__c))}"/>
+            </apex:column>
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;" >
+                <apex:outputText value="{!l.dealer__Special_Instructions__c}" rendered="{!NOT(ISBLANK(l.dealer__Special_Instructions__c))}"/>
+            </apex:column>  
+
+            <!-- Drop Ship Information -->
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;" breakBefore="true"   >
+                <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__Drop_Ship_Address__c))}" />
+            </apex:column>            
+            <apex:column style="text-align: left;vertical-align:text-top; background-color: white;"   >
+                <apex:outputText value="Drop Ship Address:" rendered="{!NOT(ISBLANK(l.dealer__Drop_Ship_Address__c))}"/>
+            </apex:column>
+            <apex:column style="text-align: left; background-color: white;" >
+                <apex:outputField value="{!l.dealer__Parts_Invoice__r.dealer__Customer_Contact__c}" rendered="{!NOT(ISBLANK(l.dealer__Drop_Ship_Address__c))}" /><br/>
+                <apex:outputText value="{!l.dealer__Drop_Ship_Address__c}" escape="false" rendered="{!NOT(ISBLANK(l.dealer__Drop_Ship_Address__c))}"/> 
+            </apex:column>                                                                                   
+        </apex:dataTable>
+    </div>
+<!-- / apex : repeat -->   
+        </td>
+    </tr>
+</table>
+
+</apex:page>

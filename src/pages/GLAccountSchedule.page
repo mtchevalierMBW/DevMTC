@@ -1,0 +1,217 @@
+<!-- 
+    2016-04-06  B. Leaman   BLL2 Improve UI with select2 for multi-select drop-downs.
+-->
+<apex:page controller="GLAccountSchedule_CTLR" tabStyle="c2g__codaTransaction__c">
+
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<!-- Select2 -->
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css" rel="stylesheet" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/js/select2.min.js"></script>
+
+<!-- adjustments for using select2 in salesforce -->
+<style>
+.select2-container .select2-selection--multiple {
+    min-height: 26px;
+}
+.select2-container .select2-search--inline {
+    margin-left: 0;
+}
+ul.select2-selection__rendered li {
+    margin-left: 0;
+}
+ol.select2-selection__rendered li {
+    margin-left: 0;
+}
+span.select2-selection__clear {
+    min-height:20px;
+}
+</style>
+
+<style>
+table.schedule {border-collapse:collapse;}
+table.schedule th {
+   background-color: #cccccc;
+   border: 1px solid #c3c3c3;
+   padding: .5em 3px;
+}
+table.schedule tr.subtotal th {
+   background-color: #dcdcdc;
+   border: 1px solid #cdcdcd;
+   padding: .5em 3px;
+   text-weight: bold;
+   text-align: right;
+}
+table.schedule td {
+   border: 1px solid #c3c3c3;
+   padding: .5em 3px;
+}
+table.schedule tr.even td {
+   background-color: #ccffcc;
+}
+table.schedule td.number { 
+   text-align:right;
+}
+table.schedule td.right { 
+   text-align:right;
+}
+table.schedule th.right { 
+   text-align:right;
+}
+table.schedule td.center { 
+   text-align:center;
+}
+table.schedule th.center { 
+   text-align:center;
+}
+</style>
+
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+var runningText = 'Running';
+var count = 0;
+var pacifier = null;
+function running(btn) {
+   count = 0;
+   //pacifier = setInterval(function() {pacifyBtnText(btn, runningText);}, 1000);
+}
+function pacifyBtnText(btn, baseText) {
+   var dots = new Array(count % 4).join('.');
+   btn.value=baseText + dots;
+}
+function setFocusOnLoad() {}
+
+$jq(document).ready(function() {
+    //var isIE10 = !!navigator.userAgent.match(/MSIE 10/i); // BLL8.1a
+    //var isIE11 = !!navigator.userAgent.match(/Trident.*rv\:11\./);    // BLL8.1a
+    //var placeholderAll = (isIE10 || isIE11) ? '' : '';
+       
+    $jq('select.select').select2({placeholder:'Please select...', allowClear:true});    // BLL8a
+    $jq('select.selectAll').select2({placeholder:'All', allowClear:true});  // BLL8a
+});
+
+</script>
+
+    <apex:form >
+        <apex:pageBlock title="Account Schedule" id="selection">
+           
+           <apex:pageBlockButtons id="pagebuttons">
+                <apex:commandButton action="{!validateInputs}" value="Run report" reRender="report,messageblock,pagebuttons"
+                      id="runReportBtn" onclick="javascript:running(this);" />
+                <apex:commandButton action="{!downloadPDF}" value="Print PDF" reRender="messageblock"/>
+                <apex:commandButton action="{!downloadXLS}" value="Download XLS" reRender="messageblock"/>
+           </apex:pageBlockButtons>
+
+           <apex:pageBlockSection title="Schedule selection criteria" columns="2">
+                <apex:selectList label="Account(s)" id="glaccounts" value="{!selectedGLAcctIds}" size="1" styleclass="select" multiselect="true">
+                    <apex:selectOptions value="{!allGLAcct}" />
+                </apex:selectList>
+                <apex:selectList label="Location(s)" id="dimension1s" value="{!selectedDim1Ids}" size="1" styleclass="selectAll" multiselect="true">
+                    <apex:selectOptions value="{!allDim1}" />
+                </apex:selectList>
+                <apex:inputField id="enddate" value="{!lookuph.c2g__JournalDate__c}" styleClass="name" required="true" label="Ending date"/>
+                <apex:inputCheckbox value="{!includeZeroBal}" label="Include zero balances"/>
+                <!-- BLL1d apex : inputField value="{!lookupd.c2g__GeneralLedgerAccount__c}" styleClass="name" required="true" label="GL Account"/ -->
+                <!-- BLL1a -->
+                <!-- BLL2d c:MultiselectPicklist id="GLAcctSelector" 
+                    leftLabel="Available GL Accounts"
+                    leftOptions="{!allGLAcct}"
+                    rightLabel="Selected GL Accounts"
+                    rightOptions="{!selectedGLAcct}"
+                    size="7"
+                    width="160px"/ -->
+                <!-- BLL1a end -->
+                <!-- BLL1d apex : inputField value="{ ! lookupd.c2g__Dimension1__c}" styleClass="name" required="true" label="Location"/ -->
+                <!-- BLL1a -->
+                <!-- c:MultiselectPicklist id="dim1Selector" 
+                    leftLabel="Available Locations"
+                    leftOptions="{!allDim1}"
+                    rightLabel="Selected Locations"
+                    rightOptions="{!selectedDim1}"
+                    size="7"
+                    width="160px"/ -->
+                <!-- BLL1a end -->
+           </apex:pageBlockSection>
+           <script type="text/javascript">
+               if (pacifier) {
+                   clearInterval(pacifier);
+               }
+           </script>
+        </apex:pageBlock>
+    </apex:form>
+
+    <apex:pageMessages id="messageblock"/>
+
+    <apex:outputPanel id="report">
+    
+        <apex:outputPanel rendered="{!showReport}">
+            <div style="border-bottom: 2px solid silver; font-size:14px; font-weight: bold;">
+                <apex:outputLink value="{!quickLinkURL}" style="float:right;">Custom link</apex:outputLink>
+                <table border="0">
+					<tr><td>Accounts:</td><td>{!GLAcctCodeStr}</td></tr>
+					<tr><td>Locations:</td><td>{!Dim1CodeStr}</td></tr>
+                	<tr><td>Through:</td><td><apex:outputText value="{0,date,MM/dd/yyyy}">
+                   <apex:param value="{!lookuph.c2g__JournalDate__c}"/>
+                	</apex:outputText></td></tr>
+                </table>
+            </div>
+            <table class="schedule">
+                <tr>
+                    <th class="center">Date</th>
+                    <th>Source</th>
+                    <th>Control#</th>
+                    <th>GL Acct-Dim1</th>
+                    <th>Transaction Id-Line</th>
+                    <th>Line reference</th>
+                    <th class="right">Value</th>
+                    <th class="right">Balance</th>
+                    <th>Customer Acct</th>
+                    <th>Days old</th>
+                </tr>
+                <apex:repeat value="{!Report}" var="r">
+                    <apex:outputPanel layout="none" rendered="{!r.subTotal==null}">
+                    <tr class="{!IF(MOD(r.groupcount,2)==0,'even','odd')}">
+                      <td>
+                            <apex:outputText value="{0,date,MM/dd/yyyy}">
+                             <apex:param value="{!r.trnDate}"/>
+                            </apex:outputText>
+                      </td>
+                      <td class="center">{!r.trnSource}</td>
+                      <td>{!r.trnControlNbr}</td>
+                      <td>{!r.glaReportingCode}-{!r.dim1ReportingCode}</td>
+                      <td><a href="/{!r.trnLineId}">{!r.trnName}-{!r.trnLineNo}</a></td>
+                      <td>{!r.trnLineReference}</td>
+                      <td class="number">{!r.trnValue}</td>
+                      <td class="number">
+                          <apex:outputText rendered="{!r.controlTotal!=null}" value="{!r.controlTotal}"/>
+                      </td>
+                      <td>{!r.accountName}</td>
+                      <td>
+                          <apex:outputText rendered="{!r.daysOld!=null}" value="{!r.daysOld} DAYS"/>
+                      </td>
+                    </tr> 
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="none" rendered="{!r.subTotal!=null}">
+                    <tr class="{!IF(MOD(r.groupcount,2)==0,'even','odd')} subtotal">
+                      <th colspan="6">{!r.subTotal} Subtotal</th>
+                      <th></th>
+                      <th class="number">
+                          <apex:outputText rendered="{!r.controlTotal!=null}" value="{!r.controlTotal}"/>
+                      </th>
+                      <th colspan="2"></th>
+                    </tr> 
+                    </apex:outputPanel>
+                </apex:repeat>
+                <tr class="grandtotal">
+                    <th colspan="6" class="right">Grand Total</th>
+                    <th class="right"></th>
+                    <th class="right">{!GrandTotal}</th>
+                    <th colspan="2"></th>
+                </tr>
+            </table>
+        </apex:outputPanel>
+
+    </apex:outputPanel>
+
+</apex:page>

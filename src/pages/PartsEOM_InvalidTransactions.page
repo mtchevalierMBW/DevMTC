@@ -1,0 +1,144 @@
+<apex:page id="partseomdetail" controller="PartsEOM" showHeader="true">
+    
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+    
+    <!-- Include Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+    
+    <!-- KENDO 2015.1.429 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.min.css')}"/>
+    <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css" />
+    
+    <style>
+        .hR {
+            text-align: right;
+        }
+    </style>
+    <apex:sectionHeader title="Invalid Transactions" />
+    <apex:form id="frm">
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton action="{!backToEOM}" value="Return to EOM Analysis"/>
+                <apex:commandButton action="{!evalLocation}" value="Evaluate {!locationName}"/>
+                <apex:commandButton action="{!purchaseOrdersNoGL}" value="Unposted Accepted Purchase Orders" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockTable value="{!invalidTransactions}" var="i">
+                <apex:column headerValue="Repair Order">
+                    <apex:outputLink value="/{!i.ro.id}"><apex:outputText value="{!i.ro.Name}" /></apex:outputLink>
+                </apex:column>
+                <apex:column headerValue="RO Date" value="{!i.ro.dealer__Posted_Date_Time__c}" />
+                <apex:column headerValue="Perpetual" headerClass="hR" styleClass="hR" value="{!i.valueOut}" />
+                <apex:column headerValue="GL" headerClass="hR" styleClass="hR" value="{!i.valueIn}" />
+                <apex:column headerValue="Variance" headerClass="hR" styleClass="hR">
+                    <apex:outputLink value="#" onclick="lookupLines('{!i.ro.id}');"><apex:outputText value="{!i.difference}"/></apex:outputLink>
+                </apex:column>
+            </apex:pageBlockTable>
+            
+            <apex:pageBlockTable value="{!missingPurchaseOrderJournals}" var="mj">
+                <apex:column headerValue="Purchase Order">
+                    <apex:outputLink value="/{!mj.Id}" target="_blank">{!mj.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column headerValue="Amount" value="{!mj.dealer__PO_Amount__c}" />
+                <apex:column headerValue="Accepted" value="{!mj.dealer__Accepted_DateTime__c}" />
+                <apex:column headerValue="Status">
+                    <apex:outputText >{!mj.dealer__Status__c}</apex:outputText>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+    <!-- Modal -->
+    <div class="bs">
+    <div class="modal fade bs-example-modal-lg" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Transaction Line Values</h4>
+          </div>
+          <div class="modal-body">
+              <div id="dataLines"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" id="cJrnl">Create a Corrective Journal</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>    
+    </div>    
+    <script>
+        var $dt = jQuery.noConflict();
+        Visualforce.remoting.timeout = 120000;
+    
+        $dt( document ).ready(function() {
+            $dt('#cJrnl').on('click', function() {
+                console.log($dt('#cJrnl').attr('roId'));
+                PartsEOM.postCorrectiveJournal($dt('#cJrnl').attr('roId')+':'+$dt('#cJrnl').attr('roDiff'), function(result, event){
+                    window.open('https://mbw.my.salesforce.com/'+result, '_blank');
+                });
+            });
+        });
+    
+        function lookupLines(rId) { 
+            PartsEOM.balanceLines(rId, function(result, event) {
+                console.log(result); 
+                var tableString = '<table width="100%"><tr><th>Document</th><th>Value</th><th>Description</th></tr>';
+                var runningtotal=0;
+                var difference = 0;
+                    jQuery.each(result.sroJoblines, function( i, val ){
+                        // tableString+='<tr><td><a href="/'+val.Id+'" target="_blank">'+val.Name+'</a></td><td>'+noU(val.dealer__Parts_Cost__c)+'</td><td></td></tr>';                                    
+                        
+                        if(val.dealer__Parts_Lines__r != undefined) {
+                            jQuery.each(val.dealer__Parts_Lines__r, function(iv, ival) {
+                              runningtotal+=ival.dealer__Cost__c;
+                              tableString+='<tr><td><a href="/'+ival.Id+'" target="_blank">'+ival.Name+'</a></td><td>'+noU(ival.dealer__Cost__c)+'</td><td></td></tr>';                                          
+                            });                                      
+                        }
+                    });
+
+                    tableString+='<tr><td>Total</td><td>'+runningtotal+'</td><td></td></tr>'; 
+                
+                    jQuery.each(result.jlines, function( i, val ){
+                        tableString+='<tr><td><a href="/'+val.c2g__Journal__c+'" target="_blank">'+val.c2g__Journal__r.Name+'</td><td>'+val.c2g__Value__c+'</td><td>'+noU(val.c2g__LineDescription__c)+'</td></tr>';
+                        difference = runningtotal - (val.c2g__Value__c * -1);
+                    });   
+                
+                    PartsEOM.anyReferenceJournalLines(rId, function(result, event) {
+                        
+                        subTable='<table>';
+                        subTable+='<tr><td colspan="3"><hr /></td></tr>';
+                        subTable+='<tr><td colspan="3">Existing Journals</td></tr>';
+                        
+                        jQuery.each(result, function( i, val ){   
+                           subTable+='<tr><td><a href="/'+val.Id+'" target="_blank">'+val.c2g__Journal__r.Name+'</td><td>'+val.c2g__Value__c+'</td><td>'+noU(val.c2g__LineDescription__c)+'</td></tr>';  
+                        });
+                        subTable+='</table>';
+                        
+                        $dt('#dataLines').append(subTable);
+                    });
+                                        
+                tableString += '</table>';
+                $dt('#dataLines').html(tableString);
+                $dt('#cJrnl').attr('roId', rId);
+                $dt('#cJrnl').attr('roDiff', difference);
+                $dt('#myModal').modal('show');
+            });
+        }
+    
+        function noU(v) {
+            if(v===undefined){
+                v='';
+            }
+            
+            return v;
+        }
+    </script>
+</apex:page>

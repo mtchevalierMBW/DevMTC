@@ -1,0 +1,154 @@
+<apex:page docType="html-5.0" controller="VehicleInventory_TitleReport" lightningStylesheets="true">
+<!--
+Modification dt  Programmer  Work item   Mod# Description
+    2018-10-30   B. Leaman   W-000475    BLL1 Add fields: source, the total vehicle cost and the purchase date;
+										 Ensure "days" column is # days since purchase (today - purchase date)
+	2019-02-13	B. Leaman	W-000594	BLL2 use window.open instead of window.location.href because of lightning.
+-->
+<apex:form >
+    <apex:pageBlock title="Vehicles Needing Title Information" id="MissingPicturesTableSearch" helpUrl="" helpTitle="">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton action="{!vehicles_query}" value="Filter" status="searchStatus" reRender="MissingPicturesTableResults"/>
+                <apex:commandButton action="{!vehicles_query}" onclick="this.form.reset()" value="Reset" reRender="MissingPicturesTableResults"/>
+            </apex:pageBlockButtons>
+        		<div id="searchstatusholder" style="position:absolute; left:50%; padding:25px; border:2px solid #1797c0; background:#cfeef8; border-radius:5px; z-index:999; display:none">
+                	<apex:actionStatus id="searchStatus" onstart="shownotice()" onstop="hidenotice()" startText="Filtering Results" stopText="Results Found"></apex:actionStatus>  
+        		</div>
+        		
+                <apex:pageBlockSection columns="2">
+                    <apex:pageBlockSection columns="2">
+                            <apex:input label="Search" value="{!vin_stock}" html-placeholder="Enter VIN or Stock" style="padding:5px;"></apex:input>
+                            <apex:selectList label="Location" size="1" value="{!location}" style="padding:5px;">
+                                <apex:selectOptions value="{!location_options}"></apex:selectOptions>
+                            </apex:selectList>
+                        </apex:pageBlockSection>
+                    	<apex:pageBlockSection ></apex:pageBlockSection>
+                        <!--<apex:pageBlockSection columns="3">
+                            <apex:commandLink value="Missing Docs" action="{!vehicles_query}" status="searchStatus" reRender="MissingPicturesTableResults">
+                                <apex:param value="missingonly" assignTo="{!filter}"></apex:param>
+                            </apex:commandLink>
+                            <apex:commandLink value="Show All" action="{!vehicles_query}" status="searchStatus" reRender="MissingPicturesTableResults">
+                                <apex:param value="showall" assignTo="{!filter}"></apex:param>
+                            </apex:commandLink>
+                    	</apex:pageBlockSection>-->
+            	</apex:pageBlockSection>
+            </apex:pageBlock>
+		</apex:form>
+    <apex:outputLink value="#" onclick="tableToExcel('j_id0:MissingPicturesTableResults:j_id15:MissingPicturesTable', 'W3C Example Table')">Excel</apex:outputLink>
+        <apex:pageBlock title="Results" id="MissingPicturesTableResults" helpUrl="mailto:ithelp@mobilityworks.com" helpTitle="Help">
+        <apex:pageBlockSection columns="1">
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageBlockTable value="{!vehicles}" var="veh" id="MissingPicturesTable" rowClasses="odd,even" styleClass="detailList">
+            <apex:facet name="caption">RED = requested document past due, please upload.</apex:facet>
+            <apex:facet name="header">Vehicles: {!recordstotal} | Total Documents Missing: {!recordsmissing} | Average Age of Vehicles Missing Docs: {!if(recordstotal != 0, round(recordsage / recordstotal,0),'NA')}</apex:facet>
+            <apex:facet name="footer"></apex:facet>
+            <apex:column >
+                <apex:facet name="header">Vehicle Info</apex:facet>
+                <apex:facet name="footer">Vehicle Info</apex:facet>
+                <apex:outputLink value="/{!veh.Id}" target="_blank">({!veh.dealer__Stock_Number__c}) {!veh.dealer__Year__c} {!veh.dealer__Make__c} {!veh.dealer__Model__c}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">VIN</apex:facet>
+                <apex:facet name="footer">VIN</apex:facet>
+                <apex:outputLink value="/{!veh.Id}" target="_blank">{!veh.dealer__VIN__c}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Store</apex:facet>
+                <apex:facet name="footer">Store</apex:facet>
+                <apex:outputText value="{!veh.dealer__Store_Location__r.dealer__City__c}, "/>
+                <apex:outputText value="{!veh.dealer__Store_Location__R.dealer__State__c} "/>
+                <apex:outputText value="({!veh.dealer__Store_Location__r.dealer__Company_Number__c})"/>
+            </apex:column>
+            <!-- BLL1 -->
+            <apex:column >
+                <apex:facet name="header">Source</apex:facet>
+                <apex:facet name="footer">Source</apex:facet>
+                <apex:outputText value="{!veh.Source__c}"/>
+            </apex:column>
+            <apex:column >
+                    <apex:facet name="header">Total Cost</apex:facet>
+                    <apex:facet name="footer">Total Cost</apex:facet>
+                    <apex:outputText value="{0,number,currency}">
+                        <apex:param value="{!veh.Total_Vehicle_Cost__c}"/>
+                    </apex:outputText>
+            </apex:column>
+            <apex:column >
+                    <apex:facet name="header">Purchase Date</apex:facet>
+                    <apex:facet name="footer">Purchase Date</apex:facet>
+                    <apex:outputText value="{0,date,MM/dd/yyyy}">
+                        <apex:param value="{!veh.dealer__Purchase_Date__c}"/>
+                    </apex:outputText>
+            </apex:column>
+            <!-- BLL1 end -->
+            <apex:column >
+                <apex:facet name="header">Title Status</apex:facet>
+                <apex:facet name="footer">Title Status</apex:facet>
+                <apex:outputText value="{!veh.Title_Location__c}"/>
+            </apex:column>
+            <apex:column >
+            	<apex:facet name="header">Floorplan</apex:facet>
+                <apex:facet name="footer">Floorplan</apex:facet>
+                <apex:outputText value="{!veh.Chassis_Floorplan__c}"/>
+            </apex:column>
+            <apex:column style="vertical-align:text-top">
+                <apex:facet name="header">Required Docs</apex:facet>
+                <apex:facet name="footer">Required Docs</apex:facet>
+                <apex:outputText value="{!test}"></apex:outputText>
+                <apex:outputText style="display:block; {!IF(veh.Lien_Release_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Lien_Release_Pending__c)}" value="Lien Release"/>
+                <apex:outputText style="display:block; {!IF(veh.Power_of_Attorney_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Power_of_Attorney_Pending__c)}" value="Power of Attorney"/>
+                <apex:outputText style="display:block; {!IF(veh.MSO_Title_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.MSO_Title_Pending__c)}" value="MSO Title"/>
+                <apex:outputText style="display:block; {!IF(veh.Proof_of_Payment_Trade_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Proof_of_Payment_Pending__c)}" value="Proof of Payment Trade"/>
+            </apex:column>
+            <apex:column style="vertical-align:text-top">
+                <apex:facet name="header">Follow Up Date</apex:facet>
+                <apex:facet name="footer">Follow Up Date</apex:facet>
+                <apex:outputText style="display:block; {!IF(veh.Lien_Release_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Lien_Release_Pending__c)}" value="{0,date,MM/dd/yy}"><apex:param value="{!veh.Lien_Release_Requested__c}"/></apex:outputText>
+                <apex:outputText style="display:block; {!IF(veh.Power_of_Attorney_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Power_of_Attorney_Pending__c)}" value="{0,date,MM/dd/yy}"><apex:param value="{!veh.Power_of_Attorney_Requested__c}"/></apex:outputText>
+                <apex:outputText style="display:block; {!IF(veh.MSO_Title_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.MSO_Title_Pending__c)}" value="{0,date,MM/dd/yy}"><apex:param value="{!veh.MSO_Title_Requested__c}"/></apex:outputText>
+                <apex:outputText style="display:block; {!IF(veh.Proof_of_Payment_Trade_Requested__c < TODAY(),'color:red','')}" rendered="{!(veh.Proof_of_Payment_Pending__c)}" value="{0,date,MM/dd/yy}"><apex:param value="{!veh.Proof_of_Payment_Trade_Requested__c}"/></apex:outputText>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Status</apex:facet>
+                <apex:facet name="footer">Status</apex:facet>
+                <apex:outputText value="{!veh.dealer__Status_Code__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Days</apex:facet>
+                <apex:facet name="footer">Days</apex:facet>
+                <!-- BLL1 -->
+                <!-- BLL1d apex:outputText value="{!veh.dealer__Days_in_Stock__c}"/ -->
+                <apex:outputText value="{!veh.Days_Since_Purchase__c}"/>
+                <!-- BLL1 end -->
+            </apex:column>
+        </apex:pageBlockTable>
+        </apex:pageBlockSection>
+	</apex:pageBlock>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script>$jq = jQuery.noConflict();</script>
+    <script type="text/javascript">
+        function shownotice() {
+            	jQuery('div[id$=MissingPicturesTableResults]').css('opacity','.33');
+        		jQuery('#searchstatusholder').css('display','block');
+            }
+    	function hidenotice() {
+            	jQuery('div[id$=MissingPicturesTableResults]').css('opacity','1');
+            	jQuery('#searchstatusholder').css('display','none');
+        	}
+    </script>
+    <script type="text/javascript">
+        var tableToExcel = (function() {
+          var uri = 'data:application/vnd.ms-excel;base64,'
+            , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
+            , base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) }
+            , format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+          return function(table, name) {
+            if (!table.nodeType) table = document.getElementById(table)
+			var ctx = {worksheet: name || 'Worksheet', table: table.innerHTML}
+			// BLL2
+			//window.location.href = uri + base64(format(template, ctx))
+			window.open(uri + base64(format(template, ctx)));	
+			// BLL2 end
+          }
+        })()
+      </script>
+</apex:page>

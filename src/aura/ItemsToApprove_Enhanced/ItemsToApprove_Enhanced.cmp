@@ -1,0 +1,82 @@
+<aura:component implements="flexipage:availableForAllPageTypes" controller="ItemsToApprove_CTLR">
+	<ltng:require scripts="{!$Resource.jQuery+'/jquery.min.js'}" afterScriptsLoaded="{!c.initFilter}"/>
+
+	<aura:attribute name="ApprovalItems" type="Object[]"/>
+	<aura:attribute name="columns" type="String[]"/>
+	<aura:attribute name="IncludeDelegated" type="Boolean" default="true"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<lightning:card title="Items to Approve - Enhanced" class="slds-p-around_small">
+		<aura:set attribute="actions">
+			<div class="slds-grid">
+				<div class="slds-col">
+					<input id="FilterTextBox" placeholder="Search items" 
+						style="margin: 0px 1em 0px 1em;"/>
+				</div>
+				<div class="slds-col">
+					<lightning:input type="toggle" checked="{!v.IncludeDelegated}" label="Delegated to me"
+						onchange="{!c.doInit}"
+						messageToggleActive="Include" messageToggleInactive="Exclude"/>
+				</div>
+			</div>
+		</aura:set>
+
+	<div style="overflow:auto; max-height: 350px;">
+	<table class="slds-cell-wrap slds-table slds-table_cell-buffer slds-table_bordered filterable" style="width:100%;">
+		<thead>
+			<tr> 
+				<th scope="col" class="slds-cell-wrap">Action</th>
+				<th scope="col" class="slds-cell-wrap">Document type</th>
+				<th scope="col">Document</th>
+				<th scope="col" class="slds-cell-wrap">Last Approver</th>
+				<th scope="col" class="slds-cell-wrap">Current Approver</th>
+				<th scope="col">Date/Time</th>
+				<aura:iteration items="{!v.columns}" var="c">
+					<th scope="col" class="slds-cell-wrap">{!c}</th>
+				</aura:iteration>
+			</tr>
+		</thead>
+
+		<tbody>
+			<aura:iteration items="{!v.ApprovalItems}" var="a" >
+				<tr>
+					<td>
+						<!-- a href="{!URLFOR($Action.ProcessInstanceWorkitem.View, a.WorkId, null, true)}">Approval Item</a -->
+						<ui:outputURL value="{!'/lightning/r/ProcessInstanceWorkitem/' + a.WorkId + '/view'}" label="Approval Item"/>
+					</td>
+					<td class="slds-cell-wrap">{#a.ItemLabel}</td>
+					<td class="slds-cell-wrap">
+						<span style="display:none;">{#a.ItemName}</span>
+						<span style="display:none;">{#a.DocumentLink}</span>
+						<ui:outputURL value="{#a.DocumentLink}" label="{#a.ItemName}"/></td>
+					<td class="slds-cell-wrap">
+						<!-- a href="{!URLFOR($Action.User.View, a.LastActorId, null, false)}">{!a.LastActorName}</a -->
+						<span style="display:none;">{#a.LastActorName}</span>
+						<ui:outputURL value="{#'/'+a.LastActorId}" label="{#a.LastActorName}"/>
+					</td>
+					<td class="slds-cell-wrap">
+						<!-- a href="{!URLFOR($Action.User.View, a.ActorId, null, false)}">{!a.ActorName}</a -->
+						<span style="display:none;">{#a.ActorName}</span>
+						<ui:outputURL value="{#'/'+a.ActorId}" label="{#a.ActorName}"/>
+					</td>
+					<td class="slds-cell-wrap">
+						<lightning:formattedDateTime value="{#a.ItemDateTime}"
+							year="numeric" month="numeric" day="numeric" 
+							hour="2-digit" minute="2-digit" timeZoneName="short" hour12="true"/>
+					</td>
+					<aura:iteration items="{#a.ItemCustomFields}" var="f">
+						<td class="slds-cell-wrap">
+							<span style="display:none;">{#f}</span>
+							<ui:outputText value="{#f}"/>
+						</td>
+					</aura:iteration>
+				</tr>
+			</aura:iteration>
+		</tbody>
+	</table>
+	</div>
+
+</lightning:card>
+
+</aura:component>

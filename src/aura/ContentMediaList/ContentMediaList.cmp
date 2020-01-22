@@ -1,0 +1,105 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/8/2018
+    Work Item:     W-000421
+    File Name:     ContentMediaList.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentMediaListController">
+
+    <!-- base url for Salesforce for Content Document download button -->
+    <aura:attribute name="sfBaseURL" type="String" default=""/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <!-- Global attribute for the selected Content -->
+    <aura:attribute name="content" type="Content__c" />
+    <aura:handler event="c:ContentEvent" action="{!c.handleContentEvent}"/>
+
+    <!-- Global attribute for the current Media record based on the parent Content record -->
+    <aura:attribute name="media" type="Media__c" />
+    <aura:attribute name="mediaURL" type="String" />
+    <aura:method name="initMedia" action="{!c.initMediaRecord}" description="function to query the database for the media record tied to the content" />
+
+    <!-- Global attribute for the current ContentDocument records based on the parent Media record -->
+    <aura:attribute name="contentDocumentActive" type="ContentDocument" />
+    <aura:attribute name="contentDocumentList" type="ContentDocument[]" />
+    <aura:method name="initContentDocuments" action="{!c.initContentDocumentList}" description="function to show all the files attached to a media record" />
+
+    <!-- File Upload definitions -->
+    <aura:attribute name="accept" type="List" default="['.mp4', '.doc', '.docx', '.pptx', '.pdf', '.png', '.jpg']"/> <!-- supports mp4, word documents and power points -->
+    <aura:attribute name="multiple" type="Boolean" default="false"/>
+    <aura:attribute name="disabled" type="Boolean" default="false"/>
+    
+    <aura:if isTrue="{!v.content != null}">
+        <lightning:card title="{!v.content.Title__c}">
+            
+            <aura:if isTrue="{!v.content == null}">
+                <div class="slds-p-horizontal_small">
+                    No Content Selected
+                </div>
+            </aura:if>
+
+            <aura:set attribute="actions">
+                <aura:if isTrue="{!v.media}">
+
+                    <!--share URLs -->
+                    <span onkeyup="{!c.urlChangeAction}">
+                        <lightning:input aura:id="urlInput" name="urlInput" label="Share URL (overides all attachments below)" value="{!v.mediaURL}"/>
+                    </span>
+                    
+                    <!-- Attachment upload -->
+                    <lightning:fileUpload  name="fileUploader"
+                        label= "Upload"
+                        multiple="{!v.multiple}"
+                        accept="{!v.accept}"
+                        disabled="{!v.disabled}"
+                        recordId="{!v.media.Id}"
+                        onuploadfinished="{!c.reInitContentDocumentList}"/>
+                </aura:if>
+            </aura:set>
+
+            <aura:if isTrue="{!and(v.content, v.contentDocumentActive)}">
+            <hr/>
+            </aura:if>
+
+            <ul class="slds-p-horizontal_large slds-list_horizontal">
+
+                <!-- Highlight the active Content Document -->
+                <aura:if isTrue="{!and(v.content, v.contentDocumentActive)}">
+                    <li>
+                        <center>
+                        <b>
+                            <lightning:icon iconName="doctype:attachment"/>
+                            <br/>
+                            <ui:outputText value="{!v.contentDocumentActive.Title}"/>
+                            <br/>
+                            <lightning:formattedDateTime value="{!v.contentDocumentActive.CreatedDate}" year="numeric" month="numeric" day="numeric" hour="2-digit" minute="2-digit" timeZoneName="short" hour12="true"/>
+                            <br/>
+                            <a href="{!v.sfBaseURL + 'sfc/servlet.shepherd/document/download/' + v.contentDocumentActive.Id }" target="_blank">Download</a>
+                        </b>
+                        </center>
+                    </li>
+                </aura:if>
+
+                <!--show inactive -->
+                <aura:iteration items="{!v.contentDocumentList}" var="store">
+                    <li>
+                        <center>
+                            <lightning:icon iconName="doctype:attachment"/>
+                            <br/>
+                            <ui:outputText value="{!store.Title}"/>
+                            <br/>
+                            <lightning:formattedDateTime value="{!store.CreatedDate}" year="numeric" month="numeric" day="numeric" hour="2-digit" minute="2-digit" timeZoneName="short" hour12="true"/>
+                            <br/>
+                            <a href="{!v.sfBaseURL + 'sfc/servlet.shepherd/document/download/' + store.Id }" target="_blank">Download</a>
+                        </center>
+                    </li>
+                </aura:iteration>
+            </ul>
+        </lightning:card>
+    </aura:if>
+</aura:component>

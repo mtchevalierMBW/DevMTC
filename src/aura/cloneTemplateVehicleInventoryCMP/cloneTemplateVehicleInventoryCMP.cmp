@@ -1,0 +1,41 @@
+<aura:component implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="vehicleInventoryQuickActions">
+        
+    <!-- Archive the vehicle immediately on click -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <aura:attribute name="vinValue" type="String" />
+
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+
+    <aura:attribute name="errorMessage" type="String" />
+
+    <lightning:input aura:id="vinInput" label="VIN Number"
+                            name="vinInputNumber"
+                            value="{!v.vinValue}"
+                            maxlength="17"
+                            onkeyup="{!c.keyCheckVin}" 
+                            placeholder="#################"/>
+
+    <center>
+        <lightning:button aura:id="disablebuttonid" name="submitButton" label="Clone Template"
+                        class="slds-m-top--medium"
+                        variant="brand"
+                        disabled="true"
+                        onclick="{!c.cloneTemplateController}"/>
+    </center>
+
+    <!--loading spinner start... style=Brand Medium (blue dots)-->
+    <aura:if isTrue="{!v.Spinner}">
+        <div class="slds-is-relative">
+            <lightning:spinner variant="brand" size="large" />
+        </div>
+     </aura:if>
+      <!-- Loading spinner end-->  
+
+    <center>
+        <br/>
+        <br/>
+        <p><ui:outputText aura:id="errorMessageText" class="error-text" value="{!v.errorMessage}" /></p>
+    </center>
+
+</aura:component>

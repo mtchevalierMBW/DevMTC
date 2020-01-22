@@ -1,0 +1,4 @@
+<apex:page standardController="dealer__Dealer_Trade__c">
+<apex:relatedList list="dealer__Dealer_Trades__r" subject="{!dealer__Dealer_Trade__c.dealer__Stock_No__c}"
+	title="All Transfers for {!dealer__Dealer_Trade__c.dealer__Stock_No__r.dealer__Stock_Number__c}"/>
+</apex:page>

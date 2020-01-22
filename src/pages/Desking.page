@@ -1,0 +1,772 @@
+<!--   
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  12/14/2018
+    Work Item:     W-000472
+    File Name:     Desking.page
+
+    Modified By         Alias       Work Item       Date     Reason 
+    __________________________________________________________________________________________________
+-->
+<apex:page sidebar="false" showHeader="false" controller="DeskingController">
+  
+<html>
+<head>
+  <title>MobilityWorks - Solution Finder</title>
+    <apex:stylesheet value="{!$Resource.slickCSS}"/>
+  	<apex:stylesheet value="{!$Resource.slickCSS_Theme}"/>
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+  <style type="text/css">
+    html, body {
+      margin: auto;
+      padding: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .slider {
+        width: 100%;
+        margin: 100px auto;
+    }
+
+    .slick-slide {
+      margin: 0px 20px;
+    }
+
+    .slick-slide img {
+      width: 100%;
+    }
+
+    .slick-prev:before,
+    .slick-next:before {
+      color: black;
+    }
+
+    .slick-dots li button:before
+    {
+        font-size: 24px;
+        line-height: 24px;
+    }
+
+    .slick-slide {
+      transition: all ease-in-out .3s;
+      opacity: .2;
+    }
+    
+    .slick-active {
+      opacity: .5;
+    }
+
+    .slick-current {
+      opacity: 1;
+    }
+
+  /* 
+  Generic Styling, for Desktops/Laptops 
+  */
+  table { 
+    width: 100%; 
+    border-collapse: collapse; 
+  }
+  /* Zebra striping */
+  tr:nth-of-type(odd) { 
+    background: #eee; 
+  }
+  th { 
+    background: #333; 
+    color: white; 
+    font-weight: bold; 
+  }
+  td, th { 
+    padding: 6px; 
+    border: 1px solid #ccc; 
+    text-align: left; 
+  }
+
+  .slider-color {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity:0.7;
+    -webkit-transition: opacity .15s ease-in-out;
+    transition: opacity .15s ease-in-out;
+  }
+  .slider-color:hover {
+    opacity:1;
+  }
+  .slider-color::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+  }
+  .slider-color::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border: 0;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+  }
+
+  .center_div {
+    margin: auto;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    padding-left:13%;
+  }
+
+  #result_panel {
+    overflow: scroll;
+    height: 25%;
+  
+    border: 2px solid #ccc;
+  
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+ @media (min-width: 34em) {
+    .card-columns {
+        -webkit-column-count: 2;
+        -moz-column-count: 2;
+        column-count: 2;
+    }
+}
+
+@media (min-width: 48em) {
+    .card-columns {
+        -webkit-column-count: 3;
+        -moz-column-count: 3;
+        column-count: 3;
+    }
+}
+
+@media (min-width: 62em) {
+    .card-columns {
+        -webkit-column-count: 4;
+        -moz-column-count: 4;
+        column-count: 4;
+    }
+}
+
+@media (min-width: 75em) {
+    .card-columns {
+        -webkit-column-count: 5;
+        -moz-column-count: 5;
+        column-count: 5;
+    }
+}
+
+  </style>
+</head>
+<body>
+
+	<nav class="navbar navbar-expand-md fixed-top">
+
+		<!-- MBW Logo -->
+		<a class="navbar-brand" href="#">
+    		<img width="160" height="56" src="https://cdn.mobilityworks.com/wp-content/uploads/mobility-works-logo-transparent-160x56.png?x58866" class="custom-logo" alt="MobilityWorks" itemprop="logo" srcset="https://cdn.mobilityworks.com/wp-content/uploads/mobility-works-logo-transparent-160x56.png?x58866 160w, https://cdn.mobilityworks.com/wp-content/uploads/mobility-works-logo-transparent.png?x58866 258w" sizes="(max-width: 160px) 100vw, 160px" />
+    		</a>
+
+      <h2>{!homeLocation.Name}</h2>
+
+  		<!-- Right hand nav bar utility items -->
+      	<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        	<div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+	        	<ul class="navbar-nav ml-auto">
+	            	<!-- <li style="margin-right: 20px;" class="nav-item">
+                        <img src="https://img.icons8.com/ios/50/000000/print-filled.png"/>
+	            	</li> -->
+
+	            	<li style="margin-right: 20px;" class="nav-item nav-item-spacing">
+                        <a href="#" data-toggle="modal" data-target="#myModal">
+                        	<img src="https://img.icons8.com/ios/50/000000/search.png"/> 
+                        </a>
+	            	</li>
+	        	</ul>
+			</div>
+
+		</div>
+    </nav>
+
+	<!-- Vehicle Carousel -->
+    <apex:form id="vehiclelistForm">
+      <section id="vehicle_carousel" class="center slider">
+          <apex:repeat value="{!listOfVehicleImages}" var="string" id="theRepeat">
+              
+            <div>
+                <img src="{!string}"/>
+            </div>
+
+        </apex:repeat>  
+      </section>
+
+	<br/>
+
+	<!-- Header Vehicle Banner Info -->
+	<center>
+		<h1 id="vehicle_name"></h1>
+	</center>
+
+	<br/>
+	<br/>
+
+	<!-- High level info -->
+    <div class="container-fluid center_div">
+  
+      <div class="row flex-row flex-nowrap">
+        
+          <div class="col-2">
+
+              <!-- Transmission -->
+
+              <div class="card">
+                <div class="card-body">
+                  <center>
+                    
+                      <img src="https://img.icons8.com/ios/50/000000/fiat-500-filled.png"/>
+
+                      <h5 class="card-title">Transmission</h5>
+                      
+                      <p id="transmission_text" class="card-text"></p>
+
+                    </center>
+                  </div>
+              </div>
+
+              <!-- / Transmission -->
+
+          </div>
+          <div class="col-2">
+
+               <!-- Exterior Color -->
+
+                <div class="card">
+                  <div class="card-body">
+                    <center>
+                      
+                        <img src="https://img.icons8.com/ios/50/000000/fill-color-filled.png"/>
+
+                        <h5 class="card-title">Exterior Color</h5>
+                        
+                        <p id="exterior_color_text" class="card-text"></p>
+
+                      </center>
+                    </div>
+                </div>
+
+                <!-- / Exterior Color -->
+          </div>
+          <div class="col-2">
+              
+              <!-- Interior Color -->
+              
+              <div class="card">
+                <div class="card-body">
+                  <center>
+                    
+                      <img src="https://img.icons8.com/ios/50/000000/color-palette-filled.png"/>
+
+                      <h5 class="card-title">Interior Color</h5>
+                      
+                      <p id="interior_color_text" class="card-text">Black</p>
+
+                    </center>
+                  </div>
+              </div>
+
+              <!-- / Interior Color -->
+          </div>
+          <div class="col-2">
+
+              <!-- Odometer -->
+
+              <div class="card">
+                <div class="card-body">
+                  <center>
+                    
+                      <img src="https://img.icons8.com/ios/50/000000/odometer-filled.png"/>
+
+                      <h5 class="card-title">Mileage</h5>
+                      
+                      <p id="mileage_text" class="card-text"></p>
+
+                    </center>
+                  </div>
+              </div>
+
+              <!-- / Odometer -->
+          </div>
+
+          <div class="col-2">
+
+            <!-- Store -->
+            <div class="card">
+              <div class="card-body">
+                <center>
+                  
+                    <img src="https://img.icons8.com/ios/50/000000/small-business-filled.png"/>
+
+                    <h5 class="card-title">Store</h5>
+                    
+                    <p id="store_text" class="card-text"></p>
+
+                  </center>
+                </div>
+            </div>
+
+            <!-- / Store -->
+
+            
+        </div>
+        
+      </div>
+    </div>
+	
+
+	<!-- Financing Options -->
+
+	<br/>
+	<br/>
+
+	<div class="container-fluid">
+    
+    <div class="row flex-row flex-nowrap">
+	    	<div class="col-sm">
+	      		<table class="responsive-table-input-matrix">
+					<thead>
+					<tr>
+						<th></th>
+						<th>Amount Down </th>
+						<th>Term A</th>
+						<th>Term B</th>
+						<th>Term C</th>
+					</tr>
+					</thead>
+					<tbody>
+
+					<tr>
+						<td>
+              <button class="btn" id="table_row_1_up_button"><i class="fa fa-arrow-up"></i></button>
+              <button class="btn" id="table_row_1_down_button"><i class="fa fa-arrow-down"></i></button>
+            </td>
+            <td><center><p id="row_1_amount">200</p></center></td>
+						<td><center><p id="row_1_term_a">450</p></center></td>
+						<td><center><p id="row_1_term_b">430</p></center></td>
+						<td><center><p id="row_1_term_c">410</p></center></td>
+					</tr>
+					<tr>
+						<td>
+				          <button class="btn" id="table_row_2_up_button"><i class="fa fa-arrow-up"></i></button>
+          					<button class="btn" id="table_row_2_down_button"><i class="fa fa-arrow-down"></i></button>
+				        </td>
+						<td><center><p id="row_2_amount">400</p></center></td>
+						<td><center><p id="row_2_term_a">420</p></center></td>
+						<td><center><p id="row_2_term_b">400</p></center></td>
+						<td><center><p id="row_2_term_c">380</p></center></td>
+					</tr>
+					<tr>
+						<td>
+          					<button class="btn" id="table_row_3_up_button"><i class="fa fa-arrow-up"></i></button>
+          					<button class="btn" id="table_row_3_down_button"><i class="fa fa-arrow-down"></i></button>
+        				</td>
+						<td><center><p id="row_3_amount">600</p></center></td>
+						<td><center><p id="row_3_term_a">380</p></center></td>
+						<td><center><p id="row_3_term_b">360</p></center></td>
+						<td><center><p id="row_3_term_c">340</p></center></td>
+					</tr>
+					</tbody>
+				</table>
+	    	</div>
+	    	<div class="col-sm">
+	      		<center>
+		      		<div class="card">
+					 	<div class="card-body">
+							<form>
+							 	<div class="form-group">
+							    	<label for="exampleInputEmail1">Trade In Estimate</label>
+                                    <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="$0+"/>
+							    	<small id="emailHelp" class="form-text text-muted">DISCLAIMER</small>
+							  	</div>
+							</form>
+					  	</div>
+					</div>
+
+					<div class="card">
+					 	<div class="card-body">
+							<form>
+							 	<div class="form-group">
+							    	<label for="exampleInputEmail2">Estimated FICO</label>
+                                    <input type="text" class="form-control" id="exampleInputEmail2" aria-describedby="emailHelp" placeholder="0 - 850"/>
+							    	<small id="emailHelp" class="form-text text-muted">DISCLAIMER</small>
+							  	</div>
+							</form>
+					  	</div>
+					</div>
+
+				</center>
+
+	    	</div>
+	    	<div class="col-sm">
+	      		<iframe width="420" height="300" src="https://www.youtube.com/embed/ueIlBaj58Qo"></iframe>
+	    	</div>
+	  	</div>
+	</div> 
+   </apex:form>
+    
+    <!-- Trigger the modal with a button -->
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <center><h4 class="modal-title">Search Settings</h4></center>
+          <center><h5>{!homeLocation.Name}</h5></center>
+        </div>
+        <div class="modal-body">
+                            
+            <div data-role="rangeslider">
+              <label for="range-1a">Price:</label> <b><label id="price_slider_text">$10000</label></b>
+              <input name="range-1a" id="range-1a" min="0" max="100000" value="10000" type="range" class="slider-color" />
+              <br/>
+              <br/>
+              <label for="range-1b">Mileage:</label> <b><label id="mileage_slider_text">10000</label></b>
+              <input name="range-1b" id="range-1b" min="0" max="200000" value="10000" type="range" class="slider-color"/>
+              <br/>
+              <br/>
+              <label for="range-1c">Distance:</label> <b><label id="distance_slider_text">75</label></b>
+              <input name="range-1c" id="range-1c" min="0" max="5000" value="75" type="range" class="slider-color"/>
+            </div>
+            <br/>
+            <apex:form id="listForm">
+            <div class="panel panel-primary" id="result_panel" style="height:250px;">
+              <div class="panel-body">
+                  <ul class="list-group">
+
+                      <section id="store_listings">
+        
+                            <apex:repeat value="{!listOfInRangeLocations}" var="loc" id="store_repeat">
+                              
+                              <li class="list-group-item"><strong>{!loc.location.Name}</strong> ({!ROUND(loc.distance, 0)} miles)</li> 
+
+                          </apex:repeat>
+                           
+                      </section>
+                  </ul>
+              </div>
+            </div>
+            <apex:inputHidden id="hdnDistance" value="{!distanceGlobal}"/>
+            <apex:inputHidden id="hdnMileage" value="{!mileageGlobal}"/>
+            <apex:actionFunction action="{!invokeLocationDistanceFunction}" name="rerenderStores" rerender="listForm">
+            </apex:actionFunction>
+            </apex:form>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  	<apex:includeScript value="{!$Resource.agf__jquery2_1_4}"/>
+  	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" type="text/javascript"></script>
+  	<apex:includeScript value="{!$Resource.slickJS}"/>
+        
+  	<script type="text/javascript">
+    
+      var amount1 = 200;
+      var amount2 = 400;
+      var amount3 = 600;
+      var termA1 = 450;
+      var termA2 = 420;
+      var termA3 = 380;
+      var termB1 = 430;
+      var termB2 = 410;
+      var termB3 = 360;
+      var termC1 = 410;
+      var termC2 = 380;
+      var termC3 = 340;
+
+	    $(document).on('ready', function() 
+	    {          
+        $('#row_1_amount').text(amount1);
+        $('#row_2_amount').text(amount2);
+        $('#row_3_amount').text(amount3);
+        
+        var tempVehicleNames = '{!listOfVehiclesJSON}';
+        var records = JSON.parse(tempVehicleNames);
+        console.dir(records);
+      
+        if(records.length >= 1)
+        {
+          $("#vehicle_name").text(records[0].dealer__Year__c + ' ' + records[0].dealer__Make__c + ' ' + records[0].dealer__Model__c + ' (' + records[0].dealer__Stock_Number__c + ')'); 
+          $("#transmission_text").text(records[0].dealer__Transmission_Type__c);
+          $("#exterior_color_text").text(records[0].dealer__Exterior_Color__c);
+          $("#interior_color_text").text(records[0].dealer__Interior_Color__c);
+          $("#mileage_text").text(records[0].dealer__Mileage__c);
+          $("#store_text").text(records[0].dealer__Store_Location__r.Name); 
+        } 
+            
+        var priceSlider = document.getElementById("range-1a");
+        var mileageSlider = document.getElementById("range-1b");
+        var distanceSlider = document.getElementById("range-1c");
+
+        priceSlider.oninput = function() {
+          console.log(this.value);
+          document.getElementById('price_slider_text').innerHTML = "$"+this.value;
+        }
+
+        mileageSlider.onmouseup = function() {
+          console.log(this.value);
+          document.getElementById('mileage_slider_text').innerHTML = this.value;
+        }
+
+        distanceSlider.onmouseup = function() {
+
+          console.log(this.value);
+          document.getElementById('distance_slider_text').innerHTML = this.value;
+
+          $("[id$='hdnDistance']").val(this.value);
+
+            rerenderStores();
+
+            Visualforce.remoting.Manager.invokeAction(
+              '{!$RemoteAction.DeskingController.invokeLocationDistanceFunction}', 
+              function(result, event){
+                  if (event.status) 
+                  {
+                    var tempVehicleNames = '{!listOfVehiclesJSON}';
+                    var records = JSON.parse(tempVehicleNames);
+                    console.dir(records);
+                  
+                    if(records.length >= 1)
+                    {
+                      $("#vehicle_name").text(records[0].dealer__Year__c + ' ' + records[0].dealer__Make__c + ' ' + records[0].dealer__Model__c + ' (' + records[0].dealer__Stock_Number__c + ')'); 
+                      $("#transmission_text").text(records[0].dealer__Transmission_Type__c);
+                      $("#exterior_color_text").text(records[0].dealer__Exterior_Color__c);
+                      $("#interior_color_text").text(records[0].dealer__Interior_Color__c);
+                      $("#mileage_text").text(records[0].dealer__Mileage__c);
+                      $("#store_text").text(records[0].dealer__Store_Location__r.Name); 
+                    }
+
+                    $('.center').slick('unslick');
+                    $('.center').slick({
+                        dots: true,
+                        infinite: true,
+                        centerMode: true,
+                        slidesToShow: 5,
+                        slidesToScroll: 2
+                    });
+                  } else if (event.type === 'exception') 
+                  {
+                    console.log(event.message);
+                    console.log(event.where);
+                  } else 
+                  {
+                    console.log(event.message);
+                  }
+              }, 
+              {escape: true}
+          );
+        }
+
+	     	$(".center").slick({
+	        	dots: true,
+	       		infinite: true,
+	        	centerMode: true,
+	        	slidesToShow: 5,
+	        	slidesToScroll: 2
+          });        
+
+	     	// Slide Event listener
+			$('#vehicle_carousel').on('beforeChange', function(event, slick, currentSlide, nextSlide)
+      {
+        $("#vehicle_name").text(records[nextSlide].dealer__Year__c + ' ' + records[nextSlide].dealer__Make__c + ' ' + records[nextSlide].dealer__Model__c  + ' (' + records[nextSlide].dealer__Stock_Number__c + ')');
+        
+        $("#transmission_text").text(records[nextSlide].dealer__Transmission_Type__c);
+        
+        $("#exterior_color_text").text(records[nextSlide].dealer__Exterior_Color__c);
+        
+        $("#interior_color_text").text(records[nextSlide].dealer__Interior_Color__c);
+        
+        $("#mileage_text").text(records[nextSlide].dealer__Mileage__c);
+        
+        $("#store_text").text(records[nextSlide].dealer__Store_Location__r.Name); 
+			});
+            
+        // F&I table listeners
+        $('#table_row_1_up_button').on("click", function(event)
+        {
+            event.preventDefault();
+
+            var term1Text = $("#row_1_term_a").text();
+            var term2Text = $("#row_1_term_b").text();
+            var term3Text = $("#row_1_term_c").text();
+    
+            amount1 = amount1 + 10;
+            var term1 = parseInt(term1Text) + 10;
+            var term2 = parseInt(term2Text) + 10;
+            var term3 = parseInt(term3Text) + 10;
+            
+            $("#row_1_amount").text(amount1);
+            $("#row_1_term_a").text(term1);
+            $("#row_1_term_b").text(term2);
+            $("#row_1_term_c").text(term3);
+        });
+            
+            $('#table_row_1_down_button').on("click", function(event)
+            {
+              event.preventDefault();
+
+              var term1Text = $("#row_1_term_a").text();
+              var term2Text = $("#row_1_term_b").text();
+              var term3Text = $("#row_1_term_c").text();
+      
+
+              amount1 = amount1 - 10;
+              var term1 = parseInt(term1Text) - 10;
+              var term2 = parseInt(term2Text) - 10;
+              var term3 = parseInt(term3Text) - 10;
+              
+              $("#row_1_amount").text(amount1);
+              $("#row_1_term_a").text(term1);
+              $("#row_1_term_b").text(term2);
+              $("#row_1_term_c").text(term3);
+            });
+            
+            $('#table_row_2_up_button').on("click", function(event)
+            {
+                  event.preventDefault();
+
+                var term1Text = $("#row_2_term_a").text();
+                var term2Text = $("#row_2_term_b").text();
+                var term3Text = $("#row_2_term_c").text();
+				
+               
+       			    amount2 = amount2 + 10;
+                var term1 = parseInt(term1Text) + 10;
+                var term2 = parseInt(term2Text) + 10;
+                var term3 = parseInt(term3Text) + 10;
+                
+                $("#row_2_amount").text(amount2);
+                $("#row_2_term_a").text(term1);
+                $("#row_2_term_b").text(term2);
+                $("#row_2_term_c").text(term3);
+            });
+            
+            $('#table_row_2_down_button').on("click", function(event)
+            {
+
+              event.preventDefault();
+
+              var term1Text = $("#row_2_term_a").text();
+              var term2Text = $("#row_2_term_b").text();
+              var term3Text = $("#row_2_term_c").text();
+				
+               
+              amount2 = amount2 - 10;
+              var term1 = parseInt(term1Text) - 10;
+              var term2 = parseInt(term2Text) - 10;
+              var term3 = parseInt(term3Text) - 10;
+              
+              $("#row_2_amount").text(amount2);
+              $("#row_2_term_a").text(term1);
+              $("#row_2_term_b").text(term2);
+              $("#row_2_term_c").text(term3);
+            });
+            
+            $('#table_row_3_up_button').on("click", function(event)
+            {
+                event.preventDefault();
+
+                var term1Text = $("#row_3_term_a").text();
+                var term2Text = $("#row_3_term_b").text();
+                var term3Text = $("#row_3_term_c").text();
+				
+               
+       			    amount3 = amount3 + 10;
+                var term1 = parseInt(term1Text) + 10;
+                var term2 = parseInt(term2Text) + 10;
+                var term3 = parseInt(term3Text) + 10;
+                
+                $("#row_3_amount").text(amount3);
+                $("#row_3_term_a").text(term1);
+                $("#row_3_term_b").text(term2);
+                $("#row_3_term_c").text(term3);
+            });
+            
+            $('#table_row_3_down_button').on("click", function(event)
+            {
+              event.preventDefault();
+
+              var term1Text = $("#row_3_term_a").text();
+              var term2Text = $("#row_3_term_b").text();
+              var term3Text = $("#row_3_term_c").text();
+				
+       			  amount3 = amount3 - 10;
+              var term1 = parseInt(term1Text) - 10;
+              var term2 = parseInt(term2Text) - 10;
+              var term3 = parseInt(term3Text) - 10;
+                
+              $("#row_3_amount").text(amount3);
+              $("#row_3_term_a").text(term1);
+              $("#row_3_term_b").text(term2);
+              $("#row_3_term_c").text(term3);
+            });
+
+            $("#exampleInputEmail1").on('input', function(){
+
+                console.log($('#exampleInputEmail1').val());
+
+                console.log(typeof $('#exampleInputEmail1').val());
+                console.log($('#exampleInputEmail1').val() != null);
+                console.log($('#exampleInputEmail1').val() != '');
+
+                if($('#exampleInputEmail1').val() != null || $('#exampleInputEmail1').val() != '') 
+                {
+                  var amountDown1 = amount1 - parseInt($('#exampleInputEmail1').val());
+                  var amountDown2 = amount2 - parseInt($('#exampleInputEmail1').val());
+                  var amountDown3 = amount3 - parseInt($('#exampleInputEmail1').val());
+                  
+                  $("#row_1_amount").text(amountDown1);
+                  $("#row_2_amount").text(amountDown2);
+                  $("#row_3_amount").text(amountDown3); 
+                }
+            });
+            
+            //Reference: https://jsfiddle.net/fwv18zo1/
+            var $select1 = $( '#select1' ),
+                    $select2 = $( '#select2' ),
+                $options = $select2.find( 'option' );
+                
+            $select1.on( 'change', function() {
+                $select2.html( $options.filter( '[value="' + this.value + '"]' ) );
+            } ).trigger( 'change' );
+	    });
+
+	</script>
+
+</body>
+</html>
+
+    
+</apex:page>

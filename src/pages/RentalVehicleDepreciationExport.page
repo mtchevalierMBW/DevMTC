@@ -1,0 +1,16 @@
+<apex:page controller="RentalVehicleDepreciation_CTLR" contentType="application/vnd.ms-excel#DepreciationSummary.xls" cache="true"> 
+  <apex:pageBlock >
+      <apex:pageBlockTable value="{!Vehicles}" var="v"> 
+             <apex:column value="{!v.dealer__Status_Code__c}"/> 
+             <apex:column value="{!v.Name}"/> 
+             <apex:column value="{!v.dealer__Year__c}"/> 
+             <apex:column value="{!v.dealer__Make__c}"/> 
+             <apex:column value="{!v.dealer__Model__c}"/>
+             <apex:column value="{!v.dealer__Store_Location__c}"/> 
+             <apex:column value="{!v.Rental_Vehicle_Costs__c}"/> 
+             <apex:column value="{!v.Rental_Depreciation_Exp__c}"/> 
+             <apex:column value="{!v.Rental_New_Vehicle_Cost__c}"/> 
+             <apex:column value="{!v.Insurance_Start_Date__c}"/>
+          </apex:pageBlockTable>
+  </apex:pageBlock> 
+</apex:page>

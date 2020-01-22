@@ -1,0 +1,9 @@
+.THIS .nolabel span {
+	display:none;
+}
+.THIS .nolabel label {
+	display:none;
+}
+.THIS .nolabel {
+	display:inline-block;
+}

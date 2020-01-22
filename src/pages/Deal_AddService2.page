@@ -1,0 +1,71 @@
+<!--
+ * 2015-10-07   J. Kuljis   JVK1 - IT13640 : Labor rate for sale of equipment off proposals should be independent of CP Labor Rate
+ * 2016-01-14 	J. Kuljis	JVK2 - Jerry asked that the labor cost field be a new property ont he location object (Proposal_Labor_Cost__c)
+-->
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Deal__c" extensions="Deal_MBW2" id="SVCSales" docType="html-5.0" >
+	<head>
+        <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+	</head>	
+
+	<apex:sectionHeader title="{!dealer__Deal__c.Name}" subtitle="Add service items to this proposal." />
+	<apex:form id="serviceSales">
+		<apex:pageMessages />
+		<apex:pageBlock title="Additional Service Item" id="pB">
+				<apex:pageBlockButtons location="top">
+					<apex:commandButton value="Return to Deal" action="{!returnToDeal}" styleClass="btn btn-primary" />
+				</apex:pageBlockButtons>		
+			<apex:panelGrid columns="5" id="pG" style="width:100%;">
+
+				<apex:outputPanel ><b>Description</b></apex:outputPanel>
+				<apex:outputPanel ><b>Shop Time</b></apex:outputPanel>
+				<apex:outputPanel ><b>Cost</b></apex:outputPanel>
+				<apex:outputPanel ><b>Sale Price</b></apex:outputPanel>
+				<apex:outputPanel >Action</apex:outputPanel>
+
+				<apex:inputText label="Description" value="{!serviceItem.description}" id="sDescription" style="width:400px;" />
+				<apex:inputText label="Shop Time" value="{!serviceItem.booktime}" id="sBookTime" />
+				<apex:inputText label="Cost" value="{!serviceItem.cost}" id="sCost" />
+				<apex:inputText label="Price" value="{!serviceItem.saleprice}" id="sPrice" />
+				<apex:outputPanel >
+					<apex:commandButton value="Save" action="{!saveService}" styleClass="btn-info btn-sm" />
+				</apex:outputPanel>
+			</apex:panelGrid>
+		</apex:pageBlock>
+		<!-- <apex:inputHidden value="{!location.Internal_Labor_Rate__c}" id="laborCost" /> -->
+		<!-- <apex:inputHidden value="{!location.Customer_Pay_Labor_Rate__c}" id="laborRetail" /> -->
+	</apex:form>
+    <script type="text/javascript">
+	    $dt = jQuery.noConflict();
+
+	    $dt('[id$="sBookTime"]').on('keyup',function(){
+	    	var cost 	= {!location.Proposal_Labor_Cost__c}, // JVK4
+	    		price	= {!location.Proposal_Labor_Rate__c}, // JVK1
+	    		time	= $dt(this).val();
+
+	    	$dt('[id$="sCost"]').val( doubleVal(time * cost) );	
+	    	$dt('[id$="sPrice"]').val( doubleVal(time * price) );
+
+	    });
+
+        function doubleVal(v) {
+
+            if(v== undefined) {
+                return 0;
+            }
+            if(typeof v=='number') {
+                return v;
+            }           
+            if(v=='') {
+                return 0;
+            }
+            if(v === parseInt(v)) {
+                return v;
+            }
+            return Number(v.replace(/[^0-9-.]/g, ''));
+        }   
+	</script>
+</apex:page>

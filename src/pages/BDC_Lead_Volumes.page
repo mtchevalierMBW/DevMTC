@@ -1,0 +1,62 @@
+<apex:page controller="BDC_Lead_Volumes_CTLR">
+<style>
+table.bdc_lvm {background-color:white; border-collapse: collapse;}
+table.bdc_lvm th {background-color: #dddddd; text-align:right;}
+table.bdc_lvm td {text-align:right;}
+table.bdc_lvm th, table.bdc_lvm td {border:1px solid #cccccc; padding: 5px;}
+table.bdc_lvm td.totalcol {background-color:#dddddd;}
+table.bdc_lvm .left {text-align:left;}
+table.bdc_lvm .center {text-align:center;}
+table.bdc_lvm .dbb {border-bottom: 1px solid #999999;}
+</style>
+    <apex:form >
+	    <apex:pageBlock title="Lead volumes">
+	        <table style="border: 1px solid #eeeeee" class="bdc_lvm">
+	        <tr>
+	          <th></th>
+	          <th colspan="4" class="center">Last 7 days</th>
+	          <th colspan="4" class="center">Last 30 days</th>
+	          <th colspan="4" class="center">Qtr-to-date</th>
+	        </tr>
+	        <tr>
+	          <th class="left"><apex:outputText value="{!summarizeBy}"/></th>
+
+	          <th>Qualified</th>
+	          <th>Unqualified</th>
+	          <th>Other</th>
+	          <th>Total</th>
+
+	          <th>Qualified</th>
+	          <th>Unqualified</th>
+	          <th>Other</th>
+	          <th>Total</th>
+
+	          <th>Qualified</th>
+	          <th>Unqualified</th>
+	          <th>Other</th>
+	          <th>Total</th>
+	        </tr>
+	        <apex:repeat value="{!Summary}" var="r">
+	            <tr>
+	            <th><apex:outputText value="{!r.key}"/></th>
+	            
+	            <td><apex:outputText value="{!r.last7.qualified}" rendered="{!r.last7.qualified>0}"/></td>
+	            <td><apex:outputText value="{!r.last7.unqualified}" rendered="{!r.last7.unqualified>0}"/></td>
+	            <td><apex:outputText value="{!r.last7.other}" rendered="{!r.last7.other>0}"/></td>
+	            <td class="totalcol"><apex:outputText value="{!r.last7.total}" rendered="{!r.last7.total>0}"/></td>
+	            
+	            <td><apex:outputText value="{!r.last30.qualified}" rendered="{!r.last30.qualified>0}"/></td>
+	            <td><apex:outputText value="{!r.last30.unqualified}" rendered="{!r.last30.unqualified>0}"/></td>
+	            <td><apex:outputText value="{!r.last30.other}" rendered="{!r.last30.other>0}"/></td>
+	            <td class="totalcol"><apex:outputText value="{!r.last30.total}" rendered="{!r.last30.total>0}"/></td>
+	            
+	            <td><apex:outputText value="{!r.qtr.qualified}" rendered="{!r.qtr.qualified>0}"/></td>
+	            <td><apex:outputText value="{!r.qtr.unqualified}" rendered="{!r.qtr.unqualified>0}"/></td>
+	            <td><apex:outputText value="{!r.qtr.other}" rendered="{!r.qtr.other>0}"/></td>
+	            <td class="totalcol"><apex:outputText value="{!r.qtr.total}" rendered="{!r.qtr.total>0}"/></td>
+	            </tr>
+	        </apex:repeat>
+	        </table>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

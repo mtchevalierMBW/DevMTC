@@ -1,0 +1,6 @@
+<aura:documentation>
+	<aura:description>Upload title paperwork and set flags on vehicle when docs are present</aura:description>
+	<!--
+	2019-11-26	B. Leaman	W-000786 BLL1 - add title location picklist
+	-->
+</aura:documentation>

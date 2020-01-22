@@ -1,0 +1,67 @@
+<apex:page showHeader="true" sidebar="false" standardController="CommercialQuote__c" extensions="CQ_EXT" 
+           showChat="true" title="{!CommercialQuote__c.Name} Commercial Quote" 
+           id="p" docType="html">
+<!--  
+  2015-06-03  B. Leaman  BLL3 - Tax ID and GPC as output only (formula from account); show unit# & vin;
+                         Show customer (as link)
+
+  2015-11-16  RedTeal    RT1 - Made the new customer field required
+  2016-04-13  B. Leaman  BLL4 - Add releasing dealer lookup support.
+  2016-04-19  B. Leaman  BLL5 - Add lien holder (finance company). 
+  2016-05-13  B. Leaman	 BLL6 - add page messages.
+  2016-09-23  B. Leaman	 BLL7 - require market segment drop-down value.
+  -->
+	<apex:sectionHeader title="Commercial Quote" subtitle="Sales Order Checklist" description="Please fill out your checklist completely.  Ensure you are showing locations for your seats, WC storage..." />
+	<apex:form >
+		<apex:pageBlock >
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!Save}" value="Save" />
+			</apex:pageBlockButtons>
+			<apex:pageMessages /><!-- BLL6a -->
+			<apex:pageBlockSection columns="1">
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Quote"/>
+				<apex:outputLink value="/{!CommercialQuote__c.Id}">{!CommercialQuote__c.Name}</apex:outputLink><!-- BLL6 -->
+				</apex:pageBlockSectionItem>
+				<apex:outputField value="{!CommercialQuote__c.Customer__c}"/><!-- BLL3a -->
+			</apex:pageBlockSection>
+			<apex:pageBlockSection title="Sales Order Check List" collapsible="false">
+				<apex:outputField value="{!CommercialQuote__c.GPC_Fleet__c}" /><!-- BLL3 change to output -->
+				<apex:outputField value="{!CommercialQuote__c.Tax_ID_Nbr__c}" /><!-- BLL3 change to output -->
+				<apex:inputField value="{!CommercialQuote__c.Market_Segment__c}" required="{!IF(CommercialQuote__c.TypeOfSale__c!='Build for Stock',true,false)}"/><!-- BLL7c require value -->
+				<apex:inputField value="{!CommercialQuote__c.New_Customer__c}" required="{!IF(CommercialQuote__c.TypeOfSale__c!='Build for Stock',true,false)}"/><!-- BLL7c require value --><!-- RT1 -->
+                <apex:inputField value="{!CommercialQuote__c.UnitNumber__c}"/><!--  BLL3a -->
+                <apex:inputField value="{!CommercialQuote__c.VIN__c}"/><!-- BLL3a -->
+
+				<!-- BLL4d apex:outputText rendered=" { ! IF(Opportunity!=null, true, false)}" -->
+					<apex:outputField value="{!Opportunity.Financing_Company__c}" rendered="{!Opportunity!=null}"/>
+					<apex:outputField value="{!Opportunity.Financing_Terms__c}" rendered="{!Opportunity!=null}"/>
+					<apex:outputField value="{!Opportunity.Financing_Type__c}" rendered="{!Opportunity!=null}"/>
+				<!-- BLL4d /apex:outputPanel -->
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="1">
+				<apex:inputField value="{!CommercialQuote__c.LienHolder__c}"/><!-- BLL5a -->
+				<apex:inputField value="{!CommercialQuote__c.ReleasingDealer__c}"/><!-- BLL4a -->
+				<apex:inputField value="{!CommercialQuote__c.Preferred_Releasing_Dealer__c}" 
+				                 html-data-autoresize="auto" style="width:500px;" />
+				<apex:inputField value="{!CommercialQuote__c.Title_Info__c}" 
+				                 html-data-autoresize="auto" style="width:500px;" />
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+<script type="text/javascript">
+$.noConflict();
+jQuery(document).ready(function() {
+    jQuery.each(jQuery('textarea[data-autoresize=auto]'), function() {  
+        var offset = this.offsetHeight - this.clientHeight;
+        var resizeTextarea = function(el) {
+            jQuery(el).css('height', 'auto').css('height', el.scrollHeight + offset);
+        };
+        jQuery(this).on('keyup input', function() { resizeTextarea(this) }).removeAttr('data-autoresize').css({'overflow':'hidden'});  
+        resizeTextarea(this); // initial resize!
+    });
+});
+</script>
+</apex:page>

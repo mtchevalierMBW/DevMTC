@@ -1,0 +1,60 @@
+<!--
+    WMK, LLC (c) - 2019
+
+    Created By:    Alexander Miller
+    Created Date:  2/25/2019
+    Work Item:     W-000603
+    File Name:     InMotionAccountSelector.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="InMotionAccountSelectorController">
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" description="Handler for valueInit event fired when the component has been initialised"/>
+
+    <aura:attribute name="barcodeValue" type="String" default=""/>
+    <aura:attribute name="campaignValue" type="Campaign" default=""/>
+    <!-- lookup -->
+    <aura:attribute name="accountValue" type="Account" default=""/>
+
+    <aura:method name="accountCampiagnModified" action="{!c.globalEventAccountCampaign}" />
+    
+    <!-- persistent runtime storage -->
+    <aura:attribute name="account" type="Account" default=""/>
+
+    <aura:registerEvent name="InMotionAccountCampaignEvent" type="c:InMotionAccountCampaignEvent"/>
+
+    <lightning:card class="slds-p-around_medium" title="Account &#38; Campaign Finder">
+            <lightning:input aura:id="vinInput" label="Barcode Number"
+                            name="Barcode Number"
+                            value="{!v.barcodeValue}"
+                            maxlength="10"
+                            onkeyup="{!c.barcodeChange}" 
+                            placeholder="######"/>
+    
+        <lightning:recordEditForm aura:id="recordEditForm" 
+                                objectApiName="In_Motion_Question__c">
+            <lightning:messages />
+            <lightning:inputField onchange="{!c.globalEventAccountCampaign}" fieldName="Campaign__c" value="{!v.campaignValue}"/>
+        </lightning:recordEditForm>
+    
+        <lightning:recordEditForm aura:id="recordEditForm" 
+                                objectApiName="Contact">
+            <lightning:messages />
+            <lightning:inputField aura:id="accountLookup" onchange="{!c.globalEventAccountCampaign}" fieldName="AccountId" value="{!v.accountValue}" />
+        </lightning:recordEditForm>
+        
+        <br/>
+
+        <a href="javascript:void(0)" onclick="{!c.openAccount}">
+            <p>{!v.account.Name}</p>
+            <p>{!v.account.Phone}</p>
+            <p>{!v.account.BillingStreet},&nbsp;{!v.account.BillingCity},&nbsp;{!v.account.BillingState},&nbsp;{!v.account.BillingPostalCode}</p>
+            <p>{!v.account.ShippingStreet},&nbsp;{!v.account.ShippingCity},&nbsp;{!v.account.ShippingState},&nbsp;{!v.account.ShippingPostalCode}</p>
+            <p>{!v.account.PersonEmail}</p>
+        </a>
+    
+    </lightning:card>
+    
+</aura:component>

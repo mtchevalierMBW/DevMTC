@@ -1,0 +1,42 @@
+<apex:page controller="ServiceROTransports" sidebar="false" showHeader="false" contentType="application/json" action="{!saveAction}">
+    <apex:outputText rendered="{!IF(trans=='operations', true, false)}" value="{!OperationCodes}" />
+    <apex:outputText rendered="{!IF(trans=='payment_methods', true, false)}" value="{!PaymentMethods}" />
+    <apex:outputText rendered="{!IF(trans=='techs', true, false)}" value="{!Technicians}" />
+    <apex:outputText rendered="{!IF(trans=='stat', true, false)}" value="{!StatusCodes}" />
+    <apex:outputText rendered="{!IF(trans=='misc_types', true, false)}" value="{!MiscTypes}" />
+    
+    <!-- Read RO Lines -->
+    <apex:outputText rendered="{!IF(trans=='rolines', true, false)}" value="{!RoLines}" />
+
+    <!-- Reads for sub line items -->
+    <apex:outputText rendered="{!IF(trans=='read_tech_time', true, false)}" value="{!TechTimes}" />
+    <apex:outputText rendered="{!IF(trans=='read_parts', true, false)}" value="{!readParts}" />
+    <apex:outputText rendered="{!IF(trans=='parts_search', true, false)}" value="{!searchParts}" />
+
+    <!-- Parts Search Records -->
+    <apex:outputText rendered="{!IF(trans=='search_parts', true, false)}" value="{!SearchParts}" />
+    <apex:outputText rendered="{!IF(trans=='global_inventory', true, false)}" value="{!StoreInventory}" />
+    <apex:outputText rendered="{!IF(trans=='part', true, false)}" value="{!lookupPartResult}" />
+
+    <!-- Update / Create Job line Results -->
+    <apex:outputText rendered="{!IF(trans='update_line', true, false)}" value="{!updateResult}" />
+    <apex:outputText rendered="{!IF(trans='create_line', true, false)}" value="{!updateResult}" />
+    <apex:outputText rendered="{!IF(trans='delete_line', true, false)}" value="{!updateResult}" />
+    
+    <!-- Tech Time -->
+    <apex:outputText rendered="{!IF(trans='create_tech_time', true, false)}" value="{!TechRow}" />
+    <apex:outputText rendered="{!IF(trans='update_tech_time', true, false)}" value="{!TechRow}" />
+    <apex:outputText rendered="{!IF(trans='delete_tech_time', true, false)}" value="{!ttResult}" />
+    
+    <!-- Parts Create/Update -->
+    <apex:outputText rendered="{!IF(trans='create_parts_line', true, false)}" value="{!PartLine}" />
+    <apex:outputText rendered="{!IF(trans='delete_parts_Line', true, false)}" value="{!ReadParts}" />
+    <apex:outputText rendered="{!IF(trans='update_parts_Line', true, false)}" value="{!updateResult}" />
+
+    <!-- Misc Create/Update/Destroy -->
+    <apex:outputText rendered="{!IF(trans=='read_misc', true, false)}" value="{!MiscItems}" />
+    <apex:outputText rendered="{!IF(trans=='create_misc', true, false)}" value="{!responseString}" />
+    <apex:outputText rendered="{!IF(trans=='delete_misc', true, false)}" value="{!MiscItems}" />
+    <apex:outputText rendered="{!IF(trans=='update_misc', true, false)}" value="{!responseString}" />
+    
+</apex:page>

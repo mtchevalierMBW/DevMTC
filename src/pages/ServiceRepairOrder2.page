@@ -1,0 +1,2096 @@
+<!-- 
+2015-10-30  B. Leaman   BLL1 Show history 
+2015-11-04  J. Kuljis   JVK1 - Temp removal of SobjectHistory_EXT to ensure JS Error Notifications are in Production
+2015-11-10  B. Leaman   Reinstate BLL1, move to qa for testing.
+2015-12-1   D. RAY      DR1 - QTY Change Handleing
+2015-12-4   D. RAY      DR2 - Fix $dt not defined error
+2015-12-8   D. RAY      DR3 - Part Dialogue: Price Field have two decimals, Quantity field calculations  
+2015-11-20  B. Leaman   BLL2 - Add taxing section. 
+2016-01-03  B. Leaman   BLL3 - Add transaction related list.
+2016-01-14  B. Leaman   BLL4 IT18468 - Add support for part type (New, Rebuilt, Reconditioned, Used)
+
+2016-01-21  D. Ray      DR4 - If On Hand is Negative, make Order QTY equal to QTY Requested
+2016-01-31  J. Kuljis   JVK2 - Urgnecy Required Error Meessage not showing
+                             - If part number search is changed the QTY Requested needs to clear
+                             - If Location does not support CPT Gray out the Create Parts Purchase Order
+2016-2-1    D. Ray      DR5 - Updating field validation on parts pop-up
+2016-2-3    D. Ray      DR6 - Fixing CCC field auto height bug
+2016-02-04  B. Leaman   BLL5a IT19799 - Show related proposal(s)
+2016-02-04  D. Ray      DR7 - Dont Display Add Line button is Posted. Date Format on PO Eta/
+2016-03-02  RedTeal     RT1 - When creating a part line, the sales price will default to the part's cost instead of its retail price IF the job line is a 
+                              warranty labor type.
+2016-04-15  D. Ray      DR8 - Reset Dropdown filters after line is edited.
+2016-08-10  D. Ray      DR9 - Prevent Part QTY line of 0 and update QTY Order when a new part is selected.
+2016-08-11  D. Ray      DR10 - Prevent Part line from being added twice.
+2016-11-03  D. Ray      DR11 - Show friendly error message on misc item creation.
+2017-01-05  J.Kuljis    JVK3 - Add Cashier Button if Posted
+2017-01-09  B. Leaman   BLL6 - show error msg when deleting tech time fails
+2017-01-30  A. Bangle   ACB1 - added new rid var to pass to the operations /apex/servicetrs request
+2017-04-28  J. Kuljis   JVK4 - Added reassign as an option in the select for order urgency
+2017-07-13  B. Leaman   BLL7 - improve error reporting (slightly).
+2018-05-04  B. Leaman   BLL8 - show service contracts on vehicle.
+2018-05-11  B. Leaman   BLL9 - rename actions for consistency.
+2018-10-18  B. Leaman   BLL10 - Lightning chg to show chatter only once; fix navigation;
+2019-01-29	B. Leaman	W-000569 BLL11 - add Files related list, move proposals down.
+2019-10-28	B. Leaman	W-000730 BLL12 - Don't allow double-click on create buttons.
+2019-11-27	B. Leaman	W-000788 BLL13 - Rerender detail after adding job line so it shows at the bottom.
+2019-12-06	B. Leaman	W-000788 BLL14 - Split Actual & Book time (roll actual to book if StdOpCode book is null).
+ -->
+<apex:page showHeader="true" sidebar="true" title="Service Repair Order" standardController="dealer__Service_Repair_Order__c"
+   extensions="ServiceRepairOrder2,SObjectHistory_EXT,ServiceVehicleESC_EXT" docType="html-5.0" id="RO2" ><!-- BLL8c -->
+
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+    <!-- <apex:includeScript value="{!URLFOR($Resource.dealer__serializeJSON)}" /> -->
+
+    <!-- INclude Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+    <!-- KENDO 2015.1.429 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__KendoUiFULL2015,'/styles/kendo.common-bootstrap.min.css')}"/>
+    
+    <!-- <apex:includeScript value="{!URLFOR($Resource.KendoUI,'/js/kendo.all.min.js')}"/> 
+    <apex:stylesheet value="{!URLFOR($Resource.KendoUI,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.KendoUI,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.KendoUI,'/styles/kendo.common-bootstrap.min.css')}"/>  
+    -->
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.KendoUiFULL2015,'/styles/kendo.common.min.css')}"/> -->
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__MomentJS)}" />
+
+    <!-- FONT-AWESOME -->
+    <apex:stylesheet value="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+    <!-- Header Data -->
+    <!-- BLL10 postpone change chatter:feed entityId="{!dealer__Service_Repair_Order__c.Id}"/ --><!--BLL10a -->
+        <apex:detail id="detail_id" subject="{!dealer__Service_Repair_Order__c.Id}" showChatter="true" relatedList="false" relatedListHover="true" inlineEdit="true"
+            oncomplete="location.reload();"/><!-- BLL added reload on complete for inline edit -->
+        <apex:form ><!--BLL10 move form? below apex:detail -->
+            <apex:actionFunction action="{!detailUpdate}" name="reloadDetail" reRender="detail_id,taxsummarysection" />
+    
+        <!-- BLL8a -->
+        <!-- not using: apex:relatedList subject="{!dealer__Service_Repair_Order__c.dealer__Vehicle__c}" list="dealer__Service_Contracts__r" rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__c!=null}"/ -->
+        <apex:pageBlock title="Service Contracts" rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c!=null,ServiceContracts.size>0)}">
+            <!-- apex:pageBlockSection columns="1" title="Service contracts" -->
+            <apex:pageBlockTable value="{!ServiceContracts}" var="esc">
+                <apex:column value="{!esc.dealer__Deductable__c}"/>
+                <apex:column value="{!esc.dealer__Status__c}"/>
+                <apex:column value="{!esc.dealer__Expiration_Months__c}"/>
+                <apex:column value="{!esc.dealer__End_Date__c}"/>
+                <apex:column value="{!esc.dealer__Expiration_Mileage__c}"/>
+                <apex:column value="{!esc.dealer__Description__c}"/>
+                <apex:column >
+                    <apex:facet name="header">Service Contract</apex:facet>
+                    <apex:outputLink value="/{!esc.Id}">{!esc.Name}</apex:outputLink>
+                </apex:column>
+            </apex:pageBlockTable>
+            <!-- ServiceContracts/apex:pageBlockSection -->
+        </apex:pageBlock>
+        <!-- BLL8a end -->
+
+    </apex:form>
+
+    <apex:variable var="btnText" value="[{'name': 'create', 'text': 'Add Job Line'}]" rendered="{!ISBLANK(dealer__Service_Repair_Order__c.dealer__Posted_Date_Time__c)}" /><!-- DR7 -->
+
+    <!-- NS Boostrap Wrapper -->
+    <div id="force">
+        <!-- data-row-template="lineTemplate" -->
+        <!-- Added link to view detail page JVK 3/5/2015 -->
+		<!-- BLL14 add field bookTime -->
+			<div id="grid" data-role="grid"
+            data-toolbar="{!btnText}"
+			data-columns="[
+                         { 'title': 'Line','field': 'lineNumber', 'width': 40 },
+                         { 'title': 'Op Code','field': 'opCode', editor: opCodeList, template: '<span>#=opCodeName#</span>'},
+                         { 'title': 'Labor Type','field': 'payMethod', 'width': 120, editor: PaymentMethodsList, template: repairOrderModel.laborTypeTemplate},
+                         { 'title': 'Status','field': 'status', 'width': 100, editor: statusList, template:'#= status #' },
+                         { 'title': 'Book Time','field': 'bookTime', 'width': 100, 'format': '{0:n1}'   },	
+                         { 'title': 'Labor Total','field': 'laborTotal', 'width': 85, 'format': '{0:c2}'   },
+                         { 'title': 'Parts Total','field': 'partsTotal', 'width': 85, 'format': '{0:c2}'   },
+                         { 'title': 'Sublet Total','field': 'subletTotal', 'width': 85, 'format': '{0:c2}'   },
+                         { 'title': 'Misc Total','field': 'miscTotal', 'width': 85, 'format': '{0:c2}'   },
+                         { 'title': 'Line Total','field': 'lineTotal', 'width': 85, 'format': '{0:c2}'   },
+                         { command: ['edit','destroy', { text: ' ', click: showDetails, className: 'fa fa-info-circle', width : '25px'}], title: '&nbsp;' },
+                      ]"
+            data-bind="source: lines"
+            data-editable="inline"
+            data-detail-init="repairOrderModel.detailInit"
+            data-detail-template="detailTemplate"
+            style="width: 100%" class="table table-striped">
+        </div>
+    </div>
+
+    <!-- Unexpected Error Dialog -->
+    <div id="error_window"></div>
+
+    <!-- BLL2a taxes -->
+    <style>
+    th.tablecellalignright {text-align:right;}
+    td.tablecellalignright {text-align:right;}
+    input.btn-warning {background: orange;}
+    input[type=button]:disabled {background: #eaeaea; color: silver; cursor:not-allowed;}
+    </style>
+    <apex:form >
+        <apex:pageMessages id="message_block"/><!-- blla -->
+    <apex:pageBlock mode="mainDetail">
+    <apex:pageBlockSection title="Taxes" id="taxsummarysection" columns="1"
+        rendered="{!NOT(ISBLANK(dealer__Service_Repair_Order__c.Id))}">
+        <apex:pageBlockSectionItem >
+            <apex:outputText value="Committed" rendered="{!dealer__Service_Repair_Order__c.TaxCommitDT__c!=null}"/>
+            <apex:outputPanel >
+            <apex:commandButton action="{!pageCalcTax}" value="Calc taxes" id="btn_CalcTax" 
+                styleClass="{!IF(AND(dealer__Service_Repair_Order__c.dealer__Status__c!='Posted',needToRecalcTax,dealer__Service_Repair_Order__c.TaxCommitDT__c==null),'btn-warning','btn-default')}"
+                rerender="message_block,detail_id,taxdetailsection"/><!--  onclick="showTaxCalcNotice()"/ -->
+            </apex:outputPanel>
+        </apex:pageBlockSectionItem>
+        <apex:outputPanel layout="none" id="taxdetailsection">
+        <apex:pageBlockTable value="{!Taxes}" var="tax"> 
+            <apex:column value="{!tax.TaxType__c}"/>
+            <apex:column value="{!tax.Name}"/>
+            <apex:column value="{!tax.JurisName__c}"/>
+            <apex:column value="{!tax.Taxable__c}" styleClass="tablecellalignright" headerClass="tablecellalignright"/>
+            <apex:column value="{!tax.TaxRate__c}" styleClass="tablecellalignright" headerClass="tablecellalignright"/>
+            <apex:column value="{!tax.Tax__c}" styleClass="tablecellalignright" headerClass="tablecellalignright">
+                <apex:facet name="footer" >
+                    <apex:outputText value="{0,number,$###,##0.00}" style="float:right;">
+                        <apex:param value="{!TaxTotal}"/>
+                    </apex:outputText>
+                </apex:facet>
+            </apex:column>
+        </apex:pageBlockTable>
+        </apex:outputPanel>
+        <script type="text/javascript">
+        //$dt = jQuery.noConflict(); // DR2  - should not be needed
+        // Reset button status based on whether taxes need to be recalculated or not...
+        if (typeof $dt != 'undefined' && '{!PrintCashierRequireTaxCalc}'=='true' && '{!dealer__Service_Repair_Order__c.TaxCommitDT__c}'=='') {
+            if (('{!ro.dealer__Status__c}'=='Open' || '{!ro.dealer__Status__c}'=='Cashier') && ('{!NeedToRecalcTax}'=='true')) {
+                $dt('input[name=print_repair_order]').attr('disabled','disabled');
+                $dt('input[name=print_audit_invoice]').attr('disabled','disabled');
+                $dt('input[name=cashier]').attr('disabled','disabled');
+                $dt('#btn_CalcTax').addClass('btn-warning');
+            }
+        }
+        </script>
+    </apex:pageBlockSection>
+    </apex:pageBlock>
+    </apex:form>
+    <!-- BLL2a end taxes -->
+
+    <!-- Related List View -->
+    <apex:relatedList list="dealer__Service_Estimates__r" /> 
+    <apex:relatedList list="Estimate_Approvals__r"  />
+    <apex:relatedList list="dealer__Cashiering__r" />
+	<!--BLL11-->
+	<apex:relatedList list="CombinedAttachments" />
+	<apex:relatedList list="AttachedContentDocuments"/>
+	<!--BLL11-->
+    <!-- BLL5a -->
+    <apex:relatedList list="dealer__ProposalDeliveryRepairOrder__r">
+        <apex:facet name="header"><h3 style="margin-left:5px;font-size:1.3em;line-height:2em;">Proposals</h3></apex:facet>
+    </apex:relatedList>
+    <apex:relatedList list="dealer__R00N70000002II35EAG__r" subject="{!dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__c}"
+        rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__c!=null}">
+        <apex:facet name="header"><h3 style="margin-left:5px;font-size:1.3em;line-height:2em;">Vehicle Proposals</h3></apex:facet>
+    </apex:relatedList>
+    <!-- BLL5a end -->
+    <apex:relatedList list="OpenActivities" />
+    <apex:relatedList list="ActivityHistories" />
+    <apex:relatedList list="Transactions__r" rendered="{!$ObjectType.c2g__codaTransaction__c.accessible}"/><!--BLL3a-->
+
+    <!-- BLL1 history --> 
+    <apex:pageBlock rendered="{!dealer__Service_Repair_Order__c.Id!=null}">
+    <apex:pageBlockSection >
+    <apex:outputPanel style="font-size:14px; font-weight:bold;">Service Repair Order History</apex:outputPanel>
+    </apex:pageBlockSection>
+    <apex:pageBlockTable value="{!HistoryLines}" var="h">
+       <apex:column value="{!h.whattime}">
+         <apex:facet name="header">Date</apex:facet>
+       </apex:column>
+       <apex:column headerValue="User">
+        <apex:outputLink value="/{!h.who.Id}">{!h.username}</apex:outputLink>
+       </apex:column>
+       <apex:column headerValue="Action">
+          <apex:outputText escape="false" value="{!h.action}" /> 
+       </apex:column>
+    </apex:pageBlockTable>
+    </apex:pageBlock>
+    <!-- BLL1 end -->
+
+    <!-- Placeholder Notification element -->
+    <span id="staticNotification"></span>
+
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="tabstrip">
+            <ul>
+                <li data-type="cccTab" class="k-state-active cccTab">
+                   Concern/Cause/Correction
+                </li>
+                <li data-type="partsTab" class="partsTab">
+                    Parts
+                </li>
+                <li data-type="techTimeTab" class="techTimeTab">
+                    Tech Time
+                </li>
+                <li data-type="posTab" class="posTab">
+                    Purchase Orders
+                </li>
+                <li data-type="miscChargesTab" class="miscChargesTab">
+                    Misc Charges
+                </li>
+            </ul>
+            <div class="form-horizontal threec">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="col-sm-1">Concern</label>
+                            <div class="col-md-8">
+                                <textarea disabled="disabled" maxlength="3000" class="form-control concern autoHeight" data-bind="value: concern" ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="col-sm-1">Cause</label>
+                            <div class="col-md-8">
+                                <textarea disabled="disabled" maxlength="3000" class="form-control cause autoHeight" data-bind="value: cause" ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="col-sm-1">Correction</label>
+                            <div class="col-md-8">
+                                <textarea disabled="disabled" maxlength="3000" class="form-control correction autoHeight" data-bind="value: correction" ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="parts"></div>
+            </div>
+            <div>
+                <div class="techtime"></div>
+            </div>
+            <div>
+                <div class="pos"></div>
+            </div>
+            <div>
+                <div class="miscTable"></div>
+            </div>
+        </div>
+    </script>
+
+    <script type="text/x-kendo-template" id="laborTypeTemplate">
+        <span>
+            # if( typeof payMethodName != 'undefined') { #
+                #= payMethodName.Name #
+            # } else { #
+                #: kendo.toString('') #
+            # } #
+        </span>
+    </script>
+
+    <script type="text/x-kendo-template" id="poToolbatTemplate">           
+        <div class="toolbar">
+        # if('{!dealer__Service_Repair_Order__c.dealer__Status__c}' == 'Open' || '{!dealer__Service_Repair_Order__c.dealer__Status__c}' == 'Cashier') { #     
+            <a class="k-button k-button-icontext k-grid-add new_po" href="\\#">
+                <span class="k-icon k-add"></span>Sublet Purchase Order
+            </a>
+            # if (!{!ro.dealer__Company__r.Centralized_Purchasing_On_Off__c}) { #
+            <a class="k-button k-button-icontext k-grid-add parts_po" href="\\#">
+                <span class="k-icon k-add"></span>Parts Purchase Order
+            </a>
+            # } #
+        # } else { #
+        Please check that the repair order has a stauts of Open or Cashier before attempting to modify job lines. 
+        # } #
+        </div>
+        
+    </script>
+
+    <script type="text/x-kendo-template" id="technameTemplate">
+        <span>
+            # if( typeof dealer__Technician__r != 'undefined') { #
+                #= dealer__Technician__r.Name #
+            # } else { #
+                #: kendo.toString('') #
+            # } #
+        </span>
+    </script>
+    <!-- Parts Editor Template -->
+    <script id="popupEditorTempalte" type="text/x-kendo-template">
+
+        <div id="force" class="wrapper">
+            <div class="col-sm-8">
+                <div class="form-group">
+                    <label for="name">Part Number</label>
+                        <input name="PartName" class="PartName" id="PartName" required />
+                </div>
+            </div>
+
+            <div class="col-sm-4 table_column">
+                <div id="qtyTable" data-role="grid"
+                    data-columns="[
+                                 { 'title': 'Store','field': 'store' },
+                                 { 'title': 'QTY','field': 'qty' },
+                              ]"
+                    data-source="repairOrderModel.storeInventoryDataSource" 
+                    data-scrollable="true"
+                    data-auto-bind="false"
+                    style="width: 100%; max-height: 400px" class="table table-striped"></div>
+            </div>
+
+            <div class="col-sm-8">
+                <div class="form-group">
+                    <label for="PartDescription">Part Description</label>
+                        <input name="PartDescription" class="PartDescription form-control" id="PartDescription" />
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label for="QTY">QTY Requested</label>
+                    <input type="number" data-bind="value: QTY" id="form_qty_requested" name="QTY" class="QTY form-control" min="1"/>
+                </div>
+                <div class="form-group">
+                    <!-- DR9 - Moved Order QTY to server -->
+                    <!-- <label for="Order">QTY Order</label>
+                    <input type="number" data-bind="value: Order" id="form_qty_order" name="Order" class="Order form-control" min="0" disabled /> -->
+                    <!-- /DR9 -->
+                </div>
+                <div class="form-group">
+                    <!--<label for="Negative">QTY Negative Sale</label>
+                    <input type="number" data-bind="value: Negative" id="form_qty_negative" name="Negative" class="Negative form-control" disabled /> -->
+
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label>On Hand / On Order <!--/ Phys OH--></label><br />
+                    <input type="number" data-bind="value: OnHand" id="form_on_hand" name="OnHand" class="OnHand form-control"  disabled /> / 
+                    <input type="number" data-bind="value: OnOrder" id="form_on_order" name="OnOrder" class="OnOrder form-control" disabled  /> <!-- / 
+                    <input type="number" data-bind="value: PhysicalOnHand" id="form_PhysicalOnHand" name="PhysicalOnHand" class="PhysicalOnHand form-control" disabled  /> -->
+                    
+                </div>
+                <div class="form-group">
+                    <label>List Price</label>
+                    <input type="number" data-bind="value: ListPrice" id="ListPrice" name="ListPrice" class="ListPrice"  disabled data-role="numerictextbox" data-min="0" data-format="c" />
+                </div>
+                <div class="form-group">                
+                    <label>Sale Price</label>
+                    <input type="number" data-bind="value: SalePrice" id="SalePrice" name="SalePrice" class="SalePrice"  data-role="numerictextbox" data-min="0" data-format="c"  />
+                </div>
+            </div>
+
+            <div class="col-sm-4" style="clear:left">
+            <!-- Removed to test 
+                <div class="form-group">
+                    <label>Line (Blank unless moving between lines)</label>
+                    <input type="text" class="name" name="ServiceJobId"
+                            data-role="dropdownlist"
+                            data-bind="value: ServiceJobId"
+                            data-source="repairOrderModel.lines.data()"
+                            data-auto-bind="true"
+                            data-value-primitive="true"
+                            data-text-field="lineNumber"
+                            data-value-field="Id" 
+                            style="width: 100%;" />
+                </div>
+            -->
+                <div class="form-group">
+                    <label>Order Urgency</label>
+                    <select class="" id="orderUrgency" name="orderUrgency" style="width: 100%;"
+                        data-bind="value: partOrderUrgency" 
+                        data-role="dropdownlist">
+                      <option value="">None</option>
+                      <option value="Ground">Ground</option>
+                      <option value="3 Day">3 Day</option>
+                      <option value="2 Day">2 Day</option>
+                      <option value="Overnight">Overnight</option>
+                      <option value="Saturday">Saturday</option>
+                      <option value="Saturday Overnight">Saturday Overnight</option>
+                      <option value="N/A">N/A</option>
+                      <option value="Drop-Ship">Drop-Ship</option>
+                      <option value="Vendor">Vendor</option>
+                      <option value="Transfer">Transfer</option>
+                      <option value="Reassign">Reassign</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- BLL4a -->
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label>Part type</label>
+                    <select class="" id="partType" style="width: 100%;"
+                        data-bind="value: partType"
+                        data-role="dropdownlist">
+                    <option value="N">New</option>
+                    <option value="R">Rebuilt</option>
+                    <option value="RC">ReConditioned</option>
+                    <option value="U">Used</option>
+                    </select>
+                </div>
+            </div>
+            <!-- BLL4a end -->
+
+        </div>
+
+    </script>
+
+    <script>
+        kendo.culture("en-US");
+
+        $dt = jQuery.noConflict();
+        storeRowState = null;
+
+        $dt(document).ready(function() {
+            var postDate = '{!dealer__Service_Repair_Order__c.dealer__Posted_Date_Time__c}';
+            var _centralizedParts = {!ro.dealer__Company__r.Centralized_Purchasing_On_Off__c};
+
+            if(postDate!='') {
+                // $dt('[name="cashier"]').each(function(i,el) {$dt(el).css('display', 'none');});
+                $dt('[name="edit"]').each(function(i,el) {$dt(el).css('display', 'none');});
+                $dt('[name="del"]').each(function(i,el) {$dt(el).css('display', 'none');});
+                $dt('[name="inlineEditSave"]').each(function(i,el) {$dt(el).css('display', 'none');});
+                $dt('[name="inlineEditCancel"]').each(function(i,el) {$dt(el).css('display', 'none');});
+                
+            }
+            // poToolbatTemplate click events
+            $dt('#grid').on('click', '.new_po', function(e){
+                e.preventDefault();
+                var grid = $dt("#grid").data("kendoGrid");
+                var dataItem = grid.dataItem( $dt(e.currentTarget).closest("tr").prev('.k-master-row') );
+                // BLL10
+                // window.location.href = '/apex/dealer__PurchaseOrder?ro='+ dataItem.dealer__Repair_Order_Id__c + '&job=' + dataItem.Id ;
+                MW_NavigateTo('/apex/dealer__PurchaseOrder?ro='+ dataItem.dealer__Repair_Order_Id__c + '&job=' + dataItem.Id);
+                // BLL10 end
+                // https://dealer.cs13.visual.force.com/apex/PurchaseOrder?ro=a25W000000077hW&job=a24W0000000UUFT
+            });
+
+            // New Parts PO
+            $dt('#grid').on('click', '.parts_po', function(e){
+                e.preventDefault();
+                var grid = $dt("#grid").data("kendoGrid");
+                var dataItem = grid.dataItem($dt(e.currentTarget).closest("tr").prev('.k-master-row'));
+                // BLL10
+                // window.location.href = '/apex/dealer__PurchaseOrder?parts_order=true&ro='+ dataItem.dealer__Repair_Order_Id__c + '&job=' + dataItem.Id ;
+                MW_NavigateTo('/apex/dealer__PurchaseOrder?parts_order=true&ro='+ dataItem.dealer__Repair_Order_Id__c + '&job=' + dataItem.Id);
+                // BLL10 end
+            });
+
+            // Show detial when clicking on
+            /*
+            $dt('#grid').on('click', ".k-master-row td span", function (e) {
+                console.log(grid.dataItem( $dt(this).closest('tr') ) );
+                grid.expandRow(  $dt(this).closest('tr')  );
+                $dt(this).closest('tr').find('.autoHeight').css('height', this.scrollHeight + (this.offsetHeight - this.clientHeight));
+            });
+            */
+
+            // Bind to the parent of dynamic input to monitor change
+            //DR1 removed this code
+            /*
+                $dt('body').on('keyup', "#form_qty_requested", function() {
+                    var onHand      =   doubleVal($dt('#form_on_hand').val());
+                    var requested   =   doubleVal($dt('#form_qty_requested').val());
+                    if(onHand <= requested) {
+                     $dt('#form_qty_order').val(requested - onHand).trigger('change');
+                    }
+                });
+
+                $dt('body').on('keyup', "#form_qty_order", function() {
+                    var onOrder     =   doubleVal($dt('#form_qty_order').val());
+                    var requested   =   doubleVal($dt('#form_qty_requested').val());
+                    if(requested >= onOrder) {
+                     $dt('#form_qty_negative').val(requested - onOrder).trigger('change');
+                    }
+                });        
+            */ 
+
+        });
+
+        $dt(window).load(function() {
+            // once the document has loaded
+            openRows();     
+        });
+
+        var errorWin = $dt("#error_window").kendoWindow({
+                    actions: ["Close"],
+                    // draggable: false,
+                    // height: "600px",
+                    modal: true,
+                    // resizable: false,
+                    title: "Error : Unable to complete",
+                    // width: "500px",
+                    visible: false
+                }).data("kendoWindow"); 
+
+		var enterBookTime = {!NOT(ro.dealer__Company__r.LaborBookEqualsActualTime__c)};
+        var repairOrderModel = kendo.observable({
+            id: getParameterByName('id'),
+            roId: getParameterByName('id'),
+            lines: new kendo.data.DataSource({
+                schema: {
+                    model: {
+                        id: "Id",
+                        fields: {
+							lineNumber: { from: "dealer__Line_Number__c",type: "string",editable:false },
+							bookTime: { from:"dealer__Book_Time__c", type:"number", editable:enterBookTime},	// BLL14
+                            laborTotal: { from: "dealer__Labor_Charges__c",type: "number" ,editable:false},
+                            partsTotal: { from: "dealer__Parts_Total__c",type: "number",editable:false },
+                            subletTotal: { from: "dealer__Sublet_Total__c",type: "number" ,editable:false},
+                            lineTotal: { from: "dealer__Line_Total__c",type: "number" ,editable:false},
+                            miscTotal: { from: "dealer__Misc_Charges__c",type: "number" ,editable:false},
+                            opCode: { from: "dealer__Standard_Operation_Code__c",type: "string" },
+                            opCodeName: { from: "dealer__Standard_Operation_Code__r.Name", type: "string" },
+                            concern: { from: "dealer__CustomerConcern__c",type: "string" },
+                            cause: { from: "dealer__CauseExtended__c",type: "string" },
+                            correction: { from: "dealer__Correction__c", type: "string" },
+                            payMethod: { from: "Payment_Method__c", type: "string", defaultValue: "" },
+                            payMethodName: { from: "Payment_Method__r" },
+                            laborType: { from: "dealer__Labor_Type__c",type: "string" },
+                            status: { from: "dealer__Stat__c",type: "string", defaultValue: "Open" },
+                        }
+                    },
+                    errors: "error",
+                    parse: function(response) {
+
+                        for (var i = 0; i < response.length; i++) {
+                            // Add Op Code Name
+                            if(typeof response[i].dealer__Standard_Operation_Code__r == 'undefined') {
+                                response[i].dealer__Standard_Operation_Code__r = {name: null}
+                            }
+                            //Migrating from dealer__Cause__c (short) to dealer__CauseExtended__c (long)
+                            //To Do: ticket 14030 - insert logic to grab existing short field data and insert into new long field.
+
+                            if(typeof response[i].dealer__Cause__c != 'undefined' && typeof response[i].dealer__CauseExtended__c == 'undefined' ) {
+                                response[i].dealer__CauseExtended__c = response[i].dealer__Cause__c;
+                            }                   
+                        }
+                        return response;
+                    }
+                },
+                // batch: true,
+                // autoSync: true,
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            id: getParameterByName('id'),
+                            action: 'rolines',
+                            roid: getParameterByName('id')
+                        }
+                    },
+                    update: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'update_line',  // BLL8c
+                            roid: getParameterByName('id')
+                        },
+                        method: 'POST',
+                        complete: function(data) {
+                            console.log('update: ' + JSON.stringify(data));
+                            reloadDetail();
+                        }                       
+
+                    },
+                    create: {                   
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'create_line',  // BLL8c
+                            rid: getParameterByName('id'),
+                            roid: getParameterByName('id')
+                        },
+						// BLL12 beforeSend - disable button
+						beforeSend: function() {
+							$dt("#grid").find("a.k-grid-cancel").hide();
+							$dt("#grid").find("a.k-grid-update").hide();
+						},
+						// BLL12 end
+						// BLL13
+						complete: function(data) {
+                            console.log('create: ' + JSON.stringify(data));
+							reRenderDetail();
+						},
+						// BLL13 end
+                        method: 'POST'
+                    },
+                    destroy: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'delete_line',
+                            roid: getParameterByName('id')
+                        },
+                        method: 'POST',
+                        complete: function(data){ // BLL7a
+                            console.log('delete line: ' + JSON.stringify(data));    // BLL7a
+                            reloadDetail(); // BLL7a
+                        }   // BLL7a
+                    }
+                },
+                error: function(e) {
+                    console.log(e); // BLL test
+                    console.log(e.errors); // displays "Invalid query"
+                    if (typeof e.errors != 'undefined') repairOrderModel.gridNotification(e.errors);
+                    else repairOrderModel.gridNotification('Unexpected response: ' + e.errorThrown);    // BLL7a
+                    // If Line exists in Model with error, remove the line;
+                },
+                change: function(e) {
+                    //console.log('Data Change Fired see line data V');
+                    var data = this.data();
+                    // console.log(data);
+                    // openRows();
+
+                },
+                dataBound: function(e) {
+                    openRows();
+                }
+            }),
+            gridNotification: function(msg, append) {
+                console.log('gridNotification');
+                if(typeof append == 'undefined') {
+                    append = '#force';
+                }
+                if(typeof msg == 'undefined') {
+                    msg = 'An unknown error occured. Please check that the repair order has a status of Open or Cashier before attempting to modify job lines.';
+                }
+                var _notif = $dt("#staticNotification").kendoNotification({
+                        appendTo: append,
+                        autoHideAfter: 0,
+                        stacking: "up"
+                    }).data("kendoNotification");
+                _notif.show(msg, "error");
+            },
+            techDetailData: null, 
+            techDetailTotal: null, 
+            detailInit: function (e) {
+                // bind parent data to sub-detailTow
+                kendo.bind(e.detailRow, e.data);
+
+                // setup parent row data
+                var parentRow = e.data;
+
+                console.dir(parentRow);
+                // console.log(e.data);
+
+                var detailRow = e.detailRow;
+                var tabstrip = detailRow.find(".tabstrip").kendoTabStrip({
+                    animation: {
+                        open: { effects: "fadeIn" }
+                    },
+                    show: function(_tab){
+                        // Save the active tab 
+                        var state = storeRowState;
+                        if (state) {
+                            // state = JSON.parse(state);
+                            for (var row in state) {
+                                if (row == parentRow.id ) {
+                                    var obj = state[row];
+                                    state[row] = {};
+                                    obj.tabClass = $dt(_tab.item).data('type');
+
+                                    state[row] = obj;
+                                }
+                            }
+                        }
+                        storeRowState = state;
+                        // sessionStorage.setItem("grid", JSON.stringify(state));
+                    }
+                });
+                // Set up data for parts read.
+                var _partsData = [];
+                    if( typeof e.data.dealer__Technician_Job_Times__r != 'undefined') {
+                        _partsData = e.data.dealer__Technician_Job_Times__r.records;
+                    }
+                    detailRow.find(".parts").kendoGrid({
+                        dataSource: {
+                            // data: _partsData,
+                            // lid=a24W0000000UUFiIAO&action=read_parts
+                            transport: {
+                                read: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        lid: parentRow.Id,
+                                        action: 'read_parts',
+                                        roid: getParameterByName('id')
+                                    }
+                                },
+                                update: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'update_parts_line',
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+                                    complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+
+                                },
+                                create: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'create_parts_line',
+                                        rid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+									dataType : 'json',
+                                    complete: function(data) {
+                                        // if(!errorTrap(data)) {
+                                            repairOrderModel.lines.read();
+                                            reloadDetail();
+                                            openRows();
+                                        // }
+                                    }
+                                },
+                                destroy: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'delete_parts_line',
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+                                    complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+                                }
+                            },
+                            schema: {
+                                model: {
+                                    id: "Id",
+                                    fields: {
+
+                                        Id: { from: "Id",type: "string" },
+                                        ServiceJobId: { from: "ServiceJobId",type: "string" },
+                                        PartName: { from: "PartName",type: "string" },
+                                        PartMasterId: { from: "PartMasterId",type: "string" },
+                                        PartInventoryId: { from: "PartInventoryId",type: "string" },
+                                        PartDescription: { from: "PartDescription",type: "string" },
+                                        SalePrice: { from: "SalePrice",type: "number" },
+                                        ExtendedTotal: { from: "ExtendedTotal",type: "number" },
+                                        QTY: { from: "QTY",type: "number",defaultValue:1,validation:{min:1} },
+                                        ListPrice: { from: "ListPrice",type: "number" },
+                                        poETA: { from: "poETA",type: "date" }, // DR7 - Needed to cast field to allow date format
+
+                                        // Additional Modal Fields
+                                        Order: { from: "Order",type: "number" },
+                                        Negative: { from: "Negative",type: "number" },
+                                        OnHand: { from: "OnHand",type: "number" },
+                                        PhysicalOnHand: { from: "PhysicalOnHand",type: "number" },
+                                        OnOrder: { from: "OnOrder",type: "number" },
+                                        partOrderUrgency: { 
+                                            from: "partOrderUrgency", 
+                                            type: "string",
+                                            // DR5
+                                            /**
+                                            validation: {
+                                                // Setup dynamic validation
+                                                orderUrgencyValidation: function (input) {
+                                                    if ( input.is("[name='orderUrgency']") && input.val() != "" && input.val() != null && input.val() != "None") {
+                                                        console.log(input);
+                                                        console.log( input.val() );
+                                                        console.log( e);
+                                                        // console.log( e.sender);
+                                                        console.log( $dt('#form_qty_order').val() );
+                                                        input.attr("data-orderUrgencyValidation-msg", "Required with QTY Order");
+                                                        return $dt('#form_qty_order').val() >= 0 ;
+                                                    }
+
+                                                    return true;
+                                                }
+                                            }
+                                            **/
+                                            // /DR5
+
+                                        },
+                                        partType: { from: "partType", type: "string"}  // BLL4a
+
+                                    }
+                                },
+                                errors: "error"
+                            },
+                            error: function(e) {
+
+                                // Prevent window from closing if there is an error
+                                detailRow.find(".parts").data('kendoGrid').one("dataBinding", function (ev) {
+                                    ev.preventDefault();
+
+                                });
+
+                                $dt('.k-edit-form-container .k-grid-update').prop('disabled', false);
+
+                                if(e.xhr != null) {
+                                    var responseString = e.xhr.responseText  ;
+                                    var skinnySource = $dt(e.xhr.responseText).find('#bodyCell');
+                                    if(skinnySource.length > 0) {
+                                        skinnySource.addClass('k-widget k-notification k-notification-error')
+                                        errorWin.content(skinnySource);
+                                        // errorWin.content('<span class="k-notification k-notification-error">'+skinnySource+'</span>');
+                                    } else {
+                                        if(responseString != '') {
+                                            errorWin.content(responseString);
+                                        }
+                                        else {
+                                            errorWin.content('Please check that the repair order has a stauts of Open or Cashier before attempting to modify job lines.')
+                                        }
+                                    }
+                                    errorWin.open().center();
+                                } else {
+                                    if(typeof e.errors != 'undefined') {
+                                        // $dt('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>').insertAfter('.k-edit-form-container wrapper');
+                                        $dt('.k-edit-form-container').append('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>');
+                                    }
+                                }
+
+                            }
+                        },
+                        toolbar: [{name:'create',text:'Add Part Line'}],
+                        columns:[
+                            {title:'Part No.', field:'PartName',width: 150},
+                            {title:'Description', field:'PartDescription'},
+                            {title:'Type', field:'partType'},   // BLL4a
+                            {title:'QTY', field:'QTY',width:40},
+                            {title:'Order', field: 'Order'},
+                            {title:'Urgency', field:'partOrderUrgency'},
+                            {title:'Order Request#', field:'orderLine'},
+                            {title:'PO', field:'poName'},
+                            {title:'PO ETA', field:'poETA', format: "{0: yyyy-MM-dd}" },
+                            {title:'Tracking#', field:'poTracking',width:150},
+                            {title:'Retail', field:'ListPrice', format: "{0:c2}",width: 60 },
+                            {title:'Sale', field:'SalePrice', format: "{0:c2}" ,width: 60},
+                            {title:'Ext. Total', field:'ExtendedTotal', format: "{0:c2}" ,width: 70},
+                            { command: ['edit',{name:'destroy',text:'Remove'}], title: '&nbsp;' },
+                        ],
+                        editable: {
+                            mode: "popup",
+                            template: kendo.template($dt("#popupEditorTempalte").html())
+                        },
+                        edit: function (e) { 
+
+                            // edit pop-up size
+                            var editWindow = this.editable.element.data("kendoWindow");
+                            editWindow.wrapper.css({ width: 680 });
+
+                            // console.log('e.model');
+                            // console.log(e.model);
+
+                            // var _partLine = e.model;
+                            // var _partLine = this.dataItem( $dt(e.sender.element[0]).closest('tr') );
+                            var _partLine = this.dataSource.getByUid( e.model.uid );                            
+
+                            $dt('.QTY').on('change', function(){
+                                //RT1 - not needed
+                                //var sV = $dt('#ListPrice').data('kendoNumericTextBox').value();
+                                //_partLine.set('SalePrice', sV);
+                             }); 
+                            $dt('.k-window-title').html("<h3>LINE #"+parentRow.lineNumber+" : "+parentRow.opCodeName+" </h3>"); 
+
+                            var _partQtyGrid = $dt(editWindow.wrapper).find('#qtyTable').data("kendoGrid");
+
+                            // DR1 -  Bind to the parent of dynamic input to monitor change
+                            $dt(editWindow.wrapper).find('#form_qty_requested').on('keyup change', function() {
+                                
+                                // DR2
+                                if( $dt(this).val() < 1 ) {
+                                    $dt(this).val(1); // Keep this field from going negative or below 1 -- DR9
+
+                                    // $dt('#orderUrgency').prop('required',true);
+                                } 
+                                // /DR2
+                                
+                                /*** DR9 - Moving ORDER AMOUNT to Server Side ***/
+                                /*
+                                var onHand      =   doubleVal($dt('#form_on_hand').val());
+                                var requested   =   doubleVal($dt('#form_qty_requested').val());
+                                var OnOrder   =   doubleVal($dt('#form_on_order').val());
+                                var PhysicalOnHand   =   doubleVal($dt('#form_PhysicalOnHand').val());
+                                if( PhysicalOnHand <= requested && PhysicalOnHand >= 0) {
+                                    $dt('#form_qty_order').val(requested - PhysicalOnHand).trigger('change');
+                                    // _partLine.set('OnOrder',requested - onHand);
+                                } else if ( PhysicalOnHand < 0 ) { // DR4
+                                    // If On Hand is Negative, make Order QTY equal to QTY Requested minus how many are on order
+                                    $dt('#form_qty_order').val( requested ).trigger('change');
+
+                                } // /DR4
+                                // //DR9 */
+
+                                console.log('_partLine.PhysicalOnHand :  ' + _partLine.PhysicalOnHand)
+                                console.log('_partLine.OnOrder :  ' + _partLine.OnOrder)
+                                console.log('_partLine.OnHand :  ' + _partLine.OnHand)
+                                console.log('_partLine.QTY :  ' + _partLine.QTY)
+
+                                if( _partLine.QTY > _partLine.OnHand ) {
+                                    $dt('#orderUrgency').prop('required',true);
+                                } else {
+                                    $dt('#orderUrgency').prop('required',false);
+                                }
+
+
+                            });
+
+                            /*** // DR Moved Order amt processing to server side.
+                            $dt(editWindow.wrapper).find('#form_qty_order').on('keyup change', function() {
+                                console.log('#form_qty_order Change Event ');
+                                var requested   =   doubleVal($dt('#form_qty_requested').val());
+                                var toOrder     =   doubleVal($dt('#form_qty_order').val());
+                                var onHand      =   doubleVal($dt('#form_on_hand').val());
+                                
+                                if(requested >= (toOrder + onHand) ) {
+
+                                    // Calculate the new
+
+                                    $dt('#form_qty_negative').val(requested - (toOrder + onHand) ).trigger('change');
+                                    // _partLine.set('OnOrder',requested - onOrder);
+                                }
+
+                                // DR2 // This may be unnecessary now with the dynamic validation in the schema above
+                                if( $dt(this).val() > 0 ) {
+                                    $dt('#orderUrgency').prop('required',true);
+                                } else {
+                                    $dt('#orderUrgency').prop('required',false);
+                                }
+                                // /DR2
+                            });         
+                            // /DR1
+                           // /DR9 ***/ 
+
+
+                            // Render AUTOCOMPLETE
+                            var autocomplete = $dt(editWindow.wrapper).find('#PartName').kendoAutoComplete({
+                                minLength: 2,
+                                filter: 'conatins',
+                                dataTextField: "PartName",
+                                valuePrimitive: true,
+                                // autoBind: false,
+                                template: '<strong>#:PartName #</strong> : #:PartDescription # <span class="text-muted"><strong>MFG:</strong> #: PartMFG # </span>',
+                                
+                                dataSource: repairOrderModel.partSearchDataSource,
+                                // height: 370
+                                select: function(e){
+                                    var _partMaster = this.dataItem(e.item) ;
+
+                                    // Render table after select
+                                    _partQtyGrid.dataSource.read({mid:_partMaster.PartMasterId});
+
+                                    $dt.ajax({
+                                        method: "POST",
+                                        url: "/apex/servicetrs",
+                                        data: { 
+                                            action: "part", 
+                                            mid: _partMaster.PartMasterId,
+                                            lid: '{!dealer__Service_Repair_Order__c.dealer__Company__c}',
+                                            roid: '{!dealer__Service_Repair_Order__c.Id}'
+                                        }
+                                    })
+                                    .done( function( results ) {
+
+                                        // Setup the parts
+                                        // _partQtyGrid.dataSource.read({ mid:results.PartMasterId });
+
+                                        /**** results.PhysicalOnHand ****/
+
+                                        console.log('Physical on-Hand; ' + results.PhysicalOnHand);
+
+                                        _partLine.set('PhysicalOnHand',results.PhysicalOnHand);
+                                        _partLine.set('PartName',results.PartName);
+                                        _partLine.set('PartMasterId',results.PartMasterId);
+                                        _partLine.set('PartInventoryId',results.PartInventoryId);
+
+                                        _partLine.set('PartDescription',results.PartDescription);
+                                        _partLine.set('OnOrder',results.OnOrder);
+                                        _partLine.set('OnHand',results.OnHand);
+                                        _partLine.set('ListPrice',results.ListPrice);
+
+                                        //RT1
+                                        if(parentRow.laborType == 'W' || parentRow.laborType == 'I') {
+                                            _partLine.set('SalePrice',results.Cost);
+                                        }
+                                        else {
+                                            _partLine.set('SalePrice',results.SalePrice);
+                                        }
+
+                                        // START DR9 - need to update quantity Order when a part is selected.
+                                        /*
+                                        var _requested   =   _partLine.get('QTY')
+
+                                        console.log('results.OnHand <= _requested  ' + (results.OnHand <= _requested));
+                                        console.log('results.OnHand >= 0  ' + (results.OnHand >= 0));
+
+                                        if(results.OnHand <= _requested && results.OnHand >= 1) {
+                                            _partLine.set('Order', _requested);
+                                        }  else if ( results.OnHand < 0 ) { // DR4
+                                            _partLine.set('Order', _requested);
+                                        }
+
+                                        console.log('_requested<results.OnHand  :  ' + _requested<results.OnHand);
+
+                                        // Dont Order any if there are some in stock.
+                                        if (_requested<=results.OnHand) {
+                                            console.log('_requested<results.OnHand');
+                                            _partLine.set('Order', 0);
+                                        
+                                        } 
+
+                                        console.log('_requested  ' + _requested);
+                                        console.log('_partLine.get("Order")  ' + _partLine.get('Order'));
+                                        console.log('results.OnHand  ' + results.OnHand);
+
+                                        if(_requested >= (_partLine.get('Order') + results.OnHand) ) {
+                                            // $dt('#form_qty_negative').val(_requested - (_partLine.get('order') + results.OnHand) ).trigger('change');
+                                            _partLine.set('Negative', _requested - (_partLine.get('order') + results.OnHand));
+
+                                        }
+
+                                        $dt('#form_qty_order').trigger('change'); // just a catch all.
+                                        */
+
+                                        // Maybe unecessary with trigger change above....
+                                        if(_partLine.QTY > _partLine.OnHand) {
+                                            $dt('#orderUrgency').prop('required',true);
+                                        } else {
+                                            $dt('#orderUrgency').prop('required',false);
+                                        }
+
+                                        // /DR9
+
+                                    });
+
+                                }
+                            }).data("kendoAutoComplete");
+                        },
+                        save: function(e){
+                            // prevent update button from beiong clicked twice
+                            // $dt('.k-edit-form-container .k-grid-update').prop('disabled', true);
+
+                            $dt(event.srcElement)
+                                .addClass("k-state-disabled")
+                                .bind("click", disable = function (e) { e.preventDefault(); return false; })
+
+                            this.dataSource.one("requestEnd", function () {
+                                $dt("[data-role=window] .k-grid-update").off("click", disable).removeClass("k-state-disabled");
+                            })
+
+                            // Check for Urgency not being populated
+
+                        }
+                    });
+                
+               		// Set up data for tech time read.
+                	var _techData = [];
+                    if( typeof parentRow.dealer__Technician_Job_Times__r != 'undefined') {
+                        _techData = parentRow.dealer__Technician_Job_Times__r.records;
+                    }
+                    detailRow.find(".techtime").kendoGrid({
+                        dataSource: {
+                            // data: _techData,
+                            transport: {
+                                read: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        lid: parentRow.Id,
+                                        action: 'read_tech_time',
+                                        roid: getParameterByName('id')
+                                    }
+                                },
+                                update: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'update_tech_time',
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+                                    dataType: 'json',
+                                    complete: function(data) {
+                                        // _totalLabor();
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+                                },
+                                create: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'create_tech_time',
+                                        rid: getParameterByName('id'),
+                                        lid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+                                    dataType: 'json',
+									// BLL12 beforeSend - disable button
+									beforeSend: function() {
+										detailRow.find("a.k-grid-cancel").hide();
+										detailRow.find("a.k-grid-update").hide();
+									},
+									// BLL12 end
+									complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+                                },
+                                destroy: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'delete_tech_time',
+                                        rid: getParameterByName('id'),
+                                        lid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    complete: function(data) {
+                                        console.log('delete_tech_time complete');   // BLL6a
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+                                },
+                                parameterMap: function(data, type) {
+                                    if (type == "create" || type == "update" ) {
+                                        data.dealer__Date__c = moment( data.dealer__Date__c ).format('MM/DD/YYYY');
+                                    }
+                                    return data;
+                                }
+                            },
+                            schema: {
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        dealer__Date__c: {from:'dealer__Date__c', type: 'date' },
+                                        dealer__Actual_Time_Entry__c: {from:'dealer__Actual_Time_Entry__c', type: 'number' } ,
+                                        dealer__Service_Job_Line__c: {from:'dealer__Service_Job_Line__c', type: 'text' } ,
+                                        Payment_Method_Rate__c: {from:'Payment_Method_Rate__c', type: 'number', editable: false } ,
+                                        Labor_Total__c: {from:'Labor_Total__c', type: 'number', editable: false } ,
+                                        Job_Line_Number__c: {from:'Job_Line_Number__c', type: 'number' } ,
+                                        newLineId: { type: 'text', defaultValue: null } ,
+                                        // Labor_Total__c: {from:'Labor_Total__c', type: 'number' } // This should be the field ... 
+                                    }
+                                },
+                                errors: 'error'
+                            },
+                            error: function(e) {
+                                console.log(e); // BLL6a
+                                console.log(e.errors); // BLL6a
+                                if (typeof e.errors!='undefined') repairOrderModel.gridNotification(e.errors);    // BLL6a
+                                else repairOrderModel.gridNotification('Unexpected response: ' + e.errorThrown);    // BLL7a
+                                if(e.xhr != null) {
+                                    var responseString = e.xhr.responseText  ;
+                                    var skinnySource = $dt(e.xhr.responseText).find('#bodyCell');
+                                    if(skinnySource.length > 0) {
+                                        skinnySource.addClass('k-widget k-notification k-notification-error')
+                                        errorWin.content(skinnySource);
+                                        // errorWin.content('<span class="k-notification k-notification-error">'+skinnySource+'</span>');
+                                    } else {
+                                        if(responseString != '') {
+                                            errorWin.content(responseString);
+                                        }
+                                        else {
+                                            errorWin.content('Please check that the repair order has a stauts of Open or Cashier before attempting to modify job lines.')
+                                        }
+                                    }
+                                    errorWin.open().center();
+                                } else {
+                                    if(typeof e.errors != 'undefined') {
+                                        // $dt('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>').insertAfter('.k-edit-form-container wrapper');
+                                        $dt('.k-edit-form-container').append('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>');
+                                    }
+                                }
+
+                            }
+                        },
+                        editable: 'inline',
+                        toolbar: [
+                           {'name': 'create', 'text': 'Add Time'}
+                        ],
+                        columns:[
+                            { title:'Technician', field:'dealer__Technician__c', editor: techList, template: repairOrderModel.technameTemplate},
+                            { title:'Date', field:'dealer__Date__c',format: "{0: MM/dd/yyyy }" },
+                            // {title:'Date', field:'dealer__Date__c',format: "{0: MM/dd/yyyy }",editor: dateField},
+                            { title:'Time', field:'dealer__Actual_Time_Entry__c' },
+                            { title:'Rate', field:'Payment_Method_Labor_Rate__c', format: '{0:c2}' },
+                            { title:'Ext. Total', field:'Labor_Total__c' , format: '{0:c2}', editor: techLaborTotal, template: '#=Labor_Total__c#' },
+                            { title:'Line', field:'newLineId', width: 75, editor: techLineNumber, template: '#=Job_Line_Number__c#' },
+                            { command: ['edit','destroy'], title: '&nbsp;' }
+                        ]
+                    });
+
+                // Set up POS data for table read.
+                var _posData = [];
+                    if( typeof parentRow.dealer__Purchase_Order_Line__r != 'undefined') {
+                        _posData = parentRow.dealer__Purchase_Order_Line__r.records;
+                    }
+                    detailRow.find(".pos").kendoGrid({
+                        // editable: 'inline',
+                        dataSource: {
+                            data: _posData,
+                            // filter: { field: "EmployeeID", operator: "eq", value: e.data.EmployeeID }
+                        },
+                        columns:[
+                            {command: [{ name:'Print PO', title:'Print', click:PrintPurchaseOrder},{ name:'View Edit PO', title:'View', click:EditPurchaseOrder}]},
+                            {title:'Name', field:'dealer__Purchase_Order__r.Name'},
+                            {title:'Description', field:'dealer__Description__c'},
+                            {title:'Amount', field:'dealer__Amount__c', format: "{0:c2}" },
+                            {title:'ETA'},
+                            {title:'Tracking#'},
+                            {title:'Vendor', field: 'dealer__Purchase_Order__r.dealer__Vendor__c'}
+                        ],
+                        toolbar: kendo.template($dt("#poToolbatTemplate").html()),
+                    });
+
+                // set up misc table
+                var _miscData = [];
+                    if( typeof parentRow.Service_Misc_Charge__r != 'undefined') {
+                        _miscData = parentRow.Service_Misc_Charge__r.records;
+                    }
+                    detailRow.find(".miscTable").kendoGrid({
+                        editable: 'inline',
+                        dataSource: {
+                            // data: _miscData,
+                            transport: {
+                                read: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        lid: parentRow.Id,
+                                        action: 'read_misc',
+                                        coNum: '{!JSENCODE(ro.dealer__Company__r.dealer__Company_Number__c)}',
+                                        roid: getParameterByName('id')
+                                    }
+                                },
+                                update: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'update_misc',                                      
+                                        rid: getParameterByName('id'),
+                                        lid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+                                    complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    },
+                                    dataType: 'json'
+                                },
+                                create: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'create_misc',
+                                        rid: getParameterByName('id'),
+                                        lid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    method: 'POST',
+									// BLL12 beforeSend - disable button
+									beforeSend: function() {
+										detailRow.find("a.k-grid-cancel").hide();
+										detailRow.find("a.k-grid-update").hide();
+									},
+									// BLL12 end
+                                    complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    },
+                                    dataType: 'json'
+                                },
+                                destroy: {
+                                    url: "/apex/servicetrs",
+                                    data: {
+                                        action: 'delete_misc',
+                                        rid: getParameterByName('id'),
+                                        lid: parentRow.Id,
+                                        roid: getParameterByName('id')
+                                    },
+                                    complete: function(data) {
+                                        repairOrderModel.lines.read();
+                                        reloadDetail();
+                                        openRows();
+                                    }
+                                }
+                            },
+                            schema: {
+                                model: {
+                                    id: "Id",
+                                    fields: {
+                                        Name: {from:'Name', type: 'string', editable: false },
+                                        Amount: {from:'Amount__c', type: 'number' },
+                                        QTY: {from:'Quantity__c', type: 'number', defaultValue: 1  },
+                                        Type: {from:'Type__c', type: 'text' },
+                                        newLineId: { type: 'text', defaultValue: null } ,
+                                        Service_Job_Line__c: {from:'Service_Job_Line__c', type: 'string' } ,
+                                        ServiceLineNumber: {from:'Service_Job_Line__r.dealer__Line_Number__c', type: 'string' } ,
+                                        Account: {from:'General_Ledger_Account__c', type: 'string' } 
+                                    }
+                                },
+                                errors: 'error'
+                            },
+                            error: function(e) {
+                                console.log(e);
+                                console.log(e.xhr);
+                                if(e.xhr != null) {
+                                    var responseString = e.xhr.responseText  ;
+                                    var skinnySource = $dt(e.xhr.responseText).find('#bodyCell');
+                                    if(skinnySource.length > 0) {
+                                        skinnySource.addClass('k-widget k-notification k-notification-error')
+                                        errorWin.content(skinnySource);
+                                        // errorWin.content('<span class="k-notification k-notification-error">'+skinnySource+'</span>');
+                                    } else {
+                                        if(responseString != '') {
+                                            errorWin.content(responseString);
+                                        }
+                                        else {
+                                            errorWin.content('Please check that the repair order has a stauts of Open or Cashier before attempting to modify job lines.')
+                                        }
+                                    }
+                                    errorWin.open().center();
+                                } else {
+                                    if(typeof e.errors != 'undefined') {
+                                        // Populate with error message and display
+                                        errorWin.content(e.errors).open().center(); // DR11
+
+                                        // $dt('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>').insertAfter('.k-edit-form-container wrapper');
+                                        $dt('.k-edit-form-container').append('<div class="k-widget k-notification k-notification-error">'+e.errors+'</div>');
+                                    }
+                                }
+
+                            }
+                        },
+                        toolbar: [ {name:'create', text:'Add Misc Line'}], 
+                        columns:[
+                            // {title:'Name', field:'Name'},
+                            {title:'Type', field:'Type',editor: miscTypeSelect },
+                            {title:'Amount', field:'Amount', format: "{0:c2}" },
+                            {title:'QTY', field: 'QTY', width: 75,},
+                            {title:'Line', field:'newLineId', width: 75, editor: techLineNumber, template: '#=ServiceLineNumber#' },
+                            {title:'Account', field:'Account', hidden: true },
+                            { command: ['edit','destroy'], title: '&nbsp;' }
+                        ]
+                    });
+
+                detailRow.find('.autoHeight').on('keyup input', function(el) { 
+                    $dt(this).data('dHeight', this.scrollHeight + (this.offsetHeight - this.clientHeight) ); // DR6a update stored height on bind
+                    resizeTextarea(this);
+                });
+                
+                $dt.each( detailRow.find('.autoHeight'), function(i, el){
+                    // console.log(this);
+                    // $dt(this).css('height', this.scrollHeight + (this.offsetHeight - this.clientHeight)); 
+                    $dt(this).data('dHeight', this.scrollHeight + (this.offsetHeight - this.clientHeight) ); // DR6a store height and bind to element
+                });
+                
+            },
+            svcCodesDataSource: new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'operations',
+                            rid: getParameterByName('id') //ACB1
+                        }
+                    }
+                }
+            }),
+            paymentTypesDataSource: new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'payment_methods'
+                        }
+                    }
+                }
+            }),
+            statusSource: new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'stat'
+                        }
+                    }
+                }
+            }),
+            partSearchDataSource: new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'search_parts'
+                        }
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "PartMasterId",
+                        fields: {
+                            PartName: { from: "PartName",type: "string" },
+                            PartMFG: { from: "PartMFG",type: "string" },
+                            PartMasterId: { from: "PartMasterId",type: "string" },
+                            PartDescription: { from: "PartDescription",type: "string" },
+                            search_display: { from: "search_display",type: "string" }
+                        }
+                    },
+                },
+                serverFiltering: true
+            }),
+            storeInventoryDataSource: new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/apex/servicetrs",
+                        data: {
+                            action: 'global_inventory'
+                        }
+                    }
+                }
+            }),
+            laborTypeTemplate: kendo.template($dt("#laborTypeTemplate").html()),
+            technameTemplate: kendo.template($dt("#technameTemplate").html()),
+            // partTemplate: kendo.template($dt("#partTemplate").html()),
+        }); 
+        // BIND Model: repairOrderModel to Grid
+        kendo.bind( $dt("#grid"), repairOrderModel);
+
+        // GET GRID AND DATA
+        var grid = $dt("#grid").data("kendoGrid");
+
+        // Bind to edit event of row
+        grid.bind("edit", function (e) {
+
+            // if (!e.model.isNew()) {}
+            grid.expandRow(e.container);
+            console.log(e.container);
+            // Enable textareas on edit
+            $dt(e.container).next('.k-detail-row').find('textarea:disabled').prop('disabled', false);
+
+            // Deactivate tabs if this is a new line
+            $dt(e.container).next('.k-detail-row').find('textarea:disabled').prop('disabled', false);
+
+            // Disable tabs if line is new
+            if ( e.model.isNew() ) {
+                var tabStrip = $dt(e.container).next('.k-detail-row').find('.tabstrip');
+                var tabKendo = tabStrip.data("kendoTabStrip");
+
+                tabKendo.disable( tabStrip.find('.partsTab') );
+                tabKendo.disable( tabStrip.find('.techTimeTab') );
+                tabKendo.disable( tabStrip.find('.posTab') );
+                tabKendo.disable( tabStrip.find('.miscChargesTab') );
+            }
+            
+        });
+
+        // Bind to canel event of row
+        grid.bind("cancel", function(e){
+            // CLose the opened row if editing is canceled.
+            grid.collapseRow(e.container);
+            // Disable textareas on cancel
+            $dt(e.container).next('.k-detail-row').find('.threec textarea').prop('disabled', 'disabled');
+
+            // DR8
+            repairOrderModel.svcCodesDataSource.filter([]);
+            repairOrderModel.paymentTypesDataSource.filter([]);
+            
+            //hideDelete();
+            setTimeout(hideDelete, 50);
+            // /DR8
+        });
+
+        // Bind to canel event of row
+        grid.bind("save", function(e){
+            // Re-open rows
+            openRows();
+            // Disable textareas on cancel
+            $dt(e.container).next('.k-detail-row').find('.threec textarea').prop('disabled', 'disabled');
+            
+            // DR8
+            repairOrderModel.svcCodesDataSource.filter([]);
+            repairOrderModel.paymentTypesDataSource.filter([]);
+            // /DR8
+        });
+
+        // Bind to detail expansion - 
+        grid.bind("detailExpand", function(e){
+            
+            // remember detail expansions
+            // if not a new line
+            if ( this.dataItem(e.masterRow).id != '' ) {
+                var state = storeRowState;
+                
+                if (!state) {
+                  state = {};
+                } else {
+                  // state = JSON.parse(state);
+                  state = storeRowState;
+                }
+
+                var activeClass = e.detailRow.find('.k-state-active').data('type');
+
+                // DR6b
+                $dt.each( e.detailRow.find('.autoHeight'), function(i, el){
+                    resizeTextarea(this);
+                });
+                // / DR6b
+
+                // if (!state.hasOwnProperty( this.dataItem(e.masterRow).id )) {
+                    state[ this.dataItem(e.masterRow).id ] = { 
+                        id: this.dataItem(e.masterRow).id, 
+                        open: true, 
+                        // TODO: possibly fix this this. resets the tabs each time the page loads.
+                        tabClass: activeClass
+                    };
+                // }
+                // sessionStorage.setItem("grid", JSON.stringify(state));
+                storeRowState = state;
+            }
+            //hideDelete();
+        });
+
+        // Bind to detail collapse event
+        grid.bind("detailCollapse", function(e){
+            // if not a new line
+            if (this.dataItem(e.masterRow).id != '') {
+
+                // var state = sessionStorage.getItem("grid");
+                var state = storeRowState;
+                
+                if (state) {
+                  // state = JSON.parse(state);
+                  
+                  delete state[this.dataItem(e.masterRow).id];
+                    // console.log(state);
+                  
+                  // sessionStorage.setItem("grid", JSON.stringify(state));
+                  storeRowState = state;
+                }
+            }
+        });
+
+        // Hide Delete buttons if there is a line total > 0
+        grid.bind("dataBound", function(e){
+            // grid.collapseRow(e.container);
+            /*$dt('#grid').find('.k-master-row').each( function(i,el) {
+                var rowData = grid.dataItem(el);
+
+                if( typeof rowData.lineTotal != 'undefined' ) {
+                    if( rowData.lineTotal > 0 ) {
+                        $dt(el).find('.k-grid-delete').hide();
+                    }
+                }
+            });*/
+            hideDelete();
+            openRows();
+            
+        });
+        
+        
+        function hideDelete(){
+            //var grid = this;
+            grid.tbody.find(".k-master-row").each(function(e){
+                var rowData = grid.dataItem(this);    
+                // You must make sure there is data attached this is not the case for new records.             
+                if( typeof rowData != 'undefined' && typeof rowData.lineTotal != 'undefined' ) {
+                    if( rowData.lineTotal > 0 ) {
+                        $btnDelete = $dt(this).find('.k-grid-delete');
+                        if($btnDelete && $btnDelete.length>0)
+                            $dt(this).find('.k-grid-delete').remove();
+                    }
+                }
+            });
+        }
+        
+        // Render tech list in editable row
+        function opCodeList(container, options) {
+            $dt('<input class="opCodeSel" required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    filter: 'contains',
+                    // optionLabel: 'Choose Code...',
+                    autoBind: true,
+                    valuePrimitive: true,
+                    // text: options.model.Name,
+                    dataSource: repairOrderModel.svcCodesDataSource,
+                    select: function(e) {
+                        var codeData = this.dataItem( e.item.index() );
+
+                        var job_line =  $dt(e.sender.element[0]).closest('tr');
+                        var jobData = grid.dataItem( job_line );
+
+                        // if( (jobData.concern == null || typeof jobData.concern == 'undefined') && typeof codeData.dealer__Concern__c != 'undefined' ) {
+                        if(typeof codeData.dealer__Concern__c != 'undefined' ) {
+                            jobData.set('concern', codeData.dealer__Concern__c);
+                        }
+
+                        if( (jobData.laborType =='' || jobData.laborType == null || typeof jobData.laborType == 'undefined') && typeof codeData.Default_Payment_Method__c != 'undefined' ) {
+                            jobData.set('payMethod', codeData.Default_Payment_Method__c);
+						}
+						// BLL14
+						if (typeof codeData.dealer__Book_Time__c!='undefined' && codeData.dealer__Book_Time__c!=0.00) {
+							if ({!NOT(ro.dealer__Company__r.LaborBookEqualsActualTime__c)}) { 
+								jobData.set('bookTime', codeData.dealer__Book_Time__c);
+							}
+						}
+						// BLL14 end
+                    },
+                });
+        }
+
+        /** Column Editors */
+		// Render tech list in editable row
+        function PaymentMethodsList(container, options) {
+            $dt('<input class="laborTypeSel" data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '" />')
+                .appendTo(container)
+                .kendoDropDownList({
+                    filter: 'contains',
+                    // optionLabel: 'Choose Method...',
+                    // text: options.model.payMethod,
+                    autoBind: true,
+                    valuePrimitive: true,
+                    dataSource: repairOrderModel.paymentTypesDataSource
+                });
+        }      
+
+        function queryParams(s) {
+          // This function is anonymous, is executed immediately and 
+          // the return value is assigned to QueryString!
+          var query_string = {};
+          var query = s;
+          var vars = query.split("&");
+          for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+                // If first entry with this name
+            if (typeof query_string[pair[0]] === "undefined") {
+              query_string[pair[0]] = decodeURIComponent(pair[1]);
+                // If second entry with this name
+            } else if (typeof query_string[pair[0]] === "string") {
+              var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+              query_string[pair[0]] = arr;
+                // If third or later entry with this name
+            } else {
+              query_string[pair[0]].push(decodeURIComponent(pair[1]));
+            }
+          } 
+          return query_string;
+        }
+
+        // Render Status Selectlist in editable row
+        function statusList(container, options) {
+            $dt('<input class="statusSel" data-text-field="label" data-value-field="value" data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    filter: 'contains',
+                    // optionLabel: 'Choose Status...',
+                    // text: options.model.status,
+                    autoBind: true,
+                    dataSource: repairOrderModel.statusSource
+                });
+        }
+
+        // Render tech Selectlist in editable row
+        function techList(container, options) {
+            $dt('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    filter: 'contains',
+                    text: options.model.dealer__Technician__c,
+                    // autoBind: false,
+                    dataSource: {
+                        transport: {
+                            read: {
+                                url: "/apex/servicetrs",
+                                data: {
+                                    action: 'techs',
+                                    roId: repairOrderModel.roId
+                                }
+                            }
+                        }
+                    }
+                });
+        }
+
+        // render date picker in edital row
+        function dateField(container, options) {
+            $dt('<input data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDatePicker();
+        }
+
+        function techLineNumber( container, options ) {
+            $dt('<input data-text-field="lineNumber" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    // autoBind: true,
+                    valuePrimitive: true,
+                    dataSource: {
+                        data: repairOrderModel.lines.data()
+                    }
+                });
+        }
+
+        function techLaborTotal( container, options) {
+            // 
+        }
+
+        // Render tech Selectlist in editable row
+        function miscTypeSelect(container, options) {
+            $dt('<input data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    // text: options.model.dealer__Technician__c,
+                    // autoBind: false,
+                    dataSource: {
+                        transport: {
+                            read: {
+                                url: "/apex/servicetrs",
+                                data: {
+                                    action: 'misc_types',
+                                    coNum: '{!JSENCODE(ro.dealer__Company__r.dealer__Company_Number__c)}'
+                                }
+                            }
+                        }
+                    },
+                    dataTextField: "name",
+                    dataValueField: "name",
+                    select: function(e) {
+                        /*
+                        var opt = e.item;
+                        console.log(opt);
+                        console.log(e.sender);
+                        console.log( $dt(e.sender) );
+
+                        var loc = e.sender.dataItem(e.item);
+                        console.log(loc);
+
+                        var misc_line =  $dt(e.sender.element[0]).closest('tr');*/
+
+                        // Get selected item data
+                        var optData = e.sender.dataItem(e.item);
+                        
+                        // Get the current line and Misc table data
+                        var misc_line = $dt(e.sender.element[0]).closest('tr');
+                        var misc_table = misc_line.closest('.miscTable').data('kendoGrid');
+
+                        console.log(misc_table);
+
+                        // Get the current line data
+                        var miscData = misc_table.dataItem( misc_line );
+
+                        // Set the line value using data binding method
+                        miscData.set('Amount',optData.rate);
+                        miscData.set('Name',optData.name);
+                        miscData.set('Type',optData.name);
+                        miscData.set('QTY',optData.qty);
+                        miscData.set('Account',optData.acct);
+
+                        console.log( miscData );
+                    }
+                });
+        }
+
+        /** Utility Functions **/
+        /*
+        function getParameterByName(s, name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                results = regex.exec(s);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        } 
+        */         
+
+        function createPo(e){
+            e.preventDefault();
+            // var dataItem = this.dataItem($dt(e.currentTarget).closest("tr") );
+            console.log( e );
+            // console.log( dataItem );
+            // window.location('/apex/PurchaseOrder?ro='+a25W000000077hW+'&job='+dataItem.Id)
+            // https://dealer.cs13.visual.force.com/apex/PurchaseOrder?ro=a25W000000077hW&job=a24W0000000UUFT
+        }
+
+        function doParts(e) {
+            e.preventDefault();
+
+            var dataItem = this.dataItem($dt(e.currentTarget).closest("tr"));
+            console.log(e);
+            // console.log(dataItem);
+            alert('Need to Hook up this button');
+        }
+
+        function doLabor(e) {
+            e.preventDefault();
+            var dataItem = this.dataItem($dt(e.currentTarget).closest("tr"));
+            // BLL10 
+            // window.open('/' + dataItem.Id);
+            MW_OpenWindowTo('/' + dataItem.Id);
+            // BLL10 end
+        }
+
+        function openRows() {
+            // var state = sessionStorage.getItem("grid");
+            var state = storeRowState;
+            var _grid = $dt("#grid").data("kendoGrid");
+
+            if (state) {
+                // console.log(state);
+                // state = JSON.parse(state);
+
+                for (var row in state) {
+
+                    if (state.hasOwnProperty(row)) {
+
+                        var obj = state[row];
+
+                        // console.log(obj);
+
+                        var dataItem = _grid.dataSource.get(obj.id);
+
+                        console.log(dataItem);
+                        _grid.expandRow('tr[data-uid="' + dataItem.uid + '"]');
+
+                        var tabStrip = $dt('tr[data-uid="' + dataItem.uid + '"]').next('.k-detail-row').find('.tabstrip');
+                        var tabLink = tabStrip.find('.'+obj.tabClass);
+                        tabStrip.data("kendoTabStrip").activateTab( tabLink );
+
+                    }
+                }
+            }
+        }
+
+        function PrintPurchaseOrder(e) {
+            e.preventDefault();
+            var dataItem = this.dataItem($dt(e.currentTarget).closest("tr"));
+            // console.log(dataItem);
+            //window.open('/apex/dealer__PurchaseOrderPDF?id=' + dataItem.dealer__Purchase_Order__c);
+            window.open('/apex/c__PurchaseOrderPDF?id=' + dataItem.dealer__Purchase_Order__c);
+        }
+
+        function EditPurchaseOrder(e) {
+            e.preventDefault();
+            var dataItem = this.dataItem($dt(e.currentTarget).closest("tr"));
+            // BLL10
+            //window.open('/apex/dealer__PurchaseOrder?id=' + dataItem.dealer__Purchase_Order__c); 
+            MW_OpenWindowTo('/apex/dealer__PurchaseOrder?id=' + dataItem.dealer__Purchase_Order__c);
+            // BLL10 end
+        }
+
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                results = regex.exec(location.search);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        var resizeTextarea = function(el) {
+            // Use the 
+            $ta = $dt(el);
+            var dynaHeight = $dt(this).scrollHeight + ($dt(this).offsetHeight - $dt(this).clientHeight); // There is a bug where this could calculate to 0 when the element is not fully visible during a "detail expand"
+            $ta.css('height', ( typeof $ta.data('dHeight') != 'undefined') ? $ta.data('dHeight') : dynaHeight );
+        };
+
+        /*
+            Total all tech labor total items and populates the value in the datamodel
+        */
+        function _totalLabor() {
+            lineId='a24W0000000UY70IAG';
+            var lines = repairOrderModel.lines.data();
+            if(lines.length==undefined) { return; }
+            ServiceRepairOrder2.laborTotal(lineId, function(result, event){
+                if(event.status) {
+                    console.log(result);
+                }
+            });
+        }
+
+        /*
+            Open Detail view of Service Job Line
+         */
+        function showDetails(e) {
+            e.preventDefault();
+            var dataItem = this.dataItem($dt(e.currentTarget).closest("tr"));
+            // BLL10
+            // window.location.replace('/'+dataItem.Id);
+            MW_NavigateTo('/' + dataItem.Id);
+            // BLL10 end
+        }
+
+        function doubleVal(v) {
+
+            if(v== undefined) {
+                return 0;
+            }
+            if(typeof v=='number') {
+                return v;
+            }           
+            if(v=='') {
+                return 0;
+            }
+            if(v === parseInt(v)) {
+                return v;
+            }
+            return Number(v.replace(/[^0-9-.]/g, ''));
+        }                   
+
+        function errorTrap(d) {
+            console.log('Error Trap ');
+            console.log(d);
+            var json = null;
+            try{
+                json = JSON.parse(d.responseText);
+            } catch(e){
+                console.log('Unable to find the Response Text');
+            }
+             
+            if(json !== null) {
+                console.log(json);
+                if(json.hasOwnProperty('error')) {
+                    alert(json.error);
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .header {
+            margin: 20px 0;
+        }
+
+        #force th {
+            padding: 3px 5px;
+            /*font-size: 1.25em;*/
+        }
+
+        #force td {
+            padding: 3px 5px;
+        }
+
+        #force .k-popup .k-list .k-item,.k-list-container ul li {
+            /*padding-left: 0;*/
+            margin: 0;
+        }
+
+        #force .no-margin {
+            margin: 0;
+        }
+
+        #force .tabstrip ul {
+            margin-top: 0;
+            margin-bottom: 0; 
+        }
+
+        #force .table_column {
+            min-height: 300px;
+            /*width: 100%;*/
+            float: right;
+        }
+
+        #force .OnHand, #force .OnOrder , #force .PhysicalOnHand {
+            width: 55px;
+            display: inline-block;
+            clear: left;`
+        }
+
+        .wrapper, .k-widget.k-window {
+            width: 680px;
+        }
+
+        .k-edit-form-container {
+            width: 98% !important;
+        }
+
+        #force .PartName, #force .k-autocomplete, #force #PartDescription {
+            width: 100%;
+        }
+
+        #force input.PartName {
+            height: 32px;
+        }
+
+        #force span.PartName {
+            height: 34px;
+        }
+
+        #PartName-list .k-item {
+            border-bottom: 1px solid #f2f2f2;
+            /*line-height: 1.2;*/
+        }
+
+        #PartName-list .k-item .text-muted {
+            font-size: .85em;
+            color: #999;
+        }
+
+        #force .k-master-row {
+            border-top-width: 2px;
+            border-top-style: solid;
+            border-top-color: #BBB;
+        }
+
+        #force .k-grid tr .k-button {
+            padding: 1px 5px;
+            font-size: 12px;
+            line-height: 1.5;
+            border-radius: 3px;
+        }
+
+        .k-numeric-wrap .k-input {
+            height: 32px;
+            padding: 6px 12px;
+        }
+
+        .k-numeric-wrap .k-select {
+            padding-top: 4px;
+        }
+    </style>
+    
+    <!-- BLL2a disable some buttons if tax needs recalc'd -->
+    <script type="text/javascript">
+    function checkAvaTaxStatus() {
+        if ('{!PrintCashierRequireTaxCalc}'=='true' && '{!dealer__Service_Repair_Order__c.TaxCommitDT__c}'=='') {
+            if (('{!ro.dealer__Status__c}'=='Open' || '{!ro.dealer__Status__c}'=='Cashier') && ('{!NeedToRecalcTax}'=='true')) {
+                $dt('input[name=print_repair_order]').attr('disabled','disabled');
+                $dt('input[name=print_audit_invoice]').attr('disabled','disabled');
+                $dt('input[name=cashier]').attr('disabled','disabled');
+                $dt('#btn_CalcTax').addClass('btn-warning');
+            }
+        }
+    }
+    $dt(document).ready(function() {
+            checkAvaTaxStatus();
+    });
+    // BLL10
+    // fix navigation under lightning
+    function MW_NavigateTo(url) {
+	    if (typeof sforce!=='undefined') {
+    		sforce.one.navigateToURL(url);
+	    } else {
+		    window.location.href = url;
+	    }
+    }
+    function MW_OpenWindowTo(url) {
+	    if (typeof sforce!=='undefined') {
+    		sforce.one.navigateToURL(url);
+	    } else {
+		    window.open(url);
+	    }
+    }
+	// BLL10 end
+	// BLL13
+	function reRenderDetail() {
+    	console.log('Reload Detail');
+    	repairOrderModel.lines.read();  
+    	reloadDetail();
+	}
+	// BLL13 end
+    </script>
+    <!-- BLL2a end -->
+</apex:page>

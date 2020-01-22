@@ -1,0 +1,317 @@
+<!--
+2016-05-12   RedTeal     RT1 - changes to use the Inventory Media object to get the url of images hosted on amazon instead of MBW website
+2016-10-04  A. Bangle   ACB1 - Added in variables for email, phone, mobile and to remove all contact information from brochure printout
+2019-02-21  J. Pritt    jrp1 - add Price Disclaimer at bottom and place astrick by price
+-->
+
+<apex:page renderAs="pdf" applyHtmlTag="false" showHeader="false" showChat="false" standardStylesheets="false" standardController="dealer__Vehicle_Inventory__c" extensions="VehicleInventory_Brochure">
+<html>
+<head>
+    <title>Vehicle Inventory Info</title>
+    <style>
+
+        @page {
+          size:portrait;
+          margin: 0.25in 0.5in .35in;
+           
+           @bottom-left {
+                content: "* Prices do not include government fees and taxes, any finance charges, any dealer document processing charge, any electronic filing charge and any emission testing charge."; /* "Prepared by MobilityWorks"; */
+                font-size: .6em;
+            }
+
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        body {
+            font-family: sans-serif;
+            font-size: 12px;
+            max-width: 900px;
+        }
+
+        .main_logo {
+            float: left;
+            height: 50px;
+            width: auto;
+            margin-right: 15px; 
+        }
+
+        table {
+            border-color: #666;
+            border-width: 0;
+            width: 100%;
+        }
+
+        td {
+            border-color: #666;
+            font-size:12px;
+            color: #333;
+        }
+
+
+        h1 {
+            margin: .5em 0 .5em;
+        }
+
+        h1 small {
+          display: block;
+          font-size: .6em;
+          font-weight: 400;
+          color: #777;
+        }
+
+        h3 small {
+          display: inline-block;
+          font-weight: 400;
+          color: #777;
+        }
+
+        hr {
+            border: 0;
+            border-bottom: 1px solid #777;
+        }
+        #wrapper {
+            width: 100%;
+            position: relative;
+        }
+
+        .header_row {
+            margin-top: 10px;
+            background-color: #0077c8; 
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFF;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .header_row2 {
+            color: #000;
+            padding: 7px 0px;
+            font-size: 24px;
+        }
+
+        .col-2 {
+            width: 48%;
+            margin: 1%;
+            float: left;
+        }
+
+        .col-2 td {
+            padding: 2px 3px;
+        }
+
+        .veh_img {
+            width: 48%;
+            padding: 1%;
+            height: auto;
+            float: left;
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="#wrapper">
+    <div id="header">
+        <table cellpadding="5" cellspacing="0" width="100%">
+            <tr>
+                <td width="60%">
+                    <apex:image value="{!$Resource.FormLogo}" styleClass="main_logo" rendered="{!NOT(dealer__Vehicle_Inventory__c.dealer__Store_Location__r.NoLogoOnForms__c)}"/>
+                    
+                </td>
+                <td align="right">
+                    <!-- Location Block -->
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td><b><apex:outputField value="{!location.Name}" /></b></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                
+                                <apex:outputField value="{!location.dealer__Address__c}" /><br />
+                                <apex:outputField value="{!location.dealer__City__c}" />,&nbsp;
+                                <apex:outputField value="{!location.dealer__State__c}" />&nbsp;
+                                <apex:outputField value="{!location.dealer__Postal_Code__c}" /><br />
+                                <apex:outputField value="{!location.dealer__Main_Phone__c}" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="header_row"><apex:outputText value="Stock #:{!vehicle.dealer__Stock_Number__c}" /></td>
+                <td class="header_row" align="right">
+                    <apex:outputPanel layout="none" rendered="{!NOT(dealer__Vehicle_Inventory__c.dealer__Store_Location__r.NoLogoOnForms__c)}">www.mobilityworks.com</apex:outputPanel>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="" class="header_row2"><strong>{!vehicle.dealer__Year__c} {!vehicle.dealer__Make__c} {!vehicle.dealer__Model__c}</strong></td>
+                <td colspan="" class="header_row2">
+
+                    <strong>
+                        Price: 
+                        <apex:outputText value="{0, number, $###,###}">
+                            <apex:param value="{!printedPrice}" />
+                        </apex:outputText><sup>*</sup>
+                    </strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="body">
+        <div class="row">
+
+
+            <div class="col-2">
+                <table width="95%">
+                    <tr>
+                        <td colspan="2" class="header_row">Vehicle Info</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Type</strong></td><td>{!vehicle.New_Used_Other__c}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Year</strong></td><td>{!vehicle.dealer__Year__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Make</strong></td><td>{!vehicle.dealer__Make__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Model</strong></td><td>{!vehicle.dealer__Model__c}</td>
+                    </tr>
+                    <!--<tr>    
+                        <td><strong>Body Style</strong></td><td>{!vehicle.dealer__Body_Style__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Engine Type</strong></td><td>{!vehicle.dealer__Engine_Description__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Transmission</strong></td><td>{!vehicle.dealer__Transmission_Type__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Driveline</strong></td><td>{!vehicle.dealer__Drive_Type__c}</td>
+                    </tr>-->
+                    <tr>    
+                        <td><strong>Trim</strong></td><td>{!vehicle.dealer__Trim_Level__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Mileage</strong></td><td>{!vehicle.dealer__Mileage__c}</td> 
+                    </tr>
+                    <tr>    
+                        <td><strong>Color Exterior</strong></td><td>{!vehicle.dealer__Exterior_Color__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>Color Interior</strong></td><td>{!vehicle.dealer__Interior_Color__c}</td>
+                    </tr>
+                    <tr>    
+                        <td><strong>VIN</strong></td><td>{!vehicle.dealer__VIN__c}</td>
+                    </tr>
+
+
+                </table>
+            </div>
+            <div class="col-2">
+                <table>
+                    <tr>
+                        <td colspan="2" class="header_row">Conversion Info</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Make</strong></td><td>{!vehicle.Conv_MFG__c}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Model</strong></td><td>{!vehicle.Conversion_Model__c}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Entry Location</strong></td><td>{!vehicle.Ramp_Location__c}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Entry Operation</strong></td><td>{!vehicle.MV_Ranp_Operation__c}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Entry Type</strong></td><td>{!vehicle.MV_Ramp_Type__c}</td>
+                    </tr>
+                </table>
+                <table id="askforholder" width="100%" style="{!IF(removeContact == 'true', 'display:none', 'display:block')}">
+                    <tr>
+                        <td colspan="2" class="header_row">Contact Info</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top" colspan="2"><strong>{!printedName}</strong></td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Email</strong></td><td>{!printedEmail}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Phone</strong></td><td>{!printedPhone}</td>
+                    </tr>
+                    <tr>    
+                        <td valign="top"><strong>Mobile</strong></td><td>{!printedMobile}</td>
+                    </tr>
+                </table>
+
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+
+            <!-- RT1
+                <img class="veh_img"  src="http://www.mobilityworks.com/inventory_photos/{!vehicle.dealer__Stock_Number__c}{! IF( imageSeq1=='1','+','-')}{! IF( NOT(ISBLANK(imageSeq1)),imageSeq1,'1')}.jpg" />
+
+                
+                <img class="veh_img"  src="http://www.mobilityworks.com/inventory_photos/{!vehicle.dealer__Stock_Number__c}{! IF( imageSeq2=='1','+','-')}{! IF( NOT(ISBLANK(imageSeq2)),imageSeq2,'2')}.jpg" />
+
+                <img  class="veh_img" src="http://www.mobilityworks.com/inventory_photos/{!vehicle.dealer__Stock_Number__c}{! IF( imageSeq3=='1','+','-')}{! IF( NOT(ISBLANK(imageSeq3)),imageSeq3,'3')}.jpg" /> 
+                -->
+                <!--RT1-->
+                <img class="veh_img"  src="{!IF(NOT(ISBLANK(imageSeq1)),imageSeq1,'')}" />
+                <img class="veh_img"  src="{!IF(NOT(ISBLANK(imageSeq2)),imageSeq2,'')}" />
+                <img class="veh_img"  src="{!IF(NOT(ISBLANK(imageSeq3)),imageSeq3,'')}" />
+                <img class="veh_img"  src="{!IF(NOT(ISBLANK(imageSeq3)),imageSeq4,'')}" />
+                <!--End RT1-->
+                 
+            </div>
+             
+        </div>
+
+
+        <!-- <div class="row">
+            <div class="col-2">
+
+                <h3>Accessory Equipment</h3>
+                <table width="100%">
+                    <tr>
+                        <td colspan="2"><strong>Info here...</strong></td>
+                    </tr>
+                </table>
+
+            </div>
+
+            <div class="col-2">
+                <h3>Additional Equipment</h3>
+                <table width="100%">
+
+                    <tr>
+                        <td colspan="2">
+                            <apex:outputText value="{!vehicle.Id}"  />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2"><strong>Label</strong></td>
+                    </tr>
+                    <tr>    
+                        <td colspan="2"><strong>Label</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div> -->
+    </div>
+</div> 
+
+</body>
+</html>
+</apex:page>

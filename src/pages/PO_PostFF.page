@@ -1,0 +1,146 @@
+<apex:page showHeader="true" title="Purchase Order" sidebar="true" standardController="dealer__Purchase_Order__c" extensions="PurchaseOrderPostFF">
+<!--
+    2017-10-18  B. Leaman   BLL1 disable double-click! Actually, remove receive buttons. It's not on managed screen.
+    2019-02-01  B. Leaman   W-000573 BLL2 Add save button and internal comments for stores to indicate paid by credit card.
+                            Remove references to obsolete method "postPurchaseOrderToDocumentPeriod";
+    2019-08-22  B. Leaman   W-000523 BLL3 Add paid by credit card field.
+-->
+    <style>
+        .tR {
+            text-align: right;
+        }
+    </style>
+    <apex:sectionHeader title="Post Purchase Order {!po.Name}" subtitle="Receive / Accept and Post {!po.Name}" />
+    <apex:form id="poForm">
+        <apex:pageMessages id="pM" />
+        <apex:pageBlock title="Post Purchase Order" mode="maindetail">
+
+            <apex:actionFunction name="post" action="{!postToFF}"/><!-- BLL1a -->
+            <!-- BLL2d apex:actionFunction name="postToDocPeriod" action="{ ! postPurchaseOrderToDocumentPeriod}"/ --><!-- BLL1a -->
+            <apex:pageBlockButtons >
+                <!-- <apex:commandButton action="{!Save}" value="Save" /> -->
+
+                    <apex:commandButton action="{!returnToPurchaseOrder}" value="Return to Purchase Order" />
+                    <!-- BLL1d apex:commandButton action="{!postToFF}" value="Receive PO" onclick="this.onclick=function(){return false;}" disabled="{!IF(received=true,true,false)}"/ -->
+                    <!-- BLL1d apex:commandButton value="Receive PO" id="btnPost" 
+                        onclick="this.disabled=true;disableBtns('btnPost','Processing...');post();" disabled="{!received}"/ --><!-- BLL1a -->
+                    <!-- BLL1d apex:commandButton action="{ ! postPurchaseOrderToDocumentPeriod}" rendered="{!if(po.RecordTypeId=='01250000000E6Y6AAK', true, false)}" onclick="this.onclick=function(){return false;}" value="Receive PO in Document Period" disabled="{!IF(received=true,true,false)}"/ -->
+                    <!-- BLL1d apex:commandButton value="Receive PO in Document Period" id="alt_btnPost" 
+                        onclick="this.disabled=true;disableBtns('btnPost','Processing...');postToDocPeriod();" 
+                        rendered="{!if(po.RecordTypeId=='01250000000E6Y6AAK', true, false)}" disabled="{!received}"/ --><!-- BLL1a -->
+
+                    <!-- BLL2 -->
+                    <!-- apex:commandButton action="{!applyVendorInvoice}" onclick="this.onclick=function(){return false;}" value="Apply Vendor Invoice" disabled="{!AND(IF(received=true,false,true), IF(balance=0, true, false), ISBLANK(po.Payable_Invoice__c))}" / -->
+                    <apex:commandButton action="{!save}" value="Save"/>
+                    <apex:commandButton action="{!applyVendorInvoice}" onclick="this.onclick=function(){return false;}" value="Apply Vendor Invoice" disabled="{!AND(IF(received=true,false,true), IF(balance=0, true, false), ISBLANK(po.Payable_Invoice__c))}" 
+                        rendered="{!$ObjectType.c2g__codaPurchaseInvoice__c.createable}"/>
+                    <!-- BLL2 end -->
+
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                
+                <apex:outputField value="{!po.dealer__Accepted_By__c}" />
+                <apex:outputField value="{!po.dealer__Accepted_DateTime__c}" />
+                <apex:outputField value="{!po.dealer__PO_Amount__c}" />
+                <apex:outputField value="{!po.Payable_Invoice__c}" />
+
+                <apex:outputText value="Vendor Invoice Details" style="font-weight:bold;"/>
+                <apex:outputText />
+
+                <apex:inputField value="{!po.dealer__Invoice_Number__c}" />
+                <apex:inputField value="{!po.dealer__Invoice_Date__c}" />
+
+                <apex:inputField value="{!po.dealer__Invoice_Amount__c}" onchange="recalcBlock();" styleClass="tR" />
+                <apex:outputText />
+
+                <apex:inputField value="{!po.Parts_Amount__c}"  onchange="recalcBlock();" styleClass="tR" rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}" />
+                <apex:outputText rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}"/>
+
+                <apex:inputField value="{!po.dealer__Freight__c}" rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}"  onchange="recalcBlock();" styleClass="tR" />
+                <apex:outputText rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}"/>
+
+                <apex:inputField value="{!po.NMEDA_Fee__c}" rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}"  onchange="recalcBlock();" styleClass="tR" />
+                <apex:outputText rendered="{!IF(po.dealer__Type__c='Parts Purchase', true, false)}"/>
+
+                <!-- JVK - 10/15 - Add a misc charge option to all purchase order posting types -->
+                <apex:inputField value="{!po.Misc_Charge__c}" styleClass="tR" onchange="recalcBlock();"/>
+                <apex:inputField value="{!po.Misc_Description__c}" onchange="recalcBlock();"/>
+                <apex:outputText />
+                <apex:inputField value="{!po.GeneralLedgerAccount__c}" onchange="recalcBlock();"/>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Balance" for="blc" />
+                    <apex:inputText value="{!balance}" id="blc" styleClass="tR" />
+                </apex:pageBlockSectionItem>
+                <!-- BLL2 -->
+                <!-- apex:pageBlockSectionItem/ -->
+                <apex:inputField value="{!po.Paid_with_Credit_Card__c}"/><!--BLL3-->
+                <apex:inputTextarea value="{!po.dealer__Comments__c}" label="Internal comments"/>
+                <!-- BLL2 end -->
+            </apex:pageBlockSection>
+            <!-- BLL2 -->
+            <div style="display:none;"><!-- test class needs these fields -->
+                <apex:outputField value="{!po.Payable_Invoice__c}"/>
+                <apex:outputField value="{!po.GeneralLedgerAccount__c}"/>
+            </div>
+            <!-- BLL2 end -->
+
+            </apex:pageBlock>
+            <apex:pageBlock >
+
+            <apex:pageBlockSection columns="1" collapsible="false" rendered="{!IF(received=true,true,false)}" title="Existing Journal Entry">
+                <apex:pageBlockTable value="{!ExistingLines}" var="e" >
+                    <apex:column headerValue="Journal" value="{!e.c2g__Journal__c}" />
+                    <apex:column headerValue="Line#" value="{!e.c2g__LineNumber__c}" />
+                    <apex:column headerValue="General Ledger Account" value="{!e.c2g__GeneralLedgerAccount__c}" />
+                    <apex:column headerValue="Value" value="{!e.c2g__Value__c}" />
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="1" collapsible="false" id="tLines" title="Payable Lines to Create">
+                <!-- Parts Specific Lines -->
+                <apex:pageBlockTable value="{!tLines}" var="j" rendered="{!IF(received=true, true, false)}"> <!--rendered="{!IF(po.dealer__Type__c='Parts_Purchase', true, false)}"-->
+                    <apex:column headerValue="General Ledger Account" value="{!j.c2g__GeneralLedgerAccount__c}" />
+                    <apex:column headerValue="Ref#" value="{!j.c2g__LineDescription__c}" />
+                    <apex:column headerValue="Account" value="{!j.c2g__Account__c}" />
+                    <apex:column headerValue="Value" value="{!j.c2g__Value__c}" headerClass="tR" />
+                    <apex:column headerValue="Dimmension 1" value="{!j.c2g__Dimension1__c}" />
+                </apex:pageBlockTable>
+
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1" collapsible="false" id="jLines" title="Journal Lines to Create">
+
+                <!-- Misc / Sublet Specific Lines -->
+                <apex:pageBlockTable value="{!jLines}" var="j" rendered="{!IF(received=true,false,true)}">
+                    <!--rendered="{!AND(IF(po.dealer__Type__c='Parts_Purchase_bad', false, true), IF(received=true,false,true))}"-->
+                    <apex:column headerValue="General Ledger Account" value="{!j.c2g__GeneralLedgerAccount__c}" />
+                    <apex:column headerValue="Ref#" value="{!j.c2g__LineDescription__c}" />
+                    <apex:column headerValue="Account" value="{!j.c2g__Account__c}" />
+                    <apex:column headerValue="Value" value="{!j.c2g__Value__c}" headerClass="tR" />
+                    <apex:column headerValue="Dimmension 1" value="{!j.c2g__Dimension1__c}" />
+                </apex:pageBlockTable>              
+
+                <apex:panelGrid columns="3" width="100%">
+                    <apex:outputText />
+                    <apex:outputText value="Balance" style="text-align:right;font-size:18px;" />
+                    <apex:outputText value="{!balance}" style="text-align:right;font-size:18px;"/>
+                </apex:panelGrid>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:actionFunction name="recalcBlock" reRender="tLines,blc" />
+    </apex:form>
+
+    <!-- BLL1a -->
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"/>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+        function disableBtns(btn, newText) {
+            var btnselector = 'input[id$='+btn+']';
+            $jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+            if (newText.length>0) $jq(btnselector).val(newText);        
+        }
+    </script>
+    <!-- BLL1a end -->
+
+</apex:page>

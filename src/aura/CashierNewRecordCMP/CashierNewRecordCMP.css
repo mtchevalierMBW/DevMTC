@@ -1,0 +1,7 @@
+.THIS .invisible {
+	display:none;
+}
+.THIS .slds-card__header {
+	padding:0!important;
+	margin:0!important;
+}

@@ -1,0 +1,493 @@
+<apex:page showHeader="true" sidebar="true" title="Management Sold Deals" controller="ManagementDashboard" docType="html-5.0" >
+	<!--
+		Change Log:
+			12-8-1015	DR1		Display negative numbers in aggregate tempaltes
+			2015-12-29	B.Leaman	BLL1 get year selection values dynamically, this year + 1 through last 5 years;
+									Also changed Proposed_Delivery_Month__c to include year.
+			2016-05-20  D. Ray      DR2 - Adding Commercial Quote info
+			2019-04-03	B. Leaman	W-000637 BLL2 replace KendoUI with dealer__Kendo2016a (unmarked)
+	-->
+
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+    <!-- INclude Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__Kendo2016a,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.min.css')}"/>  
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016aFULL2015,'/styles/kendo.common.min.css')}"/> -->
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__MomentJS)}" />
+
+    <!-- FONT-AWESOME -->
+    <apex:stylesheet value="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+    <div id="force">	
+
+	    <!-- Mangement Sold Deals -->
+	    <!-- <apex:outputPanel layout="none" rendered="{! NOT(showDashboard) }"> -->
+		    <h3>Management Sold Deals</h3>
+		    <div class="row" style="margin-bottom: 10px;">
+		    	<div class="col-md-2">
+					Report Year: <input type="text" id="reportYear" value="2015" />
+		    	</div>
+		    	<div class="col-md-2">
+		    		Report Style: <input type="text" id="reportStyle" value="All GP" />
+		    	</div>
+		    	<!-- DR2a -->
+		    	<div class="col-md-4">
+					<input type="radio" name="reportKind" id="doubleKind" value="doublekind" class="k-radio"/>
+					<label class="k-radio-label" for="doubleKind">Retail &amp; Commercial</label>
+					&nbsp;&nbsp;
+					<input type="radio" name="reportKind" id="retailKind" value="retailkind" class="k-radio"  checked="checked" />
+					<label class="k-radio-label" for="retailKind">Retail</label>
+					&nbsp;&nbsp;
+					<input type="radio" name="reportKind" id="commercialKind" value="commercialkind" class="k-radio" />
+					<label class="k-radio-label" for="commercialKind">Commercial</label>
+		    	</div>
+		    	<!-- END DR2a -->
+
+		    </div>
+	    	<div class="row">
+		    	<div class="col-md-12">
+					<div id="dealsListFull" class="table"></div>
+		    	</div>
+		    </div>
+		<!-- </apex:outputPanel> -->
+
+    </div>
+
+    <!-- cDeal Templates -->
+	    <script type="text/x-kendo-template" id="cDealToolbarTemplate">
+	    	<span>Units Sold: #= cDealModel.deals.aggregates().Name.count # <br /> Total GP: #: kendo.toString( cDealModel.deals.aggregates().grandTotalGross.sum, "c")#</span>
+	    </script>
+	    <script type="text/x-kendo-template" id="cDealNameTemplate">
+	    	<a href="/#:Id#" tartget="_blank">#: Name ##: (typeof buyerName != 'undefined') ? kendo.toString(' - ' + buyerName) : '' #</a>
+	    </script>
+	    <!-- #: buyerName ##= (!buyerName==null)? ' - '+ buyerName : ''; # -->
+	    <script type="text/x-kendo-template" id="cDealCustTemplate">
+			# if(typeof buyerId == 'undefined') { #
+				#= kendo.toString('No Cust') #
+			# } else { #
+		    	<a href="/#:buyerId#" target="_blank">#: buyerName #</a>
+			# } #
+	    </script>
+	    <script type="text/x-kendo-template" id="hierarchyName">
+			# if( field == 'region' ) { #
+				#= field.toUpperCase() +" "+value  #
+			# } else { #
+		    	#: value #</a>
+			# } #
+	    </script>
+
+        <script type="text/x-kendo-template" id="detailTableTemplate">
+            <div class="detailTable"></div>
+        </script>
+
+
+	<script type="text/javascript">
+		$dt = jQuery.noConflict();
+
+		// Default Year is Current Year
+		var yearStr = moment().year();
+		var styleStr = 'All GP';
+		var kindStr = 'retailkind'; // DR2b
+
+		function yearChange(e) {
+			console.log( this.value() );
+			yearStr = this.value();
+
+			cDealModel.deals.read().then(function() {
+				renderCDealTable();
+			});
+		}
+
+		function styleChange(e) {
+			console.log( this.value() );
+			styleStr = this.value();
+
+			cDealModel.deals.read().then(function() {
+				renderCDealTable();
+			});
+		}
+
+		// BLL1a
+		function getRecentYears() {
+			var yyyy = (new Date()).getFullYear();
+			var yearary = [];
+			for(y=yyyy+1; y>yyyy-5; --y) {
+			    yearary[yearary.length] = y+'';
+			}
+			return yearary;
+		}
+		// BLL1a end
+
+		$dt(document).ready(function(){
+			var years = getRecentYears(); // BLL1a
+			$dt("#reportYear").kendoDropDownList({
+                // dataSource: ['2015'],
+                //BLL1d dataSource: ['2015','2014','2013','2012','2011'], 
+                //BLL1d value: '2015',
+                dataSource: years,  // BLL1a
+                value: (new Date()).getFullYear()+'',  // BLL1a
+                change: yearChange
+            });
+
+			$dt("#reportStyle").kendoDropDownList({
+                // dataSource: ['2015'],
+                dataSource: ['All GP','F&I GP','VEH Only GP'],
+                value: 'All GP',
+                change: styleChange
+            });
+
+			// $dt('#reportYear').change(function(){
+			// 	yearChange();
+			// });
+
+			// DR2c
+			$dt('input[type=radio][name=reportKind]').change(function() {
+				kindStr = this.value;
+
+				cDealModel.deals.read().then(function() {
+					renderCDealTable();
+				});
+		    });
+			// /DR2c
+		});
+
+		/************************
+			Management Sold Deals
+		 */
+		var cDealMoCols = [];
+		var cDealMoYYCols = [];
+
+		var emptyArray = [];
+		var cDealAggregatesHold = [ 
+			{field: "totalPrice", aggregate: "sum"},
+			{field: "deliveredGP", aggregate: "sum"},
+			{field: "forcastedGP", aggregate: "sum"},
+			{field: "Name", aggregate: "count"} ,
+			{field: "region", aggregate: "count"} ,
+			{field: "locName", aggregate: "count"} ,
+			{field: "salesPersonName", aggregate: "count"} ,
+			{field: "grandTotalGross", aggregate: "sum"} 
+		];
+		var cDealAggregates = emptyArray.concat(cDealAggregatesHold);
+
+		var cDealTable = null;
+
+		cDealModel = kendo.observable({
+	        deals: new kendo.data.DataSource({
+
+	            transport: {
+	                read: {
+	                    url: "/apex/DashboardTRS",
+						data: {
+	                    	action: 'read_cdeals'
+	                    }
+	                },
+		            parameterMap: function(data, operation) {
+		                if(operation == "read") {
+		                	// this allows dynamic data for the read transport
+		                    data.reportYear = yearStr;
+		                    data.reportStyle = styleStr;
+		                    data.reportKind = kindStr; // DR2d
+		                }
+		                return data; 
+	            	}
+	            },
+	            // sort: [
+	            // 	{ field: 'region', dir: "asc" }, 
+	            // 	{ field: 'deliveryDate', dir: "asc" }, 
+	            // ],
+	            schema: {
+					parse: function(response) {
+						// console.log('Year String: ' + yearStr);
+						// console.log('Year Field: ' + $dt('#reportYear').val());
+
+				    	// Reset Monthly Columns
+				    	cDealMoYYCols = [];
+				    	cDealMoCols = [];
+						// reset aggregates
+						cDealAggregates = emptyArray.concat(cDealAggregatesHold);
+
+						for (var i = 0; i < response.length; i++) {
+
+							// Add salesperson field if not assigned.
+							if(typeof response[i].locName == 'undefined' || response[i].locName == null ) {
+								response[i].locName = 'Unassigned'
+							}
+
+							// Add salesperson field if not assigned.
+							if(typeof response[i].salesPersonId == 'undefined' || response[i].salesPersonId == null) {
+								response[i].salesPersonName = 'Unassigned'
+							} 
+							// Create Monthly Gross Field
+							if(typeof response[i].deliveryMonth != 'undefined' || response[i].deliveryMonth == null) {
+								// Add month value
+								//BLL1d response[i][response[i].deliveryMonth+yearStr] = response[i].grandTotalGross;
+								//BLL1d response[i][response[i].deliveryMonth+yearStr+'_DGP'] = ( response[i].status == 'Won - Delivered'|| response[i].status == 'Won - Posted' ) ? response[i].grandTotalGross : 0;
+								//BLL1d response[i][response[i].deliveryMonth+yearStr+'_FGP'] = (response[i].status != 'Won - Delivered' && response[i].status != 'Won - Posted') ? response[i].grandTotalGross : 0;
+
+								// BLL1a
+								response[i][response[i].deliveryMonth] = response[i].grandTotalGross;
+								response[i][response[i].deliveryMonth+'_DGP'] = ( response[i].status == 'Won - Delivered'|| response[i].status == 'Won - Posted' ) ? response[i].grandTotalGross : 0;
+								response[i][response[i].deliveryMonth+'_FGP'] = (response[i].status != 'Won - Delivered' && response[i].status != 'Won - Posted') ? response[i].grandTotalGross : 0;
+								// BLL1a end
+
+								response[i]['deliveredGP'] = (response[i].status == 'Won - Delivered' || response[i].status == 'Won - Posted') ? response[i].grandTotalGross : 0;
+								response[i]['forcastedGP'] = (response[i].status != 'Won - Delivered' && response[i].status != 'Won - Posted') ? response[i].grandTotalGross : 0;
+
+						    	// Is month already in Array?
+						    	if( cDealMoCols.indexOf( response[i].deliveryMonth ) == -1 ) {
+						    		// Add to array
+						    		//BLL1d cDealMoCols.push( response[i].deliveryMonth );
+						    		//BLL1d cDealMoYYCols.push( response[i].deliveryMonth+yearStr );
+						    		cDealMoCols.push( response[i].deliveryMonth );
+						    		cDealMoYYCols.push( response[i].deliveryMonth );
+
+						    		// Add aggregate field
+						    		//BLL1d
+						    		//if( cDealAggregates.indexOf( {field: response[i].deliveryMonth+yearStr, aggregate: "sum"} ) == -1 ) {
+							    	//	cDealAggregates.push( {field: response[i].deliveryMonth+yearStr, aggregate: "sum"} );
+							    	//	cDealAggregates.push( {field: response[i].deliveryMonth+yearStr+'_DGP', aggregate: "sum"} );
+							    	//	cDealAggregates.push( {field: response[i].deliveryMonth+yearStr+'_FGP', aggregate: "sum"} );
+							    	//}
+							    	//BLL1a
+						    		if( cDealAggregates.indexOf( {field: response[i].deliveryMonth, aggregate: "sum"} ) == -1 ) {
+							    		cDealAggregates.push( {field: response[i].deliveryMonth, aggregate: "sum"} );
+							    		cDealAggregates.push( {field: response[i].deliveryMonth+'_DGP', aggregate: "sum"} );
+							    		cDealAggregates.push( {field: response[i].deliveryMonth+'_FGP', aggregate: "sum"} );
+							    	}
+						    	}
+							}
+						}
+				    	// console.log(cDealMoYYCols);
+						// Finally Return
+				    	console.log(response);
+				    	// console.log(JSON.stringify(response));
+
+						return response;
+					}
+	            },
+	            // group: [
+	            // 	{field: 'region', aggregates: cDealAggregates},
+	            // 	{field: 'locName', aggregates: cDealAggregates},
+	            // 	{field: 'salesPersonName', aggregates: cDealAggregates},
+	            // ],
+	            // aggregate: cDealAggregates
+	        }),
+			companyData: function(){
+				var _dealList =  this.get('deals').view();
+				return _dealList;
+			},
+	        dealNameTemplate: kendo.template($dt("#cDealNameTemplate").html()),
+	        dealCustTemplate: kendo.template($dt("#cDealCustTemplate").html()),
+	        dealToolbarTemplate: kendo.template($dt("#cDealToolbarTemplate").html()),
+
+		});
+
+		function renderCDealTable(){
+
+			/*** Setup columns for Deal Detail tables ***/		    
+			var colArray = [ 
+	            { field: 'Name', title: 'Proposal', template: cDealModel.dealNameTemplate , width: 150,locked: true}, 
+	            {field: 'buyerName', title: 'Customer', template: cDealModel.dealCustTemplate, width: 120, hidden: true },
+	            { field: 'model',title: 'Model' ,width: 120, hidden: true }, 
+	            { field: 'status',title: 'Status', width: 120 ,locked: true }, 
+	    		{ field: 'locName', title: 'Store', hidden: true, groupHeaderTemplate: "#= value # : (Deals: #= count#)" }, 
+	    		{ field: 'region', title: 'Region', hidden: true, groupHeaderTemplate: "Region  #= value# : (Deals: #= count#)" }, 
+	            { field: 'salesPersonName', title: 'CMC', width: 120, hidden: 'true', groupHeaderTemplate: "#= value # : (Deals: #= count#)"},
+	            // groupFooterTemplate: '#=kendo.toString(sum,"c") #',
+	            { field: 'totalPrice', title: 'Amt', format: '{0:c0}', width: 120, aggregates: ['sum'], groupFooterTemplate: '#=kendo.toString(sum,"c0") #', hidden: 'true' },
+	            { field: 'deliveryDate', title: 'Del. Date', template: "#= moment(deliveryDate).format('M/D/YYYY')  #" , width: 80, aggregates: ['sum'],locked: true },
+	            //, footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates().totalPrice.sum,"c") #'
+	    	]; 
+
+			// Loop through the months array and create column strings
+		    $dt.each( cDealMoYYCols, function(i,col){
+
+		    	colArray.push(
+
+		    		// { field: col, title: col, format: '{0:c0}', width: 90, aggregates: ['sum']}
+
+		    		//BLL1d { field: col, title: col, format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #' }
+		    		{ field: col, title: col.substring(0,3), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #' }
+
+		    		// { field: col, title: col, format: '{0:c0}', width: 90, aggregates: ['sum'], template: '# if (typeof '+col+'_FGP != "undefined") { # <span class="fgp">#= kendo.toString('+col+'_FGP.sum, \"c0\") #</span># } #' }
+		    		//# if ('+col+'_DGP.sum > 0) { ## <span class="fgp">#= kendo.toString('+col+'_DGP.sum, \"c0\") #</span>## } #
+
+		    		// { field: mo+yearStr, title: mo+"-"+yearStr, format: '{0:c0}', width: 90, aggregates: ['sum'], groupFooterTemplate: '#= kendo.toString(sum,"c") #'}
+
+		    		// footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates()['+ mo+yearStr +'].sum,"c") #' 
+		    		// { field: mo+yearStr, title: mo+"-"+yearStr, format: '{0:c0}', width: 90 }
+		    	);
+		    });
+			
+
+		    /*** Setup columns for innter detail tables ***/
+		    var innerColArray = [
+		    	{ title: 'Name', template: kendo.template($dt("#hierarchyName").html())},
+		    	{ title: 'YTD GP', field: 'aggregates.deliveredGP.sum', format: '{0:c0}'}
+		    ];
+
+			// Loop through the months array and create column strings for detail format
+		    $dt.each( cDealMoYYCols, function(i,col){
+		    	innerColArray.push(
+		    		//BLL1d { title: cDealMoCols[i], template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'_DGP.sum, \"c0\") #</span> # if (aggregates.'+col+'_FGP.sum != 0 && aggregates.'+col+'_FGP.sum != null) { #  / <span class="fgp">#= kendo.toString(aggregates.'+col+'_FGP.sum, \"c0\") #</span>  #= kendo.toString( (aggregates.'+col+'_FGP.sum + aggregates.'+col+'_DGP.sum) , \"c0\") # # } #',aggregates: ['sum'] }
+		    		{ title: cDealMoCols[i].substring(0,3), template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'_DGP.sum, \"c0\") #</span> # if (aggregates.'+col+'_FGP.sum != 0 && aggregates.'+col+'_FGP.sum != null) { #  / <span class="fgp">#= kendo.toString(aggregates.'+col+'_FGP.sum, \"c0\") #</span>  #= kendo.toString( (aggregates.'+col+'_FGP.sum + aggregates.'+col+'_DGP.sum) , \"c0\") # # } #',aggregates: ['sum'] }
+		    	);
+		    });
+
+		    /*** Setup Tables for the wrapper table with Company Information ***/
+		    var CompanyColumns = [
+		    	{ title: 'Name', template: kendo.template($dt("#hierarchyName").html())},
+		    	{ title: 'YTD GP', field: 'aggregates.deliveredGP.sum', format: '{0:c0}', aggregates:['sum'], footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates().deliveredGP.sum,\"c0\") #' }
+		    ];
+		    // Add Footer remplate to COMPANY COLUMNS
+		    $dt.each( cDealMoYYCols, function(i,col){
+
+		    	CompanyColumns.push(
+		    		{ 
+		    			//BLL1d title: cDealMoCols[i],
+		    			title: cDealMoCols[i].substring(0,3), 
+		    			template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'_DGP.sum, \"c0\") #</span> # if (aggregates.'+col+'_FGP.sum != 0) { #  / <span class="fgp">#= kendo.toString(aggregates.'+col+'_FGP.sum, \"c0\") #</span> #= kendo.toString( (aggregates.'+col+'_FGP.sum + aggregates.'+col+'_DGP.sum) , \"c0\") ## } #',  
+		    			aggregates: ['sum'],
+		    			footerTemplate : '<span class="dgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'_DGP"].sum, \"c0\") #</span> # if (cDealModel.deals.aggregates()["'+col+'_FGP"].sum != 0) { #  / <span class="fgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'_FGP"].sum, \"c0\") #</span>   #= kendo.toString( (cDealModel.deals.aggregates()["'+col+'_FGP"].sum + cDealModel.deals.aggregates()["'+col+'_DGP"].sum) , \"c0\") #  # } #' 
+		    		}
+		    	);
+		    });
+
+		    if(cDealTable != null) {
+	            cDealTable.destroy();
+	            $dt('#dealsListFull').html('');
+	            cDealTable = null;
+
+		    }
+
+		    // reset aggregates
+		    cDealModel.deals.aggregate(cDealAggregates);
+		    cDealModel.deals.group([
+	            	{field: 'region', aggregates: cDealAggregates},
+	            	{field: 'locName', aggregates: cDealAggregates},
+	            	{field: 'salesPersonName', aggregates: cDealAggregates},
+	            ]);
+
+			// Render Custom Deal Grid - Region Level
+			cDealTable = $dt("#dealsListFull").kendoGrid({
+			    columns: CompanyColumns,
+			    dataSource: cDealModel.companyData(),
+			    // toolbar: [ { template: cDealModel.dealToolbarTemplate } ],
+			    detailTemplate: kendo.template($dt("#detailTableTemplate").html()),
+			    detailInit: function(e) {
+                    var detailRow = e.detailRow;
+                    var parentRow = e.data;
+
+                    // Store Level
+                    detailRow.find(".detailTable").kendoGrid({
+                    	columns: innerColArray,
+					    detailTemplate: kendo.template($dt("#detailTableTemplate").html()),					 
+                        dataSource: parentRow.items,
+					    detailInit: function(e) {
+		                    var detailRow = e.detailRow;
+		                    var parentRow = e.data;
+
+		                    // SalesPerson Level
+		                    detailRow.find(".detailTable").kendoGrid({
+		                    	columns: innerColArray,
+							    detailTemplate: kendo.template($dt("#detailTableTemplate").html()),
+		                        dataSource: parentRow.items,
+							    detailInit: function(e) {
+				                    var detailRow = e.detailRow;
+				                    var parentRow = e.data;
+
+				                    // Deal Level
+				                    detailRow.find(".detailTable").kendoGrid({
+				                    	columns: colArray,
+				                        dataSource: {
+				                        	data: parentRow.items,
+				                        	sort: [{ field: 'deliveryDate', dir: "desc" }]
+				                        }
+				                    });
+							    }
+
+		                    });
+					    }
+                    });
+			    },
+				dataBound: function(e) {
+
+					// Collapse rows by default
+				    if (this.dataSource.group().length > 0) {
+				        var GrpList = $dt(".k-grouping-row");
+
+				        for (var i = 0; i < GrpList.length; i++) {
+				            if (GrpList[i]) {
+				                this.collapseGroup(GrpList[i]);
+				            }
+				        }
+
+				    }
+				}
+			}).data("kendoGrid");
+		}
+
+	    // READ data then create monthly gross columns
+		cDealModel.deals.read().then(function() {
+			renderCDealTable();
+		});
+
+
+	</script>
+
+	<style type="text/css">
+		.k-grid-content-locked {
+			overflow: visible;
+		}
+
+		#force h1,#force h2,#force h3,#force h4,#force h5 {
+			margin: 0 0 .25em 0;
+			display: block;
+		}
+
+		#force table {
+			font-size: 12px;
+		}
+
+		#force td, #force th {
+	        padding: .5em .6em .4em .6em; 
+		}
+
+		.dgp {
+			color: green;
+		}
+		.fgp {
+			color: #AF8417;
+		}
+
+		#force th.k-hierarchy-cell, .k-grid .k-hierarchy-col {
+			width: 50px;
+		}
+
+		.k-group ul li {
+			margin-left: 0;
+		}
+
+		.k-radio:checked+.k-radio-label:after {
+			top: 2px;
+			left: 2px;
+		}
+
+		#force label.k-radio-label {
+			margin-bottom: 0;
+			line-height: 1;
+			font-weight: normal;
+		}
+	</style>
+</apex:page>

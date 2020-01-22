@@ -1,0 +1,81 @@
+<apex:page showHeader="true" sidebar="true" controller="ffaAsofAgingDateController">
+<style>
+    /* Modal elements are used for indicating the form is saving when page is executed in the Service Console.
+   Sets the background to 80% white to 'grey' out input form */
+    .modal {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .8 )
+                    50% 50%
+                    no-repeat;
+    }
+    /* Box elements are used for indicating the form is saving when page is executed in the Service Console.
+       Box elements appear in the center of the page. */
+    .box {
+        background-color:      white;
+        border-radius:         10px;
+        -webkit-border-radius: 10px;
+        -moz-border-radius:    10px;
+        box-shadow:            0 0 20px 0 #222;
+        -webkit-box-shadow:    0 0 20px 0 #222;
+        -moz-box-shadow:       0 0 20px 0 #222;
+        position:              fixed;
+        top:                   50%;
+        left:                  50%;
+        margin-top:            -50px;
+        margin-left:           -100px;
+        height:                80px;
+        width:                 240px;
+        padding-top:           35px;
+        text-align:            center;
+    }
+    .alert-box {
+        color:#555;
+        border-radius:10px;
+        font-family:Tahoma,Geneva,Arial,sans-serif;font-size:11px;
+        padding:10px 10px 10px 36px;
+        margin:10px;
+        }
+    .alert-box span {
+        font-weight:bold;
+        text-transform:uppercase;
+    }
+    .error {
+        background:#ffecec url('images/error.png') no-repeat 10px 50%;
+        border:1px solid #f5aca6;
+    }
+    .success {
+        background:#e9ffd9 url('images/success.png') no-repeat 10px 50%;
+        border:1px solid #a6ca8a;
+    }
+    .warning {
+        background:#fff8c4 url('images/warning.png') no-repeat 10px 50%;
+        border:1px solid #f2c779;
+    }
+    .notice {
+        background:#e3f7fc url('images/notice.png') no-repeat 10px 50%;
+        border:1px solid #8ed9f6;
+    }
+</style>
+	<apex:form id="theForm">
+		<apex:pageBlock title="FFA Statement Filter Dates" >
+			<apex:pageMessages />
+		    <apex:pageBlockButtons >
+		        <apex:commandButton value="Save" action="{!doSave}" reRender="theForm"/>
+		        <apex:commandButton value="Cancel" action="{!doCancel}"/>
+		    </apex:pageBlockButtons>
+			<apex:outputText >
+		        <div class="alert-box notice">Select a start and end date to be used for statement generation. Balances on the statements will be aged based on the End Date selected</div>
+		    </apex:outputText>
+		    <apex:pageBlockSection >
+                <apex:inputField label="Statement Start Date" value="{!dummyContact1.Birthdate}"/>
+		    	<apex:inputField label="Statement End Date / Cutoff Date" value="{!dummyContact2.Birthdate}"/>
+		    </apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

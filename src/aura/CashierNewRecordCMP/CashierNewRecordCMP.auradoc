@@ -1,0 +1,10 @@
+<aura:documentation>
+	<aura:description>New/Edit screen for dealer__Cashering__c records in POS</aura:description>
+	<!-- modification log
+	2019-06-13	B. Leaman	W-000575 BLL1 - flag corporate entries (Corporate_Entry__c) so they can be kept in their
+							own separate cash entries.
+	-->
+	<aura:example name="ExampleName" ref="exampleComponentName" label="Label">
+		Example Description
+	</aura:example>
+</aura:documentation>

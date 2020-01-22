@@ -1,0 +1,57 @@
+<apex:page standardController="ffc_statex__StatementAccount__c" recordSetVar="records" renderAs="pdf">
+    <apex:repeat value="{!records}" var="account">
+    <div >
+        <p align="center">
+            <img src="{!account.ffc_statex__OwnerCompany__r.c2g__LogoURL__c}"/><br/>
+            <small><apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__Street__c}"/><br/>
+            <apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__City__c}"/><apex:outputText value=", "/><apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__StateProvince__c}"/><br/>
+            <apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__ZipPostCode__c}"/><br/>
+            <apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__Country__c}"/><br/>
+            <apex:outputText value="Phone: "/><apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__Phone__c}"/><apex:outputText value=" Fax: "/><apex:outputField value="{!account.ffc_statex__OwnerCompany__r.c2g__Fax__c}"/><br/><br/></small>
+        </p>
+        <p>
+            <ffc_statex:CODALocalFormatterController date="{!TODAY()}"/>
+            <br/><br/>
+<apex:outputText rendered="{!account.ffc_statex__Account__r.Name!=''}" escape="false">
+                                {!account.ffc_statex__Account__r.Name}<br/>
+                             </apex:outputText>
+            <apex:outputText rendered="{!account.ffc_statex__Account__r.BillingStreet!=''}" escape="false">
+                                {!account.ffc_statex__Account__r.BillingStreet}<br/>
+                            </apex:outputText>
+            <apex:outputText rendered="{!account.ffc_statex__Account__r.BillingCity!=''}" escape="false">
+                                {!account.ffc_statex__Account__r.BillingCity}</apex:outputText>,
+            <apex:outputText rendered="{!account.ffc_statex__Account__r.BillingState!=''}" escape="false">
+                                {!account.ffc_statex__Account__r.BillingState}
+                            </apex:outputText>
+            <apex:outputText rendered="{!account.ffc_statex__Account__r.BillingPostalCode!=''}" escape="false">
+                                {!account.ffc_statex__Account__r.BillingPostalCode}<br/>
+                            </apex:outputText>
+             <apex:outputText rendered="{!account.ffc_statex__Account__r.BillingCountry!=''}" escape="false">{!account.ffc_statex__Account__r.BillingCountry}</apex:outputText>
+                        
+
+            
+
+            <br/><br/>
+            Dear Customer
+            <br/><br/>
+            Please find below a statement of your account with us. We would appreciate prompt payment of these items.
+        </p>
+        <br/><br/>
+        <apex:dataTable value="{!account.ffc_statex__StatementAccountLines__r}" var="line" border="1" cellpadding="3">
+            <apex:column style="text-align:left" headervalue="Document Type" value="{!line.ffc_statex__Transaction__r.c2g__TransactionType__c}"/>
+            <apex:column style="text-align:left" headervalue="Document Number" value="{!line.ffc_statex__Transaction__r.c2g__DocumentNumber__c}"/>
+            <apex:column style="text-align:center" headervalue="Due Date" value="{!line.ffc_statex__DueDate__c}"/>
+            <apex:column style="text-align:right" headervalue="Outstanding Amount"><ffc_statex:CODALocalFormatterController number="{!IF(line.ffc_statex__Transaction__r.c2g__TransactionType__c!='Journal',ABS(line.ffc_statex__DocumentOutstandingValue__c),line.ffc_statex__DocumentOutstandingValue__c)}" currency="{!line.ffc_statex__TransactionLineItem__r.c2g__DocumentCurrency__r.Name}"/></apex:column>
+            <apex:column style="text-align:left" headervalue="Currency"><apex:outputField value="{!line.ffc_statex__TransactionLineItem__r.c2g__DocumentCurrency__r.Name}"/></apex:column>
+        </apex:dataTable>
+        <br/>
+        <p>
+            If you have any questions about this payment please do not hesitate to contact us.     
+            <br/><br/>
+            Sincerely,
+            <br/><br/>
+            {!$User.FirstName} {!$User.LastName}
+        </p>
+        </div>
+    </apex:repeat>
+</apex:page>

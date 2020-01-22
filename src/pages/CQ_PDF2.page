@@ -1,0 +1,526 @@
+<apex:page renderAs="pdf" sidebar="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false" 
+		   standardController="CommercialQuote__c" extensions="CQ_EXT">
+<html>
+<head>
+    <!-- 2015-03-27 BLL1 Remove Name from CQ Options print -- basically duplicates the description -->
+    <!-- 2015-05-14 BLL2 Remove Estimated Commercial rebate per Kathi Neel. Had previously been removed from entry screen by someone -->
+    <!-- 2015-05-20 BLL3 Darken text td, th were #444, label & disclaimer were #777 -->
+    <!--
+    	2016-04-19	B. Leaman	BLL4 IT#23675 - Add location address, color & odometer to quote.
+    	2016-05-17	B. Leaman	BLL5 Use delivery date instead of created date.
+    	2016-06-09	B. Leaman	BLL6 - Print doctype instead of "Quote" (so it can say "invoice" instead).
+    -->
+    <apex:stylesheet value="//fonts.googleapis.com/css?family=Open+Sans" />
+  <style>
+
+    body {
+      font-family: 'PT Sans', Dialog;
+      font-size: 11px;
+    }
+
+    strong {
+      font-weight: 700;
+    }
+
+    table {
+      border-right:  1px solid #000;
+      border-bottom:  1px solid #000;
+    }
+
+    td, th {
+      border-top: 1px solid #000;
+      border-left: 1px solid #000;
+      padding: 2px 5px;
+      border-bottom: 0;
+      border-right: 0;
+      color: #111;
+    }
+
+    .pull_right {
+      float: right;
+    }
+
+    .center_text {
+      text-align: center;
+    }
+
+    .right_text {
+      text-align: right;
+    }
+
+    .disclaimer {
+      font-size: .8em;
+      color: #333;
+    }
+
+    .form_data {
+      font-family: 'Monaco', 'Courier New', Courier, monospace;
+      /*float: right;*/
+      /*font-size: 1.1em;*/
+      font-weight: bold;
+      margin-left: 5px;
+      color: #000;
+    }
+
+    .title_cell {
+      background-color: #444;
+      text-align: center;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .header_cell, th {
+      background-color: #DDD;
+      text-align: center;
+    }
+
+    .quote_data td {
+      vertical-align: top;
+      height: 30px;
+    }
+
+    .label {
+      font-size: 7px;
+      color: #333;
+      clear: both;
+    }
+
+    .spacers td {
+      border-right: 0px;
+      border: 0px solid #000;
+    }
+
+    .spacers tr {
+      border: 0px solid #fff;
+    }
+
+    p {
+      margin: 0;
+      padding: 0;
+    }
+
+    @page {
+    /* Landscape orientation */
+    size:portrait;
+    margin: 0.15in;
+
+        /* Put page numbers in the top right corner of each
+        page in the pdf document. */
+        @bottom-left {
+            font-family: 'PT Sans', Dialog;
+            width: 600px;
+            font-size: 12px;
+            content: "Commercial {!doctypename}";	/* BLL6c was Quote */
+        }
+        @bottom-right {
+          font-family: 'PT Sans', Dialog;
+          width: 200px;
+          font-size: 10px;
+          content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+    td.qty { width: 50px;}
+    tbody.head{page-break-before:avoid;page-break-after:avoid;}
+    tbody.options {page-break-before:avoid;page-break-inside:auto;}
+    tr {page-break-inside:avoid;}
+  </style>
+</head>
+
+<body>
+<div style="page-break-inside:avoid;">
+<table cellspacing="0" cellpadding="0">
+  <tbody class="head">
+    <tr class="spacers">
+      <td width="50"></td>
+      <td width="125"></td>
+      <td width="100"></td>
+      <td width="25"></td>
+      <td></td>
+      <td></td>
+      <td width="25"></td>
+      <td width="50"></td>
+      <td width="50"></td>
+    </tr>
+    <tr>
+      <td class="center_text" colspan="9">
+
+        <!-- Table to have logo on the left and user on the right -->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border:0px;">
+            <tr style="border:0px;">
+                <td style="border:0px;" width="35%;"><!-- BLL4 was 75% -->
+                  <apex:image url="{!$Resource.MobilityWorksComLogo}" /><br />
+                  <strong>TOLL FREE:  1-888-466-5504</strong><br />
+                  <a href="http://www.mobilityworkscommercial.com/" target="_blank"><u>www.mobilityworkscommercial.com</u></a>                  
+                </td>
+                <!-- BLL4a -->
+                <td style="border:0px; text-align:left;" width="40%">
+                <apex:outputText value="{!IF(ISBLANK(location.Dealer_License_Name__c),'MobilityWorks of ' + location.Name,location.Dealer_License_Name__c)}"/><br/>
+                <apex:outputText value="{!location.dealer__Street__c}"/><br/>
+                <apex:outputText value="{!location.dealer__City__c}"/>, 
+                <apex:outputText value="{!location.dealer__State__c}" style="margin-left:1em;"/>
+                <apex:outputText value="{!location.dealer__Postal_Code__c}" style="margin-left:2em;"/>
+                <br/><br/><!-- BLL6a -->
+                <apex:outputText value="{!doctypename} {!CommercialQuote__c.Name}" rendered="{!doctypename<>'Quote'}"
+                	style="font-size:12pt;"/><!-- BLL6a -->
+                </td>
+                <!-- BLL4a end -->
+                <td style="border:0px;">
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border:0px;">
+                    <tr style="border:0px;">
+                      <td style="text-align:left;border:0px;"><b>Regional Sales Manager</b></td>
+                    </tr>
+                    <tr style="border:0px;">
+                      <td style="text-align:left;border:0px;">{!quoteAuthor.FirstName}&nbsp;{!quoteAuthor.LastName}</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:left;border:0px;">Desk:&nbsp;{!quoteAuthor.Phone}</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:left;border:0px;">Mobile:&nbsp;{!quoteAuthor.MobilePhone}</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:left;border:0px;">Fax:&nbsp;{!quoteAuthor.Fax}</td>
+                    </tr>                    
+                    <tr>
+                      <td style="text-align:left;border:0px;">Email:&nbsp;{!quoteAuthor.Email}</td>
+                    </tr>                    
+                  </table>
+                </td>
+            </tr>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+  <tbody class="quote_data">
+    <tr>
+      <td colspan="4"><span class="label">COMPANY </span><br/>{!CommercialQuote__c.Customer__r.Name}</td>
+      <td colspan="2"><span class="label">SALESPERSON </span><br/><apex:outputField value="{!CommercialQuote__c.Salesperson__r.Name}" />&nbsp;</td>
+      <td colspan="2"><span class="label">{!UPPER(doctypename)} NUMBER </span><br/><apex:outputField value="{!CommercialQuote__c.Name}" />&nbsp;</td><!-- BLL6c doctypename -->
+      <td><span class="label">DATE </span><br/>   <apex:outputText value="{0,date,MM/dd/yyyy}">
+      <apex:param value="{!CommercialQuote__c.Delivery_Date__c}" /><!-- BLL5c -->
+   </apex:outputText>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="4"><span class="label">CONTACT </span><br/>{!CommercialQuote__c.Contact__c}</td>
+      <td colspan="2"><span class="label">COUNTY </span><br/><apex:outputField value="{!CommercialQuote__c.County__c}" />&nbsp;</td>
+      <td colspan="3"><span class="label">TAX ID# </span><br/><apex:outputField value="{!CommercialQuote__c.Tax_ID_Nbr__c}" />&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="4"><span class="label">STREET </span><br/>{!CommercialQuote__c.Street__c}</td>
+      <td colspan="2"><span class="label">CUSTOMER PO# </span><br/><apex:outputField value="{!CommercialQuote__c.Customer_Purchase_Order__c}" />&nbsp;</td>
+      <td colspan="3"><span class="label">JOB REFERENCE </span><br/><apex:outputField value="{!CommercialQuote__c.Job_Reference__c}" />&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="4"><span class="label">CITY, STATE and ZIP </span><br/>{!CommercialQuote__c.City__c}<apex:outputText rendered="{!NOT(ISBLANK(CommercialQuote__c.State__c))}">,</apex:outputText> {!CommercialQuote__c.State__c} {!CommercialQuote__c.Zip__c}</td>
+      <td colspan="2"><span class="label">F.O.B. </span><br/><apex:outputField value="{!CommercialQuote__c.F_O_B__c}" />&nbsp;</td>
+      <td colspan="3"><span class="label">TERMS </span><br/><apex:outputField value="{!CommercialQuote__c.Terms__c}" />&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2" width="25%"><span class="label">PHONE </span><br/>{!CommercialQuote__c.Phone__c}</td>
+      <td colspan="2" width="25%"><span class="label">FAX </span><br/><apex:outputField value="{!CommercialQuote__c.Fax__c}" />&nbsp;</td>
+      <td colspan="5" width="50%"><span class="label">DELIVERY NOTES</span><br/><apex:outputField value="{!CommercialQuote__c.Delivery_Notes__c}" />&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2" width="25%"><span class="label">UNIT NUMBER</span><br/><apex:outputField value="{!CommercialQuote__c.UnitNumber__c}" />&nbsp;</td>
+      <td colspan="2" width="25%"><span class="label">COLOR</span><br/><apex:outputField value="{!CommercialQuote__c.ExteriorColor__c}"/>&nbsp;</td>    
+      <td colspan="4"><span class="label">VIN</span><br/><apex:outputField value="{!CommercialQuote__c.VIN__c}" />&nbsp;</td>
+      <td><span class="label">ODOMETER</span><br/><apex:outputField value="{!CommercialQuote__c.Mileage__c}"/>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="4" width="50%"><span class="label">SPECIAL ORDER NOTES</span><br/><apex:outputField value="{!CommercialQuote__c.Chassis_Special_Order_Notes__c}" />&nbsp;</td>    
+      <td colspan="5" width="50%"><span class="label">DELIVERY LOCATION</span><br/><apex:outputField value="{!CommercialQuote__c.Delivery_Location__c}" />&nbsp;</td>
+    </tr>
+  </tbody>
+  <tbody class="options">
+    <tr>
+      <td class="qty header_cell"><strong>QTY</strong></td>
+      <td colspan="8" class="header_cell"><strong>VEHICLE and EQUIPMENT</strong></td>
+      <!-- <td colspan="2" class="header_cell"><strong>COST</strong></td>-->
+    </tr>
+
+    <!-- Chassis -->
+    <tr>
+      <td class="qty center_text">{!CommercialQuote__c.Chassis_QTY__c}</td>
+      <td colspan="8">
+        <p style="font-size: 0.85em;"><!-- BLL1d {!CommercialQuote__c.Chassis__r.Name}: -->
+        <span style="font-size: 0.9em;">{!CommercialQuote__c.Chassis__r.Description__c}</span></p>
+      </td>
+    </tr>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Wheelbase Options -->
+    <apex:outputText rendered="{!IF(LongWheelBaseSelectedItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Wheelbase Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!LongWheelBaseSelectedItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Seating Options -->
+    <apex:outputText rendered="{!IF(AdditionalSeatingItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Seating Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!AdditionalSeatingItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Fabric Options -->
+    <apex:outputText rendered="{!IF(FabricItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Fabric Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!FabricItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Wheelchair Restraint Options -->
+    <apex:outputText rendered="{!IF(WheelChairRestraints.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Wheelchair Restraint Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!WheelChairRestraints}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Interior Upgrades -->
+    <apex:outputText rendered="{!IF(InteriorOptions.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Interior Upgrades</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!InteriorOptions}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Stanchion Poles -->
+    <apex:outputText rendered="{!IF(StantItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Stanchion Poles</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!StantItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Exterior Upgrades -->
+    <apex:outputText rendered="{!IF(ExtItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Exterior Upgrades</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!ExtItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Wheelchair Storage Options -->
+    <apex:outputText rendered="{!IF(ChairStorageItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Wheelchair Storage Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!ChairStorageItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody class="options">
+
+    <!-- Additional Safety Options -->
+    <apex:outputText rendered="{!IF(SafetyItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Additional Safety Options</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!SafetyItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;"><!-- BLL1d {!item.Commercial_Quote_Options__r.Name}: -->
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+  </tbody>
+  <tbody>
+
+    <!-- MISC Options -->
+    <apex:outputText rendered="{!IF(MiscItems.Size > 0,true,false)}">
+      <tr><td colspan="9" align="center"><strong>Other Items</strong></td></tr>
+    </apex:outputText>
+    <apex:repeat value="{!MiscItems}" var="item">
+      <tr>
+        <td class="qty center_text">{!item.Quantity__c}</td>
+        <td colspan="8">
+          <p style="font-size: 0.85em;">
+          <span style="font-size: 0.9em;">{!item.Description__c}</span></p>
+        </td>
+      </tr>
+    </apex:repeat>
+
+    </tbody>
+    </table>
+    </div>
+
+    <div style="page-break-after:avoid;">
+    <table cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr class="spacers">
+      <td width="50"></td>
+      <td width="125"></td>
+      <td width="100"></td>
+      <td width="25"></td>
+      <td></td>
+      <td></td>
+      <td width="25"></td>
+      <td width="50"></td>
+      <td width="50"></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">Total vehicle package - (before rebates)</td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Total__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">+ Dealer document fee / temp tag </td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Dealer_document_fee_temp_tag__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">+ Freight </td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Freight_Amount__c}" /></td>
+    </tr>    
+    <!-- tr> removed BLL2 5/14/2015 per Kathi Neel. Had previously been removed from entry screen by someone.
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">-  *Estimated Commercial rebate </td>
+      <td colspan="2" class="right_text">< apex : outputField value="{ ! CommercialQuote__c.Commercial_rebate__c }" /></td>
+    </tr -->
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"> - Mobility rebate </td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Mobility_rebate__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"> -*Estimated Additional MFG Rebate or Special Incentive </td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Additional_Ford_Rebate_Or_Special_Financ__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"> -*Government Price Concession for Qualified Buyers (with GPC code)</td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Government_Price_Concession__c}" /></td>
+    </tr>    
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">&nbsp;</td>
+      <td colspan="2" class="right_text">&nbsp;</td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"><em>Tax and Title Fees (If applicable)</em></td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Tax__c}" /></td>
+    </tr>    
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text">Total vehicle package (after applicable rebates &amp; discounts) *</td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Total_After_Discounts_Rebates__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"><em>Less Deposit Received</em></td>
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Deposit__c}" /></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="6" class="right_text"><em>Balance Due</em></td>
+      <!-- td colspan="2" class="right_text" --><!-- apex:outputField value="{!CommercialQuote__c.Total_After_Discounts_Rebates__c+CommercialQuote__c.Tax__c-CommercialQuote__c.Deposit__c}" / --><!-- /td -->
+      <td colspan="2" class="right_text"><apex:outputField value="{!CommercialQuote__c.Total_Due__c}" /></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td colspan="6">
+        *Height measurements may vary based on suspension condition, gas levels &amp; cargo loads.  All estimated specifications are subject to change without notice. 
+        <br /> * Estimated Rebates or Special Finance Rates Subject to Change without notice. 
+        <br/><strong>QUOTE IS VALID FOR 30 DAYS</strong>
+      </td>
+      <td colspan="2"></td>
+    </tr>
+    <tr>
+      <td rowspan="2" colspan="4" class="disclaimer">All material is guaranteed to be as specified.  All work to be completed in a workman like manner according to standard practices.  Any alteration or deviation from above specifications involving extra costs will be executed only upon written orders, and will become an extra charge over and above the estimate.  All agreements contingent upon  strikes, accidents or delays beyond our control.   Owner to carry fire, tornado, and other  necessary insurance.  Our workers are fully covered by Worker's Compensation Insurance. Manufacturer’s discounts and rebates are subject to change.  Height measurements may vary based on suspension condition, gas levels and cargo loads.  All estimated specifications are subject to change without notice. All goods and services sold and accepted subject to warranty and terms conditions published at: <a href="http://www.mobilityworks.com/Commercial/terms-conditions.php">http://www.mobilityworks.com/Commercial/terms-conditions.php</a></td>
+      <td colspan="5" class="center_text"><strong>QUOTE APPROVAL</strong></td>
+    </tr>
+    <tr>
+      <td colspan="3" valign="top"><strong>Authorized Signature:</strong></td>
+      <td colspan="2" valign="top"><strong>Date</strong></td>
+    </tr>
+    <tr>
+      <td colspan="4" class="center_text"><strong>CREDIT CARDS WILL BE ACCEPTED FOR DEPOSITS ONLY.</strong></td>
+      <td colspan="5" class="center_text">A non-refundable deposit of $1000.00 is required on all special order units.</td>
+    </tr>
+  </tbody>
+  </table>
+  </div>
+&nbsp;
+</body>
+</html>
+</apex:page>

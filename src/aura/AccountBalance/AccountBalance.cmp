@@ -1,0 +1,63 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId"
+		controller="AccountBalance">
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<aura:attribute name="balances" type="Object[]"/>
+	<aura:attribute name="balancecount" type="Integer" default="0"/>
+	<aura:attribute name="spinner" type="boolean" default="true"/>
+	<aura:attribute name="authorized" type="boolean" default="false"/>
+	<aura:attribute name="reporturl" type="string" />
+
+	<aura:attribute name="ldsFields" type="Object"/> 
+	<aura:attribute name="ldsError" type="String"/> 
+	<force:recordData aura:id="ldsAccountViewer" 
+		recordId="{!v.recordId}" 
+		fields="Id,Name" 
+		targetFields="{!v.ldsFields}" 
+		targetError="{!v.ldsError}" 
+		recordUpdated="{!c.ldsHandleRecordUpdated}" 
+		mode="VIEW" 
+	/>
+
+	<lightning:card title="{!v.ldsFields.Name+' Account Balance'}" aura:id="accountBalanceList" 
+		class="{!'slds-p-around_small '+if(v.authorized,'','hidden')}">
+		 <!-- spinner start... style=Brand Medium (blue dots) -->
+ 		<aura:if isTrue="{!v.spinner}">
+			<div aura:id="spinnerId" class="slds-spinner_container">
+				<div class="slds-spinner_brand  slds-spinner slds-spinner_small slds-is-relative" role="alert">
+					<span class="slds-assistive-text">Loading</span>
+					<div class="slds-spinner__dot-a"></div>
+					<div class="slds-spinner__dot-b"></div>
+				</div>
+			</div>
+		 </aura:if>
+		 <!-- spinner end -->    
+	
+		<aura:if isTrue="{!v.balancecount>0}">
+			<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-no-row-hover">
+				<thead>
+				<tr class="slds-line-height_reset">
+					<th scope="col">Company Name</th>
+					<th scope="col" style="text-align:right;">Balance</th>
+				</tr>
+				</thead>
+				<tbody>
+				<aura:iteration items="{!v.balances}" var="bal"> 
+					<tr class="slds-hint-parent">
+						<th data-label="Company Name" scope="row">{#bal.CompanyName}</th>
+						<td data-label="Balance" style="text-align:right;">
+							<a href="{! v.reporturl+'?fv0='+v.ldsFields.Name+'&amp;fv1='+bal.CompanySearch}">
+								<ui:outputCurrency value="{#bal.Balance}"/>
+							</a>
+						</td>
+					</tr>
+				</aura:iteration>
+				</tbody>
+			</table>
+		<aura:set attribute="else">
+			<a href="{! v.reporturl+'?fv0='+v.ldsFields.Name+'&amp;fv1=%20&amp;fv3=%20'}">No open balances</a>
+		</aura:set>
+		</aura:if>
+	</lightning:card>
+
+</aura:component>

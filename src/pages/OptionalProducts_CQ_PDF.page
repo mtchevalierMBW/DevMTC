@@ -1,0 +1,201 @@
+<apex:page renderAs="PDF" standardController="CommercialQuote__c"  sidebar="false" applyHtmlTag="false" 
+			extensions="CQ_EXT" applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">                                 
+<html>
+<head>
+<title>OptionalProducts PDF CQ</title>
+<style>
+  @page{size:letter Portrait; 
+          @bottom-left {content:"{!CommercialQuote__c.Name}"; font-size:0.7em;
+          }  
+  }
+  .formdata {margin-left: .5em; font-size: 12pt;}
+</style>
+</head>
+<body>
+<div>
+<table align="left" width="100%">
+<tr>
+<td align="center"><font style="font-size:1.3em;"><b>OPTIONAL PRODUCTS AND SERVICES DISCLOSURE</b></font>
+</td>
+</tr>
+<tr>
+<td style="padding-top:10px">
+<table width="100%" align="left" border="1" cellpadding="0" cellspacing="0" style="font-size:0.8em">
+<tr>
+<td colspan="5" align="left" valign="top" height="40px">Buyer Name(s)
+<br/><span class="formdata">
+<apex:outputText value="{!CommercialQuote__c.Customer__r.Name}"/>
+</span>
+</td>
+</tr>
+<tr>
+<td colspan="4" height="40px" valign="top">
+<table width="100%">
+<tr>
+<td width="55%" align="left" valign="top">Address (Street)
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.Street__c}"/>
+    </span>
+</td>
+<td width="15%" align="left" valign="top">City
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.City__c}"/>
+    </span>
+</td>
+<td width="15%" align="left" valign="top">State
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.State__c}"/>
+    </span>
+</td>
+<td width="15%" align="left" valign="top">Zip
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.Zip__c}"/>
+    </span>
+</td>
+</tr>
+</table>
+</td>
+<td width="20%" align="left" valign="top">
+    <table width="100%">
+      <tr>
+        <td>Contract Date  
+           <br/><span class="formdata">
+           <apex:outputText value="{0,date,MM/dd/yyyy}">
+              <apex:param value="{!CommercialQuote__c.Delivery_Date__c}"/>
+           </apex:outputText>
+           </span>
+        </td>
+      </tr>
+    </table>
+</td>
+</tr>
+<tr>
+<td height="40px" width="15%" align="left" valign="top">Year 
+    <br/><span class="formdata">
+    <apex:outputText value="{!veh.dealer__Year__c}"/>
+    </span>
+</td>
+<td width="20%" align="left" valign="top">Make 
+    <br/><span class="formdata">
+    <apex:outputText value="{!veh.dealer__Make__c}"/>
+    </span>
+</td>
+<td width="20%" align="left" valign="top">Model 
+    <br/><span class="formdata">
+    <apex:outputText value="{!veh.dealer__Model__c}"/>
+    </span>
+</td>
+<td width="25%" align="left" valign="top" colspan="2">VIN 
+    <br/><span class="formdata">
+    <apex:outputText value="{!veh.dealer__VIN__c}"/>
+    </span>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td align="left" style="font-size:0.9em;padding-top:5px;">I/We, the undersigned; acknowledge:</td>
+</tr>
+<tr>
+<td align="left" style="font-size:0.9em;" valign="top">
+<table width="100%" align="left">
+<tr>
+<td width="2%" valign="top" style="font-size:1.2em">&#x02022;</td><td  valign="top" align="left" style="text-align: justify;">
+The charges for each of the products/services described below
+        will be included and separately itemized in the retail installment 
+        sale contract accompanying the purchase of the above described vehicle.
+</td>
+</tr>
+<tr>
+<td width="2%" valign="top" style="font-size:1.2em">&#x02022;</td><td  valign="top" align="left" style="text-align: justify;">
+These products/services are not required as a condition to purchase 
+        the vehicle or to obtain financing.
+</td>
+</tr>
+<tr>
+<td width="2%" valign="top" style="font-size:1.2em">&#x02022;</td><td  valign="top" align="left" style="text-align: justify;">
+This document was presented to me/us prior to the execution of the 
+        retail installment sale contract.
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<table width="100%" align="left" style="font-size:0.9em">
+<tr>
+<td colspan="3" align="left"><b>Optional Products/Services</b></td><td align="left"><b width="15%">Price</b></td>
+</tr>
+<tr>
+<td colspan="5" align="left" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Service Contract(s):</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(1)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(2)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td colspan="3" height="30px" valign="bottom" align="left" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Debt Cancellation Agreement (GAP):_______________________________</td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td colspan="5" align="left"  height="30px" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Theft Deterrent Device(s):</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(1)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(2)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td colspan="5" align="left"  height="30px" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Surface Protection Product(s):</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(1)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td width="10%" height="30px"></td><td valign="bottom" width="65%" style="border-bottom:0.5px solid;">(2)</td><td width="10%"></td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td colspan="3" height="30px" valign="bottom" align="left" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Vehicle Contract Cancellation Option Agreement</td><td valign="bottom">$_____________</td>
+</tr>
+<tr>
+<td colspan="3" height="30px" valign="bottom" align="left" style="padding-top:5px"><img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;Optional Insurance Product:______________________________________________</td><td valign="bottom">$_____________</td>
+</tr>
+
+<tr>
+<td colspan="2"></td><td align="left" height="50px" valign="bottom"><b>Total</b></td><td valign="bottom">$_____________</td>
+</tr>
+
+</table>
+</td>
+</tr>
+<tr>
+<td align="center" style="font-size:0.9em;padding-top:40px">Installment Payment EXCLUDING Listed Items:&nbsp;&nbsp;&nbsp;&nbsp;$___________</td>
+</tr>
+<tr>
+<td align="center" style="font-size:0.9em;padding-top:20px">Installment Payment INCLUDING Listed Items:&nbsp;&nbsp;&nbsp;&nbsp;$___________</td>
+</tr>
+<tr>
+<td style="padding-top:50px">
+<table width="100%" align="left">
+<tr>
+<td width="20%" aling="left" style="border-bottom:0.5px solid;"></td><td width="5%"></td>
+<td width="35%" align="left" style="border-bottom:0.5px solid;"><img src="{!$Resource.Sign}" width="30px" height="20px"/></td><td width="5%"></td>
+<td width="35%" align="left" style="border-bottom:0.5px solid;"><img src="{!$Resource.Sign}" width="30px" height="20px"/></td>
+</tr>
+<tr>
+<td align="left" valign="top" style="font-size:0.7em;">Date</td><td></td>
+<td align="center" valign="top" style="font-size:0.7em;">Buyer's Signature</td><td></td>
+<td align="center" valign="top" style="font-size:0.7em;">Co-Buyer's Signature</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
+</apex:page>

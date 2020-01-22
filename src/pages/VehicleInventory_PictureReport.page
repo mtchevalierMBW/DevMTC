@@ -1,0 +1,92 @@
+<apex:page docType="html-5.0" controller="VehicleInventory_PictureReport">
+    <apex:form >
+    <apex:pageBlock title="Search Missing Vehicle Photos" id="MissingPicturesTableSearch" helpUrl="https://webapps.mobilityworks.com/apps/Taking%20and%20Uploading%20Vehicle%20Images.pptx" helpTitle="View Users Guide">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!vehicles_query}" value="Filter" status="searchStatus" reRender="MissingPicturesTableResults"/>
+                <apex:commandButton action="{!vehicles_query}" onclick="this.form.reset()" value="Reset" reRender="MissingPicturesTableResults"/>
+            </apex:pageBlockButtons>
+        		<div id="searchstatusholder" style="position:absolute; left:50%; padding:25px; border:2px solid #1797c0; background:#cfeef8; border-radius:5px; z-index:999; display:none">
+                	<apex:actionStatus id="searchStatus" onstart="shownotice()" onstop="hidenotice()" startText="Filtering Results" stopText="Results Found"></apex:actionStatus>  
+        		</div>
+        		
+                <apex:pageBlockSection columns="2">
+                    <apex:pageBlockSection columns="2">
+                            <apex:input label="Search" value="{!vin_stock}" html-placeholder="Enter VIN or Stock" style="padding:5px;"></apex:input>
+                            <apex:selectList label="Location" size="1" value="{!location}" style="padding:5px;">
+                                <apex:selectOptions value="{!location_options}"></apex:selectOptions>
+                            </apex:selectList>
+                        </apex:pageBlockSection>
+                    	<apex:pageBlockSection ></apex:pageBlockSection>
+                        <apex:pageBlockSection columns="3">
+                            <apex:commandLink value="Pending Only" action="{!vehicles_query}" status="searchStatus" reRender="MissingPicturesTableResults">
+                                <apex:param value="pendingonly" assignTo="{!filter}"></apex:param>
+                            </apex:commandLink>
+                            <apex:commandLink value="Missing Only" action="{!vehicles_query}" status="searchStatus" reRender="MissingPicturesTableResults">
+                                <apex:param value="missingonly" assignTo="{!filter}"></apex:param>
+                            </apex:commandLink>
+                            <apex:commandLink value="Show All" action="{!vehicles_query}" status="searchStatus" reRender="MissingPicturesTableResults">
+                                <apex:param value="showall" assignTo="{!filter}"></apex:param>
+                            </apex:commandLink>
+                    	</apex:pageBlockSection>
+            	</apex:pageBlockSection>
+            </apex:pageBlock>
+		</apex:form>
+        <apex:pageBlock title="Results" id="MissingPicturesTableResults" helpUrl="mailto:vanphotos@mobilityworks.com" helpTitle="Questions on Photos?">
+        <apex:pageBlockSection columns="1">
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageBlockTable value="{!vehicles}" var="veh" id="MissingPicturesTable" rowClasses="odd,even" styleClass="detailList">
+           <apex:facet name="caption">RED = missing pictures, please upload. YELLOW = pictures pending approval. Click on Stock Number or VIN to upload pictures.</apex:facet>
+            <apex:facet name="header">Total Vehicles: {!recordstotal} | Vehicles Missing Images: {!recordsmissing} | Compliancy: {!if(recordstotal != 0, round(((recordstotal - recordsmissing) / recordstotal) * 100,1),'NA')}% | Average Age of Vehicles missing Picture: {!if(recordstotal != 0, round(recordsage / recordstotal,0),'NA')}</apex:facet>
+            <apex:facet name="footer">MobilityWorks Website Picture Report</apex:facet>
+            <apex:column >
+                 <apex:facet name="header">Vehicle Info</apex:facet>
+                <apex:facet name="footer">Vehicle Info</apex:facet>
+                <apex:outputLink value="/apex/dealer__InventoryImageUploader?id={!veh.Id}" target="_blank">({!veh.dealer__Stock_Number__c}) {!veh.dealer__Year__c} {!veh.dealer__Make__c} {!veh.dealer__Model__c}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                 <apex:facet name="header">VIN</apex:facet>
+                <apex:facet name="footer">VIN</apex:facet>
+                <apex:outputLink value="/apex/dealer__InventoryImageUploader?id={!veh.Id}" target="_blank">{!veh.dealer__VIN__c}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                 <apex:facet name="header">Store</apex:facet>
+                <apex:facet name="footer">Store</apex:facet>
+                <apex:outputText value="{!veh.dealer__Store_Location__r.dealer__City__c}, "/>
+                <apex:outputText value="{!veh.dealer__Store_Location__R.dealer__State__c} "/>
+                <apex:outputText value="({!veh.dealer__Store_Location__r.dealer__Company_Number__c})"/>
+            </apex:column>
+            <apex:column style="{!IF((veh.dealer__Image_Count__c - veh.Images_Published__c) > 0,'background-color: #fff669;', IF(veh.Images_Published__c < 10,'background-color: #ffb0b0;','background-color: #b0ffb0;'))}">
+                <apex:facet name="header">Images<br/>Pending/Approved</apex:facet>
+                <apex:facet name="footer">Images</apex:facet>
+                <apex:outputText value="{!veh.dealer__Image_Count__c - veh.Images_Published__c}"/> / 
+                <apex:outputText value="{!veh.Images_Published__c}"/>
+                <!--<apex:repeat value="{!veh.dealer__Inventory_Images__r}" var="image" id="theRepeat">
+                        <apex:outputText value="{!image.dealer__Sequence_Number__c}({!image.dealer__Publish__c})," id="theValue"/>
+                  </apex:repeat>-->
+            </apex:column>
+            <apex:column >
+                 <apex:facet name="header">Status</apex:facet>
+                <apex:facet name="footer">Status</apex:facet>
+                <apex:outputText value="{!veh.dealer__Status_Code__c}"/>
+            </apex:column>
+            <apex:column >
+                 <apex:facet name="header">Days on Hand</apex:facet>
+                <apex:facet name="footer">Days on Hand</apex:facet>
+                <apex:outputText value="{!veh.dealer__Days_in_Stock__c}"/>
+            </apex:column>
+        </apex:pageBlockTable>
+        </apex:pageBlockSection>
+	</apex:pageBlock>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script>$jq = jQuery.noConflict();</script>
+    <script type="text/javascript">
+        function shownotice() {
+            	jQuery('div[id$=MissingPicturesTableResults]').css('opacity','.33');
+        		jQuery('#searchstatusholder').css('display','block');
+            }
+    	function hidenotice() {
+            	jQuery('div[id$=MissingPicturesTableResults]').css('opacity','1');
+            	jQuery('#searchstatusholder').css('display','none');
+        	}
+    </script>
+</apex:page>

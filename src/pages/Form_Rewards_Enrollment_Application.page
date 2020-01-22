@@ -1,0 +1,257 @@
+<apex:page renderas="PDF" standardController="dealer__Deal__c" extensions="Deal_MBW2" showHeader="false" showChat="false" standardStylesheets="false" applyHtmlTag="false" >
+<html>
+<!-- 
+	2017-02-13	B. Leaman	Replace Service_Vehicle__c with dealer__Service_Vehicle__c.
+	2017-02-28	B. Leaman	unmarked updates to record type for commercial (use dealer__Deal_Type__c instead)
+ -->
+<head>
+    <title>Rewards Application</title>
+
+      <style>
+              @page {
+                size:portrait;
+                margin: 0.25in 0.35in .35in;
+                 
+                 @bottom-left {
+                      /*content: "Prepared by Mobility Works";*/
+                      font-size: .85em;
+                  }
+
+              }
+
+            body {
+                  font-family:Arial,Helvetica,sans-serif;
+                  font-size:15px;
+            }
+
+            .checkbox {
+                width: 20px; 
+                height: auto; 
+                position: relative;
+                bottom: -5px;
+            }
+
+            .label {
+                  font-size: .8em;
+                  font-style: italic;
+            }
+      </style>
+</head>
+<body>
+<table width="100%" border="0" border-collapse="collapse">
+    <tr>
+      <td width="20%" style="height:50px;valign:top;border-style:none;">&nbsp;</td>
+
+      <td width="32%" style="height:50px;valign:top; border-style:none;" valign="top"><span class="label">Enrolled by:</span> {!dealer__Deal__c.dealer__Salesperson_1__r.Name}</td>
+
+      <td width="27%" style="height:50px;valign:top; border-style:none;" valign="top"></td>
+
+      <td width="26%" style="height:50px;valign:top; border-style:none;" valign="top"><span class="label">Date:</span> <apex:OutputText value="{0, date, MM'/'dd'/'yyyy}"><apex:param value="{!dealer__Deal__c.Proposed_Delivery_Date__c}" /></apex:OutputText></td>
+    </tr>
+
+    <tr>
+      <td width="20%" rowspan="3" align="right" style="border-style:none;"><img src="{!URLFOR($Resource.MWRewards_logo)}" /></td>
+
+      <td colspan="3" valign="center" style="border-style:none;"><b style="font-size:32px;">Rewards Enrollment Application</b></td>
+    </tr>
+
+    <tr>
+      <td valign="top"><img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Service Enrollment</td>
+
+      <td colspan="2" valign="top"><img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Basic Rewards(Purchased Vehicle)</td>
+    </tr>
+
+    <tr>
+      <td valign="top"><img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Extended Warranty Bonus</td>
+
+      <td valign="top"><img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Vehicle Finance Bonus</td>
+
+      <td valign="top"><img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;GAP Bonus</td>
+    </tr>
+
+</table>
+  <br />
+  <br />
+
+  <table width="100%">
+    <tr>
+      <td class="label" style="height:30px;">Buyer</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Buyer__r.Name}</td>
+
+      <td colspan="4" style="height:30px;"></td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">Co-Buyer</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Co_Buyer__r.Name}</td>
+
+      <td colspan="4" style="height:30px;"></td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">Address 1</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Buyer_Address__c}</td>
+
+      <td colspan="4" style="height:30px;"></td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">Address 2</td>
+
+      <td style="height:30px;"></td>
+
+      <td colspan="4" style="height:30px;"></td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">City</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Buyer_City__c}</td>
+
+      <td class="label" style="height:30px;">State</td>
+
+      <td style="height:30px;" align="left">{!dealer__Deal__c.dealer__Buyer_State__c}</td>
+
+      <td class="label" style="height:30px;">Zip Code</td>
+
+      <td style="height:30px;" align="left">{!dealer__Deal__c.dealer__Buyer_Postal_Code__c}</td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">Home Phone</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}</td>
+
+      <td class="label" style="height:30px;">Business Phone</td>
+
+      <td style="height:30px;"></td>
+
+      <td class="label" style="height:30px;">Mobile Phone</td>
+
+      <td style="height:30px;">{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}</td>
+    </tr>
+
+    <tr>
+      <td class="label" style="height:30px;">Birthdate</td>
+
+      <td style="height:30px;">
+        <apex:outputText value="{0,date, MM/dd/yyyy}">
+          <apex:param value="{!dealer__Deal__c.dealer__Buyer__r.PersonBirthdate}" />
+        </apex:outputText>
+      </td>
+
+      <td class="label" colspan="2" style="height:30px;">E-mail Address</td>
+
+      <td colspan="2" style="height:30px;">{!dealer__Deal__c.dealer__Buyer__r.PersonEmail}</td>
+    </tr>
+  </table><br />
+
+  <table border="1" width="100%" border-collapse="collapse">
+    <tr>
+      <td colspan="4" align="center" style="height:30px;border-style:none;background-color: black;color:white;">DEALER TO COMPLETE</td>
+    </tr>
+
+    <tr>
+      <!--td style="border-style:none;height:30px;" colspan="2"><span class="label">Customer #</span>&nbsp;{!dealer__Deal__c.dealer__Buyer__r.AccountNumber}</td-->
+
+      <td rowspan="2" style="border-style:none;height:30px;" colspan="2" align="center"><b>Bar Code#</b><br />
+      <br />
+      {!dealer__Deal__c.dealer__Buyer__r.dealer__Rewards_Number__pc}</td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;" colspan="2"><span class="label">Dealership Location</span> &nbsp;&nbsp; Mobility Works {! IF( NOT(ISBLANK( location.Name)), ' - '+ location.Name, '') }</td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;" colspan="2"><span class="label">VIN #</span> &nbsp;{! IF(BEGINS(dealer__Deal__c.dealer__Deal_Type__c, 'Equipment'),dealer__Deal__c.dealer__Service_Vehicle__r.dealer__VIN__c,dealer__Deal__c.dealer__Vehicle__r.dealer__VIN__c )}&nbsp;&nbsp;&nbsp;</td>
+
+      <td style="border-style:none;height:30px;" colspan="2"></td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;"><span class="label">Year</span>&nbsp;&nbsp;{! IF(BEGINS(dealer__Deal__c.dealer__Deal_Type__c, 'Equipment'),dealer__Deal__c.dealer__Service_Vehicle__r.dealer__Year__c,dealer__Deal__c.dealer__Vehicle__r.dealer__Year__c ) }</td>
+
+      <td style="border-style:none;height:30px;"><span class="label">Make</span>&nbsp;&nbsp;{! IF(BEGINS(dealer__Deal__c.dealer__Deal_Type__c, 'Equipment'),dealer__Deal__c.dealer__Service_Vehicle__r.dealer__Make__c,dealer__Deal__c.dealer__Vehicle__r.dealer__Make__c ) }</td>
+
+      <td style="border-style:none;height:30px;"><span class="label">Model</span> &nbsp;&nbsp; {! IF(BEGINS(dealer__Deal__c.dealer__Deal_Type__c, 'Equipment'),dealer__Deal__c.dealer__Service_Vehicle__r.dealer__Carline__c,dealer__Deal__c.dealer__Vehicle__r.dealer__Model__c ) }</td>
+
+      <td style="border-style:none;height:30px;">&nbsp;<img class="checkbox" src="{! IF(deal.dealer__Vehicle__r.MV_Ramp_Type__c = 'Fold Out', URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;Fold Out&nbsp;&nbsp;&nbsp;<img class="checkbox" src="{! IF(deal.dealer__Vehicle__r.MV_Ramp_Type__c = 'In Floor', URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;In Floor</td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;" colspan="2"><span class="label">Purchase Date</span> &nbsp;&nbsp; <apex:OutputText value="{0, date, MM'/'dd'/'yyyy}"><apex:param value="{!dealer__Deal__c.Proposed_Delivery_Date__c}" /></apex:OutputText></td>
+
+      <td style="border-style:none;height:30px;" colspan="2"><span class="label">Stock #</span> &nbsp;&nbsp;{!dealer__Deal__c.dealer__Stock_Number__c}</td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;"><!-- Salesperson# --></td>
+
+      <td style="border-style:none;height:30px;"><!--{!dealer__Deal__c.dealer__Salesperson_1__r.Name}--></td>
+
+      <td style="border-style:none;height:30px;text-align:right;">&nbsp;<img class="checkbox" src="{! IF(deal.dealer__Vehicle__r.New_Used_Other__c = 'New', URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;New</td>
+
+      <td style="border-style:none;height:30px;">&nbsp;&nbsp;&nbsp;<img class="checkbox" src="{! IF(deal.dealer__Vehicle__r.New_Used_Other__c != 'New', URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;Pre-Owned</td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;" colspan="4"><span class="label">DMS #</span> &nbsp;&nbsp;<!-- PROS-217153 --></td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;">&nbsp;<img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Purchase</td>
+
+      <td style="border-style:none;height:30px;">&nbsp;&nbsp;&nbsp;<img class="checkbox" src="{!URLFOR($Resource.box)}" />&nbsp;Lease</td>
+
+      <td style="border-style:none;height:30px;" class="label">Lease or Finance Expiration Date</td>
+
+      <td style="border-style:none;height:30px;"><!-- 08/24/2019 --></td>
+    </tr>
+
+    <tr>
+      <td style="border-style:none;height:30px;" class="label">Extended Service Contract</td>
+
+      <td style="border-style:none;height:30px;">&nbsp;<img class="checkbox" src="{! IF(soldOnProposalSC.size > 0, URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;Yes&nbsp;&nbsp;&nbsp;<img class="checkbox" src="{! IF(soldOnProposalSC.size <= 0, URLFOR($Resource.CheckboxChecked) , URLFOR($Resource.box))}" />&nbsp;No</td>
+
+      <td style="border-style:none;height:30px;" class="label">Ext. Svc. Contract Expiration Date</td>
+
+      <td style="border-style:none;height:30px;"></td>
+    </tr>
+  </table>
+
+  <div style="text-align: justify;">
+    The MobilityWorks Rewards program has been completely explained to me, and I fully understand the program and benefits as it applies to me. I hereby acknowledge receipt of my MobilityWorks Rewards key tags and membership card.
+  </div>
+
+  <table width="100%">
+    <tr>
+      <td valign="bottom" style="border-style:none;height:30px;">__________________________________</td>
+
+      <td valign="bottom" style="border-style:none;height:30px;">__________________________________</td>
+    </tr>
+
+    <tr>
+      <td valign="top" style="border-style:none;height:30px;">Buyer's Signature</td>
+
+      <td valign="top" style="border-style:none;height:30px;">Date</td>
+    </tr>
+
+    <tr>
+      <td valign="bottom" style="border-style:none;height:30px;">__________________________________</td>
+
+      <td valign="bottom" style="border-style:none;height:30px;">__________________________________</td>
+    </tr>
+
+    <tr>
+      <td valign="top" style="border-style:none;height:30px;">Authorization</td>
+
+      <td valign="top" style="border-style:none;height:30px;">Date Received</td>
+    </tr>
+  </table>
+  </body>
+</html>
+</apex:page>

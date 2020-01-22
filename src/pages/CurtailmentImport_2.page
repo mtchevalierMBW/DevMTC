@@ -1,0 +1,125 @@
+<apex:page controller="CurtailmentImportController_2">
+<!-- Flooring update, not curtailments -->
+<!-- 
+	2017-10-20	B. Leaman BLL1 IR-0016942 - add floored date as optional update (if specified in upload); rename end to org;
+ -->
+    <apex:form >
+    <script src="https://use.fontawesome.com/22da5c8c72.js"></script>
+    <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/css/theme.jui.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+		function disableBtn(btn, newText) {
+			var btnselector = 'input[id$='+btn+']';
+			$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+			if (newText.length>0) $jq(btnselector).val(newText);		
+		}
+    </script>
+    <apex:includeScript value="//code.jquery.com/jquery-2.1.1.min.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.widgets.js"/>
+
+    <apex:actionFunction action="{!submitCurtailments}" name="submitCurtailments"/>
+    <apex:actionFunction action="{!importCSVFile}" name="importCSVFile"/><!-- BLL1c -->
+
+        <apex:pagemessages />
+
+            <apex:pageBlock title="Import Floorplan Statement">
+                <apex:pageBlockSection columns="5"> 
+                      <apex:commandButton id="Import_btn" value="Preview" onclick="disableBtn('Import_btn','Processing...');importCSVFile();" rendered="{!ShowImportbtns}" style="width: 150px; height: 30px; margin: 0px 150px;" />
+                    <apex:commandButton value="Reset" action="{!reset}" rendered="{!ShowResetbtn}" style="height:30px;width:150px;margin: 0px 150px;" ></apex:commandButton>
+                </apex:pageBlockSection>
+                <table>
+                    <thead>
+                        <colgroup>
+                            <col style = "width:3%" />
+                            <col style = "width:21%" />
+                            <col style = "width:15%" />
+                            <col style = "width:16%" />
+                            <col style = "width:16%" />
+                            <col style = "width:16%" />
+                            <col style = "width:16%" /><!-- BLL1a -->
+                        </colgroup>
+                        <tr>
+                            <th></th>
+                            <th>Template</th>
+                            <th>Floorplan</th>
+                            <th>VIN Column</th>
+                            <th>Original Amt</th>
+                            <th>Current Amt</th>
+                            <th>Floored Date</th><!-- BLL1a -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!Options}" var="item">
+                        	<tr>
+                                <td><input type="radio" name="floorplan" id="floorplan" value="{!item.Name}" class="k-radio"/></td>
+                                <td><apex:outputText value="{!item.Name}"/></td>
+                                <td><apex:outputText value="{!item.Floorplan__c}"/></td>
+                                <td><apex:outputText value="{!item.VIN_Column__c}"/></td>
+                                <td><apex:outputText value="{!item.Original_Amount__c}"/></td>
+                                <td><apex:outputText value="{!item.Amount_Column__c}"/></td>
+                                <td><apex:outputText value="{!item.Date_Floored_Column__c}"/></td><!-- BLL1a -->
+                        	</tr>
+                        </apex:repeat>
+                        <tr>
+                        	<td colspan ="4">CSV File: <apex:inputFile value="{!csvFileBody}"  filename="{!csvAsString}" rendered="{!ShowImportbtns}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </apex:pageBlock>
+            <apex:pageBlock >
+
+            <div align="center" draggable="false">
+                <apex:commandButton id="Top_CurtailmentBtn" style="height:30px;width:150px;" disabled="false" value="Submit Floorplan Statement" rendered="{!ShowCurtailmentbtn}" onclick="disableBtn('CurtailmentBtn','Processing...');submitCurtailments();"/><!-- action="{!submitCurtailments}"/ -->
+            </div>
+            <apex:pageBlock title="Vehicles Mapped to Submit: {!vehicleSubmitCount}" mode="detail" rendered="{!ShowCurtailmentTable}">
+            <script>
+                    $(document).ready(function(){
+                        $("table").tablesorter({
+                        headerTemplate : '{content} {icon}',
+                        cssIconAsc : 'fa fa-caret-up',
+                        cssIconDesc : 'fa fa-caret-down'
+                  });
+                    });
+                </script>
+                <table class="list sortable" width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr class="headerRow" >
+                        <th style="width: 10%;text-align:center; cursor:pointer;">CSV VIN</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Record VIN</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Description</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Stock</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Floorplan</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Floored</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Date Floored</th><!-- BLL1a -->
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Original Floored Amt</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Current Floored Amt</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <apex:repeat value="{!vehList}" var="s">
+                        <tr class="dataRow even first">
+                            <td style="text-align:center"><apex:outputText value="{!s.serial}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.db_serial}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.message}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.stock}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.floor}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.floored_bool}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.date_floored}"/></td><!-- BLL1a -->
+                            <td style="text-align:center"><apex:outputText value="{!s.org_pmt}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.pmt}"/></td>
+                            <td style="text-align:center"><apex:outputText style="color: {!s.color}" value="{!s.description}"/></td>
+                            
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:pageBlock>
+        <div align="center" draggable="false">
+            <apex:commandButton id="Btm_CurtailmentBtn" style="height:30px;width:150px;" rendered="{!ShowCurtailmentbtn}" value="Submit Curtailments" onclick="disableBtn('CurtailmentBtn','Processing...');submitCurtailments();"/><!-- action="{!submitCurtailments}"/ -->
+        </div>
+     </apex:pageBlock>
+   </apex:form>
+</apex:page>

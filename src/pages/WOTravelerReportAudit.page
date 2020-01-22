@@ -1,0 +1,279 @@
+<apex:page controller="WOTravelerReport3" renderAs="pdf" showHeader="false" applyHtmlTag="false" applyBodyTag="false" >
+<html> 
+    <head>
+        <style type="text/css">
+            label.left-label {
+                margin-left:25px;
+                width:100px;
+                font-style: normal;
+                font-size: 12px;
+            }
+            .div-right-align {
+                width:50%;
+                text-align:right;
+                display:inline-block;
+                font-style: normal;
+                font-size: 12px;
+                vertical-align:top;
+            }
+            .div-left-align {
+                width:40%;
+                text-align:left;
+                display:inline-block;
+                margin-left:20px;
+                vertical-align:top;
+                font-style: normal;
+                font-size: 12px;
+            }
+            div.left-label-container {
+                width:100%;
+            }
+            h3 {
+                font-size: 13pt;
+                margin-top: 6pt;
+                margin-bottom: 2pt;
+            }
+        </style>
+        <style type="text/css" media="print">
+            @page {
+                /*margin-top:370px;*/
+                margin-top: 300px;
+                @top-center {
+                    content: element(header);
+                }
+            }
+            @page:first {
+                margin-top: 20px;
+                @top-center {}
+            }
+            div.header {
+                width:100%;
+                padding: 10px;
+                position: running(header);
+            }
+/**             td {border: 1px solid gray;}    **/
+        </style>
+    </head>
+    <apex:pageBlock >
+        <div class="header" style="margin-right: 400px;">
+            <h2 style="width:100%; text-align:center">
+                Work Order Traveler
+            </h2>
+            <div style="width:50%;">
+                <div style="float: left;width: 100%;">
+                    <div class="left-label-container">
+                        <div class="div-right-align">WORK ORDER NUMBER:</div><div class="div-left-align">{!strWONum}</div><br/><br/>
+                        <div class="div-right-align">ITEM NUMBER:</div><div class="div-left-align">{!strItemNum}</div><br/>
+                        <div class="div-right-align">DESCRIPTION:</div><div class="div-left-align">{!strItemDesc}</div><br/><br/>
+                        <div class="div-right-align">MAKE FOR:</div><div class="div-left-align">{!strSalesOrderLine}</div>
+                    </div>
+                </div>
+                <div style="float: right;width: 300px;margin-right: -300px;">
+                    <div class="left-label-container">
+                        <div class="div-right-align">SCHEDULED START:</div><div class="div-left-align">{!strDateStart}</div><br/>
+                        <div class="div-right-align">DUE DATE:</div><div class="div-left-align">{!strDateDue}</div><br/><br/>
+                        <div class="div-right-align">QUANTITY:</div><div class="div-left-align">{!dblQty}</div><br/>
+                        <div class="div-right-align">UNIT OF MEASUREMENT:</div><div class="div-left-align">{!strUOM}</div><br/><br/>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="clear:both; position:static; padding-right:20px">
+                <table>
+                    <colgroup>
+                        <col style='width:5%' /> 
+                        <col style='width:10%' />
+                        <col style='width:23%' />
+                        <col style='width:16%' />
+                        <col style='width:20%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                    </colgroup> 
+                    <thead>
+                        <tr>
+                            <th style="border-bottom:solid;border-top:solid"><center>Step</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Work Center</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Product</center></th> 
+                            <th style="border-bottom:solid;border-top:solid"><center>Op Code</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Description</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Hours</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Qty</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>UOM</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Keep</center></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+<!-- page 1 -->
+        <div style="width:100%;display:block;">
+            <h2 style="width:100%; text-align:center">
+                Work Order Traveler
+            </h2>
+            <div style="width:50%;display:block;">
+                <div style="float: left;width: 100%;">
+                    <div class="left-label-container">
+                        <div class="div-right-align">WORK ORDER NUMBER:</div><div class="div-left-align"><h3>{!strWONum}</h3></div><br/><br/> <!-- AMILLER1 added h3 tags -->
+                        <div class="div-right-align">ITEM NUMBER:</div><div class="div-left-align">{!strItemNum}</div><br/>
+                        <div class="div-right-align">DESCRIPTION:</div><div class="div-left-align">{!strItemDesc}</div><br/><br/>
+                        <div class="div-right-align">MAKE FOR:</div><div class="div-left-align">{!strSalesOrderLine}</div>
+                    </div>
+                </div>
+                <div style="float: right;width: 300px;margin-right: -300px;">
+                    <div class="left-label-container">
+                        <div class="div-right-align">SCHEDULED START:</div><div class="div-left-align">{!strDateStart}</div><br/>
+                        <div class="div-right-align">DUE DATE:</div><div class="div-left-align">{!strDateDue}</div><br/><br/>
+                        <div class="div-right-align">QUANTITY:</div><div class="div-left-align">{!dblQty}</div><br/>
+                        <div class="div-right-align">UNIT OF MEASUREMENT:</div><div class="div-left-align">{!strUOM}</div><br/><br/>
+                    </div>
+                </div>
+            </div>
+
+            <div style="width:100%;display:block;clear:both;">
+                <table style='width:100%;font-style: normal; font-size: 12px;margin-bottom:12px; border: 1px solid black; background:#eaeaea;'>
+                    <colgroup>
+                        <col style='width:20%' />
+                        <col style='width:8%' />
+                        <col style='width:10%' />
+                        <col style='width:14%' />
+                        <col style='width:10%' />
+                        <col style='width:14%' />
+                        <col style='width:10%' />
+                        <col style='width:14%' />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th style="text-align:center; border-bottom:1px solid;">Serial #</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Mfg Year</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Mfg Make</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Mfg Model</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Mfg Model Ext</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Key Tag</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Exterior Color</th>
+                            <th style="text-align:center; border-bottom:1px solid;">Frame</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr>
+                                <td><center>{!vin}</center></td>
+                                <td><center>{!year}</center></td>
+                                <td><center>{!make}</center></td>
+                                <td><center>{!model}</center></td>
+                                <td><center>{!modelExt}</center></td>
+                                <td><center>{!keyTag}</center></td>
+                                <td><center>{!extColor}</center></td>
+                                <td><center>{!frame}</center></td>
+                            </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="display:block; clear:both; position:static; padding-right:20px">
+                <table>
+                    <colgroup>
+                        <col style='width:5%' /> 
+                        <col style='width:10%' />
+                        <col style='width:25%' />
+                        <col style='width:10%' />
+                        <col style='width:4%' /> 
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                    </colgroup> 
+                    <thead>
+                        <tr>
+                            <th style="border-bottom:solid;border-top:solid"><center>Step</center></th> 
+                            <th style="border-bottom:solid;border-top:solid"><center>Work Center</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Product</center></th> 
+                            <th style="border-bottom:solid;border-top:solid"><center>Op Code</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Hours</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Qty</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>UOM</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Keep</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Remove</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Chng Qty</center></th>
+                            <th style="border-bottom:solid;border-top:solid"><center>Chng Dept</center></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+       </div>
+
+<!--  end page 1 header -->
+
+        <!--  ul -->
+            <apex:repeat value="{!GroupedList}" var="item">
+                <br/>
+                <table style='table-layout:fixed; width:100%;font-style: normal; font-size: 12px;'>
+                    <colgroup>
+                        <col style='width:5%' /> 
+                        <col style='width:10%' />
+                        <col style='width:25%' />
+                        <col style='width:10%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                        <col style='width:4%' />
+                    </colgroup>  
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th> <!-- AMILLER signoff section for shop floor-->
+                            <th></th>
+                            <th ></th>
+                            <th ></th>
+                            <th ></th> 
+                            <th ></th> 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!GroupedList[item]}" var="inItem">
+                            <tr>
+                                <td>{!inItem.lbrSeqNbr}</td><!-- BLL2a -->
+                                <td>{!inItem.strDept}</td><!-- BLL2a -->
+                                <td>{!inItem.strProduct}</td>
+                                <td>{!inItem.strItemNum}</td><!-- BLL2c was colspan="3" -->
+                                <td>{!inItem.dblHours }</td>
+                                <td>{!inItem.dblQty }</td>
+                                <td>{!inItem.strUOM }</td>
+                                <td style="border-bottom:solid;"></td>
+                                <td style="border-bottom:solid;"></td>
+                                <td style="border-bottom:solid;"></td>
+                            </tr>
+                            <apex:repeat value="{!inItem.TaskList}" var="tasksItem">
+                                <tr>
+                                    <td style="text-align:right;">TASK: </td>
+                                    <td colspan="3" style="background:lightgrey">
+                                        {!tasksItem.rstk__woopertask_desc__c}&nbsp;&nbsp;{!tasksItem.rstk__woopertask_comments__c}
+                                    </td>
+                                    <td colspan="3" style="background:lightgrey">{!tasksItem.rstk__woopertask_assignto__r.Name}</td>
+                                    <td></td>
+                                </tr>
+                            </apex:repeat>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+                <br/>
+            </apex:repeat>
+        <!-- /ul -->
+    </apex:pageBlock>
+ </html>
+</apex:page>

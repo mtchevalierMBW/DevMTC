@@ -1,0 +1,29 @@
+<apex:page controller="ImportPartData">
+    <apex:form >
+        <apex:pagemessages />
+        <apex:pageBlock >
+            <apex:pageBlockSection columns="4"> 
+
+                <apex:inputFile value="{!csvFileBody}"  filename="{!csvAsString}"/>
+                <apex:commandButton value="Import Parts" action="{!buildPartsInventory}" />
+                <apex:commandButton value="Import Part Ledger" action="{!buildLedger}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:pageBlock title="Part Ledger Data to Commit" >
+        	<apex:pageBlockButtons >
+        		<apex:commandButton rendered="{!historySize>0}" action="{!createHistory}" value="Create Ledger History" />
+        	</apex:pageBlockButtons>
+        	<apex:pageBlockTable value="{!ledgerLines}" var="l" rendered="{!historySize<=1000}" >
+        		<apex:column value="{!l.dealer__Part__c}" />
+        		<apex:column value="{!l.dealer__Entry_Date__c}" />
+        		<apex:column value="{!l.dealer__Quantity__c}" />
+        		<apex:column value="{!l.dealer__Item_Value__c}" />
+        		<apex:column value="{!l.dealer__Transaction_Note__c}" />
+        	</apex:pageBlockTable>
+
+            <apex:outputText rendered="{!historySize>1000}">
+                Parts History larger than 1000 rows.  
+            </apex:outputText>
+        </apex:pageBlock>
+   </apex:form>
+</apex:page>

@@ -1,0 +1,106 @@
+<!-- 
+	2016-07-05	B. Leaman	BLL1 - Add Chassis/Conversion allowance split.
+ -->
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Deal__c" extensions="Deal_MBW2" id="quoteTrades">
+
+	<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+
+	<apex:sectionHeader id="tradeSecHeader" description="Add a customer trade to Poposal# {!dealer__Deal__c.Name}" title="Trade-In" subtitle="Add New Trade-In" />
+
+	<apex:form >
+	<apex:messages />
+		<apex:pageBlock mode="maindetail">
+			<apex:pageBlockButtons >	
+				<apex:commandButton action="{!saveTrade}" value="Save" id="saveTradeCommandButton" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="tradeVIN" columns="2">
+				<apex:inputField value="{!tradeData.dealer__VIN__c}" id="VIN" styleClass="VIN" style="width:450px;" />
+				<pageBlockSectionItem><button id="decode">Decode VIN</button></pageBlockSectionItem>
+			</apex:pageBlockSection>
+			<apex:pageBlockSection id="tradeBlock">
+
+				<apex:inputField value="{!tradeData.dealer__Year__c}" id="year" required="true"/>
+				<apex:inputField value="{!tradeData.dealer__Make__c}" id="make" required="true" />
+
+				<apex:inputField value="{!tradeData.dealer__Model__c}" id="model" required="true" />
+				<apex:inputField value="{!tradeData.Mobility_Equiped__c}" id="mobilityEquiped" />
+
+				<apex:inputField value="{!tradeData.dealer__Odometer_at_Trade_In__c}" id="odometer" />
+				<apex:inputField value="{!tradeData.Type__c}" id="tradeData" />
+
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="1" id="tradeNotesSection">
+				<apex:inputField value="{!tradeData.Trade_In_Notes__c}" id="tradeNotes" style="width:450px;" />
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Valuation" collapsible="false">
+				<apex:inputField value="{!tradeData.dealer__ACV__c}" id="trade_ACV" required="true"/>
+				<apex:inputField value="{!tradeData.dealer__Trade_Allowance__c}" id="trade_GrossValue" />
+				<!-- BLL1a -->
+				<apex:outputText />
+				<apex:inputField value="{!tradeData.Chassis_Allowance__c}" id="chassis_ALW"/>
+				<apex:outputText />
+				<apex:inputField value="{!tradeData.Conversion_Allowance__c}" id="conversion_ALW"/>
+				<!-- BLL1a end -->
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Payoff Information" columns="1">		
+				
+				<apex:inputField value="{!tradeData.dealer__Pay_Off_Amount__c}" id="payoffAmount" />
+				<apex:inputField value="{!tradeData.dealer__Pay_Off_Expiration_Date__c}" id="payoffGoodThru" />
+				<apex:inputField value="{!tradeData.Per_diem__c}" id="perdiem" />
+				
+				<apex:inputField value="{!tradeData.dealer__Pay_Off_To__c}" id="payoffTo" />
+				<apex:inputField value="{!tradeData.Payoff_Account__c}" id="payoffAccount" />
+				<apex:inputField value="{!tradeData.Lien_Holder_Address__c}" id="lienHolderAddress" />
+				<apex:inputField value="{!tradeData.Payoff_Contact__c}" id="payoffContact" />
+				<apex:inputField value="{!tradeData.Payoff_Phone__c}" id="payoffPhone" />
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Stock Information" columns="1">
+				<apex:inputField value="{!tradeData.dealer__Stock_Number__c}" id="stocknumber" />
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+	<script>
+		$dt = jQuery.noConflict();
+
+		$dt( document ).ready(function(){
+			$dt('#decode').click(function(e){
+				e.preventDefault();
+				var VIN = $dt('.VIN').val();
+				if(VIN) {
+
+					$dt.ajax({
+						url: '/apex/dealer__VINDecodeRemote',
+						data: {
+							vin: VIN
+						},
+						dataType: 'jsonp',
+						type: 'GET',
+						crossDomain: true,
+						success: function(response){
+							console.log(response);
+
+							$dt('[id$="year"').val(response.dealer__Year__c);
+							$dt('[id$="make"').val(response.dealer__Make__c);
+							$dt('[id$="model"').val(response.dealer__Carline__c);
+							
+							// dealer__Trim_Level__c: Array[1],
+							// dealer__VIN__c: "2C4RDGCG6CR215714",
+
+						}
+					});
+				}
+
+			});
+		})
+	</script>
+	<style>
+		#decode {
+			position: relative;
+			left: -25px;
+		}
+	</style>
+</apex:page>

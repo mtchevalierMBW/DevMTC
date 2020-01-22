@@ -1,0 +1,30 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/8/2018
+    Work Item:     W-000421
+    File Name:     ContentListComponent.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentListController">
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <!-- Global decleration for the Content Id selected -->
+    <aura:attribute name="ContenList" type="Content__c[]"/>
+
+    <aura:attribute name="searchValue" type="String" />
+
+    <!--filter listener -->
+    <aura:handler event="c:ContentFilterEvent" action="{!c.searchKeyChange}"/>
+
+    <ui:scrollerWrapper class="scrollerSize">
+        <aura:iteration items="{!v.ContenList}" var="store">
+            <c:ContentCard content="{!store}"/>
+        </aura:iteration>
+    </ui:scrollerWrapper>
+
+</aura:component>

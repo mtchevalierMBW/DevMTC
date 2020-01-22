@@ -1,0 +1,59 @@
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Deal__c" extensions="Deal_MBW2" id="PrtSales" docType="html-5.0" >
+<!-- 
+    2019-07-31  B. Leaman   W-000703 BLL1 - ability to use static price, if specified.
+-->
+<head>
+        <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+    </head> 
+
+    <apex:sectionHeader title="{!dealer__Deal__c.Name}" subtitle="Add a Part to this proposal." />
+    <apex:form id="serviceSales">
+        <apex:pageBlock title="Additional Part" id="pB">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="Return to Deal" action="{!returnToDeal}" styleClass="btn btn-primary" />
+                </apex:pageBlockButtons>        
+            <apex:pageBlockSection columns="1" id="searchBlock">
+            <apex:panelGrid columns="3" id="pG" style="width:100%;">
+
+                <apex:outputPanel >Search Part Number</apex:outputPanel>
+                <apex:outputPanel >Search Part Description</apex:outputPanel>
+                <apex:outputPanel >&nbsp;</apex:outputPanel>
+                <!-- <apex:outputPanel >Add Multiple?</apex:outputPanel> -->
+
+                <apex:inputText value="{!searchByPartNumber}" id="dapsearchpartnbr"/>
+                <apex:inputText value="{!searchByDescription}" id="dapsearchpartdesc"/>
+                <apex:commandButton value="Search" action="{!searchParts}" reRender="searchResults" />
+                <!-- <apex:inputCheckbox value="{!partItem.selectMultiple}" /> -->
+
+                
+            </apex:panelGrid>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="1" id="searchResults">
+                <apex:pageBlockTable value="{!PartsResults}" var="p">
+                    <apex:column headerValue="Name" value="{!p.Name}" />
+                    <apex:column headerValue="Description" value="{!p.dealer__Part_Description__c}" />
+                    <!-- <apex:column headerValue="On Hand" value="{!p.dealer__On_Hand__c}" /> -->
+                    <apex:column headerValue="Cost" value="{!p.dealer__Cost__c}" />
+                    <!-- BLL1 -->
+                    <!-- apex:column headerValue="List" value="{!p.dealer__Retail_Price__c}" / -->
+                    <apex:column headerValue="List"> 
+                        <apex:outputText value="{0,number,currency}" >
+                            <apex:param value="{!IF(AND(p.Static_price__c!=null,p.Static_price__c!=0),p.Static_price__c,p.dealer__Retail_Price__c)}"/>
+                        </apex:outputText>
+                    </apex:column>
+                    <!-- BLL1 -->
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="btn" value="Select" action="{!savePartOnProposal}" immediate="true">
+                            <apex:param name="selectedPartNumber" assignTo="{!selectedPartNumber}" value="{!p.Id}" />
+                        </apex:commandLink>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

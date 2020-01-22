@@ -1,0 +1,18 @@
+.THIS .aligntoggles span.slds-form-element__label {
+	min-width:75%;
+}
+.THIS ul {
+	list-style-type: square;
+}
+.THIS ul li {
+	margin-left:1.5em;
+}
+
+.THIS button.deleteFile {
+	float:right;
+	color:#666;
+}
+.THIS button.deleteFile:hover svg {
+	fill:darkred !important;
+	font-weight:bold;
+}

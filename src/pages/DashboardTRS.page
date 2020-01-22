@@ -1,0 +1,22 @@
+<apex:page controller="ManagementDashboard" sidebar="false" showHeader="false" 
+	contentType="application/json" > <!-- BLL7d action=" { ! readCDeals}" -->
+
+	<apex:outputText rendered="{!IF(action=='read_deals', true, false)}" value="{!DealsListJSON}" />
+	<apex:outputText rendered="{!IF(action=='read_sales_ups', true, false)}" value="{!SalesUpList}" />
+	<apex:outputText rendered="{!IF(action=='read_tasks', true, false)}" value="{!TaskList}" />
+	<!-- apex:outputText rendered="{!IF(action=='read_cdeals', true, false)}" value="{!readResponse}" / -->
+    <apex:outputPanel layout="none" rendered="{!IF(action=='read_cdeals_split2',true,false)}">
+    	<apex:outputText value="{!selectedCDeals}"/><!-- BLL7a -->
+    	<!-- BLL7d apex:outputText value="{!selected_cDeals1}" / -->
+    	<!-- apex:outputText value="{!retail_cDeals2}" / -->
+		<!-- BLL7d apex:outputText value="{!commercial_cDeals}" / -->
+	</apex:outputPanel>
+    <!-- apex:outputText rendered="{!IF(action=='read_cdeals_new', true, false)}" value="{!readResponse}" / -->
+    <apex:outputPanel layout="none" rendered="{!IF(action=='read_cdeals_split',true,false)}">
+    	<apex:outputText value="{!selectedDeals}" /><!-- BLL7a w/ budgets -->
+    	<!-- BLL7d apex:outputText value="{!retailDeals1}" / -->
+    	<!-- apex:outputText value="{!retailDeals2}" / -->
+		<!-- BLL7d apex:outputText value="{!commercialDeals}" / -->
+	</apex:outputPanel>
+	
+</apex:page>

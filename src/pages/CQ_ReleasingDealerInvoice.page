@@ -1,0 +1,475 @@
+<apex:page renderAs="pdf" sidebar="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false" 
+           standardController="CommercialQuote__c" extensions="CQ_EXT">
+<html>
+<head>
+    <!--
+        2016-06-09  B. Leaman   Created for billing releasing dealer (no chassis or related fees).
+    -->
+  <apex:stylesheet value="//fonts.googleapis.com/css?family=Open+Sans" />
+  <style>
+    body {
+        font-family: 'PT Sans', Dialog;
+        font-size: 9pt;
+    }
+
+    a:link {text-decoration:none; color:#333333;}
+    a:visited {text-decoration:none; color:#333333;}
+    .datalabel {font-size:8pt; font-style:italic; text-align:right; font-weight:light;}
+    
+    td {vertical-align:top; padding-left: .3em;padding-right: .3em;}
+    td.number {text-align:right;}
+    
+    table.noborders tr td {border:none; }
+    table.noborders {border-collapse: collapse;}
+
+    table.borders {border-collapse: collapse;}
+    table.borders tr td {border:.5px solid black; }
+
+    table.verticalborders {border-collapse:collapse;}
+    table.verticalborders tr td {border-top:0; border-bottom:0; border-left:.5px solid black; border-right:.5px solid black;}
+    td.verticalborders {border-top:0; border-bottom:0; border-left:.5px solid black; border-right:.5px solid black;}
+    
+    @page {
+    /* Landscape orientation */
+    size:portrait;
+    margin-top: 0.15in;
+    margin-left: 0.15in;
+    margin-right: 0.15in;
+    margin-bottom: 0.35in; 
+    
+        /* Put page numbers in the top right corner of each
+        page in the pdf document. */
+        @bottom-left {
+            width: 600px;
+            font-size: 12px;
+            content: "{!CommercialQuote__c.Name}";
+        }
+        @bottom-right {
+          width: 200px;
+          font-size: 10px;
+          content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+  </style>
+</head>
+<body>
+
+    <table class="noborders" width="100%">
+    <tr><!-- Logo, store address, salesperson -->
+        <td width="40%"><!-- logo -->
+            <apex:image url="{!$Resource.MobilityWorksComLogo}" />
+        </td>
+        <td width="25%"><!-- store address -->
+            <apex:outputText value="{!IF(ISBLANK(location.Dealer_License_Name__c),location.Name,location.Dealer_License_Name__c)}"/><br/>
+            <apex:outputText value="{!location.dealer__Street__c}"/><br/>
+            <apex:outputText value="{!location.dealer__City__c}"/>
+            <apex:outputText rendered="{!AND(NOT(ISBLANK(location.dealer__City__c)),NOT(ISBLANK(location.dealer__State__c)))}">,</apex:outputText> 
+            <apex:outputText value="{!location.dealer__State__c}" style="margin-left:.5em;"/>
+            <apex:outputText value="{!location.dealer__Postal_Code__c}" style="margin-left:1em;"/>
+            <br /><br />
+            <strong>TOLL FREE:  1-888-466-5504</strong><br />
+            <a href="http://www.mobilityworkscommercial.com/" target="_blank" style="font-size:8pt;">www.mobilityworkscommercial.com</a>                  
+        </td>
+        <td width="35%"><!-- salesperson -->
+            <apex:outputText value="{!CommercialQuote__c.Salesperson__r.Title}"/><br/>
+            <apex:outputText value="{!CommercialQuote__c.Salesperson__r.Name}"/><br/>
+            <apex:outputText value="Phone: {!CommercialQuote__c.Salesperson__r.Phone}"/><br/>
+            <apex:outputText value="Fax: {!CommercialQuote__c.Salesperson__r.Fax}"/><br/>
+            <apex:outputText value="Email: {!CommercialQuote__c.Salesperson__r.Email}"/><br/>
+        </td>
+    </tr>
+    </table>
+    <br/>
+    <table class="noborders" width="100%">
+    <tr>
+        <td width="40%"><!-- Releasing dealer -->
+            <table class="noborders">
+            <tr>
+                <td class="datalabel">Billing Name</td>
+                <td colspan="3"><apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.Name}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Address</td>
+                <td colspan="3"><apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.BillingStreet}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">City, State ZIP</td>
+                <td colspan="3">
+                    <apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.BillingCity}"/>
+                    <apex:outputText rendered="{!AND(NOT(ISBLANK(CommercialQuote__c.ReleasingDealer__r.BillingCity)),NOT(ISBLANK(CommercialQuote__c.ReleasingDealer__r.BillingState)))}">,</apex:outputText>
+                    <apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.BillingState}" style="margin-left:.5em;"/>
+                    <apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.BillingPostalCode}" style="margin-left:1em;"/>
+                </td>
+            </tr>
+            <tr>
+                <td class="datalabel">County</td>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Phone</td>
+                <td><apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.Phone}"/></td>
+                <td class="datalabel">Fax</td>
+                <td><apex:outputText value="{!CommercialQuote__c.ReleasingDealer__r.Fax}"/></td>
+            </tr>
+            </table>
+        </td>
+        <td width="40%"><!-- Customer -->
+            <table class="noborders">
+            <tr>
+                <td class="datalabel">Customer Name</td>
+                <td><apex:outputText value="{!CommercialQuote__c.Customer__r.Name}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Address</td>
+                <td><apex:outputText value="{!CommercialQuote__c.Street__c}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">City, State ZIP</td>
+                <td>
+                    <apex:outputText value="{!CommercialQuote__c.City__c}"/>
+                    <apex:outputText rendered="{!AND(NOT(ISBLANK(CommercialQuote__c.City__c)),NOT(ISBLANK(CommercialQuote__c.State__c)))}">,</apex:outputText>
+                    <apex:outputText value="{!CommercialQuote__c.State__c}" style="margin-left:.5em;"/>
+                    <apex:outputText value="{!CommercialQuote__c.Zip__c}" style="margin-left:1em;"/>
+                </td>
+            </tr>
+            <tr>
+                <td class="datalabel">County</td>
+                <td><apex:outputText value="{!CommercialQuote__c.County__c}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Phone</td>
+                <td><apex:outputText value="{!CommercialQuote__c.Phone__c}"/></td>
+            </tr>
+            </table>
+        </td>
+        <td width="20%"><!-- Document details -->
+            <table class="noborders">
+            <tr>
+                <td class="datalabel">Stock #</td>
+                <td><apex:outputText value="{!CommercialQuote__c.UnitNumber__c}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Cust ID #</td>
+                <td><apex:outputText value="{!CommercialQuote__c.Customer__r.ClientID__c}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Invoice #</td>
+                <td><apex:outputText value="{!CommercialQuote__c.Name}"/></td>
+            </tr>
+            <tr>
+                <td class="datalabel">Date</td>
+                <td>
+                    <apex:outputText value="{0, date, MM/dd/yyyy}">
+                        <apex:param value="{!CommercialQuote__c.Delivery_Date__c}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            </table>
+        </td>
+    </tr>
+    </table>
+
+    <!-- main body -->
+    <table class="borders" width="760">
+    <tr><!-- define column widths -->
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="75" style="border:none;">&nbsp;</td>
+        <td width="100" style="border:none;">&nbsp;</td>
+        <td width="135" style="border:none;">&nbsp;</td>
+    </tr>
+    
+    <tr>
+        <td><span class="datalabel">New/Used</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.New_Used_Other__c}"/>
+        </td>
+        <td colspan="2"><span class="datalabel">Make</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.dealer__Make__c}"/>
+        </td>
+        <td colspan="2"><span class="datalabel">Model</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.dealer__Model__c}"/>
+        </td>
+        <td><span class="datalabel">Year</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.dealer__Year__c}"/>
+        </td>
+        <td><span class="datalabel">Color</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.dealer__Exterior_Color__c}"/>
+        </td>
+        <td colspan="2"><span class="datalabel">To Be Delivered On Or About</span><br/>
+            <apex:outputText value="{0, date, MM/dd/yyyy}">
+            <apex:param value="{!CommercialQuote__c.Delivery_Date__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    
+    <tr>
+        <td colspan="2"><span class="datalabel">Type of Vehicle</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VehicleInventory__r.dealer__Body_Type__c}"/>
+        </td>
+        <td colspan="3"><span class="datalabel">VIN</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.VIN__c}"/>&nbsp;
+        </td>
+        <td><span class="datalabel">Mileage</span><br/>
+            <apex:outputText value="{!CommercialQuote__c.Mileage__c}"/>
+        </td>
+        <td colspan="3">&nbsp;
+        </td>
+    </tr>
+
+    <!--  added equipment -->   
+    <tr><td colspan="8" style="border:none; border-left:.5px solid black;">&nbsp;</td>
+        <td class="number" style="border:none;border-left:.5px solid black;border-right:.5px solid black;"></td>
+    </tr>
+    <apex:repeat value="{!AllItems}" var="equip">
+    <tr>
+        <td colspan="8" style="border:none; border-left:.5px solid black;">
+            <apex:outputText rendered="{!equip.Quantity__c<0}">REMOVE:&nbsp;</apex:outputText>
+            <apex:outputText value="{!equip.Commercial_Quote_Options__r.Name}" rendered="{!NOT(ISBLANK(equip.Commercial_Quote_Options__r.Name))}"/>
+            <apex:outputText value="{!equip.Description__c}" rendered="{!ISBLANK(equip.Commercial_Quote_Options__r.Name)}"/>
+            <apex:outputText value=" ({!equip.Quantity__c} @ {!equip.Selling_Price__c})" rendered="{!OR(equip.Quantity__c>1,equip.Quantity__c<-1)}"/>
+        </td>
+        <td class="number" style="border:none;border-left:.5px solid black;border-right:.5px solid black;">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!equip.Extended_Total__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    </apex:repeat>
+    <tr><td colspan="8" style="border:none; border-left:.5px solid black;">&nbsp;</td>
+        <td class="number" style="border:none;border-left:.5px solid black;border-right:.5px solid black;"></td>
+    </tr>
+    <tr><td colspan="8" style="border:none; border-left:.5px solid black;">&nbsp;</td>
+        <td class="number" style="border:none;border-left:.5px solid black;border-right:.5px solid black;"></td>
+    </tr>
+
+    <!-- fees and totals -->
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Documentation Fee
+        </td>
+        <td class="number">
+            $ 0.00
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Finance Charge
+        </td>
+        <td class="number">
+            $ 0.00
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            <b>&nbsp;Total</b>
+        </td>
+        <td class="number">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!CommercialQuote__c.Total_Options_Price__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Sales Tax
+        </td>
+        <td class="number">
+            $ 0.00
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Title Fee
+        </td>
+        <td class="number">
+            $ 0.00
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Freight
+        </td>
+        <td class="number">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!CommercialQuote__c.Freight_Amount__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            <b>&nbsp;Total Cash Delivered Price</b>
+        </td>
+        <td class="number">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!CommercialQuote__c.Total_Options_Price__c+CommercialQuote__c.Freight_Amount__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Third Party Payment
+        </td>
+        <td class="number">
+            $ 0.00
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Rebate
+        </td>
+        <td class="number">
+        	$ 0.00
+            <!-- apex:outputText value=" { 0 ,number,currency}" -->
+            <!-- apex:param value=" { ! CommercialQuote__c.Mobility_rebate__c}"/ -->
+            <!-- /apex:outputText -->
+        </td>
+    </tr>
+    <tr>
+        <td colspan="6" style="border-top:0;border-bottom:0;">
+        </td>
+        <td colspan="2" class="datalabel">
+            Deposit
+        </td>
+        <td class="number">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!CommercialQuote__c.Deposit__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+    
+    <tr>
+        <td colspan="8"><span class="datalabel">Description Of Trade-In</span></td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td rowspan="2"><span class="datalabel">Make</span><br/>
+            &nbsp;
+        </td>
+        <td rowspan="2"><span class="datalabel">Model</span><br/>
+            &nbsp;
+        </td>
+        <td rowspan="2"><span class="datalabel">Type</span><br/>
+            &nbsp;
+        </td>
+        <td rowspan="2"><span class="datalabel">Year</span><br/>
+            &nbsp;
+        </td>
+        <td rowspan="2"><span class="datalabel">Qty</span><br/>
+            &nbsp;
+        </td>
+        <td colspan="2" class="number"><span class="datalabel">Trade Allowance</span></td>
+        <td class="number">&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="number"><span class="datalabel">Less Payoff</span></td>
+        <td class="number">&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="4"><span class="datalabel">VIN</span><br/>
+            &nbsp;
+        </td>
+        <td><span class="datalabel">License No.</span><br/>
+            &nbsp;
+        </td>
+        <td colspan="2" class="number datalabel" style="vertical-align:middle;">Net Trade</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="5" style="border:none;">&nbsp;</td>
+        <td colspan="3" class="number">
+            <b>Amount Due Upon Delivery</b>
+        </td>
+        <td class="number">
+            <apex:outputText value="{0,number,currency}">
+            <apex:param value="{!CommercialQuote__c.Total_Options_Price__c-CommercialQuote__c.Deposit__c+CommercialQuote__c.Freight_Amount__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+
+    </table>
+
+    <table class="noborders" width="100%">
+    <tr>
+        <td style="border-bottom:2px solid black; text-align:center;padding:5px;">
+            <b>ONLY THOSE ITEMS AND SERVICES SPECIFICALLY WRITTEN ON THIS ORDER ARE INCLUDED IN THE STATED<br/>
+            PRICE. ANY OTHER AGREEMENTS, UNLESS IN WRITING, ARE NOT BINDING ON THE SELLER.</b>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size:8pt;padding:5px;">
+            All material is guaranteed to be as specified.  All work to be completed in a workman like manner 
+            according to standard practices.  Any alteration or deviation from above specifications involving extra 
+            costs will be executed only upon written orders, and will become an extra charge over and above the 
+            estimate.  All agreements contingent upon  strikes, accidents or delays beyond our control.   Owner to 
+            carry fire, tornado, and other  necessary insurance.  Our workers are fully covered by Worker's 
+            Compensation Insurance. Manufacturer’s discounts and rebates are subject to change.  Height measurements 
+            may vary based on suspension condition, gas levels and cargo loads.  All estimated specifications 
+            are subject to change without notice. All goods and services sold and accepted subject to warranty and 
+            terms conditions published at: 
+            <a href="http://www.mobilityworks.com/Commercial/terms-conditions.php">http://www.mobilityworks.com/Commercial/terms-conditions.php</a>
+        </td>
+    </tr>
+    </table>
+
+    <table width="100%">
+    <tr>
+        <td width="350" style="text-align:center;border-bottom: 1px solid black;">
+            <apex:outputText value="{!CommercialQuote__c.Contact__c}"/>
+        </td>
+        <td width="60">&nbsp;</td>
+        <td width="350" style="text-align:center;border-bottom: 1px solid black;">
+            <apex:outputText value="{!CommercialQuote__c.Salesperson__r.Name}"/>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;" class="datalabel">Purchaser's Name</td>
+        <td>&nbsp;</td>
+        <td style="text-align: center;" class="datalabel">Sales Person</td>
+    </tr>
+    <tr style="height:18pt;">
+        <td width="350" style="border-bottom: 1px solid black;">
+        </td>
+        <td width="60">&nbsp;</td>
+        <td width="350" style="border-bottom: 1px solid black;">
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;" class="datalabel">Purchaser's Signature</td>
+        <td>&nbsp;</td>
+        <td style="text-align: center;" class="datalabel">Approved by:<br/>
+        <div style="font-size:8pt; display:block; margin-top:5px;">
+            This order is not valid unless signed and accepted by dealer.
+        </div>
+        </td>
+    </tr>
+    </table>
+
+</body>
+</html>
+
+</apex:page>

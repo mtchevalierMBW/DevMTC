@@ -1,0 +1,58 @@
+<apex:page standardController="dealer__Dealer_Trade__c" extensions="DealerTradeOpenDocs_EXT"
+           showHeader="false" sidebar="false">
+
+<style>
+table {
+	border-collapse:collapse;
+	width:100%;
+}
+table th {
+	border:1px solid silver;
+	background-color: #eaeaea;
+	font-weight:bold;
+	padding:3px;
+}
+table td {
+	border:1px solid silver;
+	padding:3px;
+}
+.center {text-align:center;}
+.right {text-align:right;}
+</style>
+
+<!-- Fields needed by controller extension (in lieu of doing "addfields") -->
+<div style="display:none;"><apex:outputText value="{!dealer__Dealer_Trade__c.dealer__Stock_No__c}"/></div>
+<!--  -->
+<div height="20pt;">&nbsp;</div>
+	<apex:dataTable value="{!OpenDocuments}" var="d">
+		<apex:column styleclass="center">
+			<apex:outputText rendered="{!d.docRef.Deal__c!=null}">Proposal</apex:outputText>
+			<apex:outputText rendered="{!d.docRef.CommercialQuote__c!=null}">Quote</apex:outputText>
+			<apex:facet name="header">Document type</apex:facet>
+		</apex:column>
+		<apex:column styleclass="center">
+			<apex:facet name="header">Document</apex:facet>
+			<apex:outputLink value="/{!d.docRef.Deal__c}" target="_blank" rendered="{!d.docRef.Deal__c!=null}">{!d.DocName}</apex:outputLink>
+			<apex:outputLink value="/{!d.docRef.CommercialQuote__c}" target="_blank" rendered="{!d.docRef.CommercialQuote__c!=null}">{!d.DocName}</apex:outputLink>
+		</apex:column>
+		<apex:column styleclass="left">
+			<apex:facet name="header">Location</apex:facet>
+			<apex:outputLink value="/{!d.docRef.dealer__Company__c}" target="_blank">{!d.StoreLocationName}</apex:outputLink>
+		</apex:column>
+		<apex:column styleclass="left" value="{!d.Status}">
+			<apex:facet name="header">Status</apex:facet>
+		</apex:column>
+		<apex:column styleclass="left">
+			<apex:facet name="header">Customer</apex:facet>
+			<apex:outputLink value="/{!d.docRef.dealer__Customer__c}" target="_blank">{!d.CustomerName}</apex:outputLink>
+		</apex:column>
+		<apex:column styleclass="left">
+			<apex:facet name="header">Salesperson</apex:facet>
+			<apex:outputLink value="/{!d.docRef.dealer__Service_Advisor__c}" target="_blank">{!d.SalespersonName}</apex:outputLink>
+		</apex:column>
+		<apex:column styleclass="left" value="{!d.DeliveryDate}">
+			<apex:facet name="header">Delivery Date</apex:facet>
+		</apex:column>
+	</apex:dataTable>
+	
+</apex:page>

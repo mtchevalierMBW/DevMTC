@@ -1,0 +1,64 @@
+<!--
+    WMK, LLC (c) - 2019
+
+    Created By:    Alexander Miller
+    Created Date:  2/28/2019
+    Work Item:     W-000603
+    File Name:     InMotionCampaignQuestionnaireCard.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="InMotionCampaignCardController">
+
+    <aura:attribute name="question" type="In_Motion_Question__c" /> 
+    <aura:attribute name="questionBoolean" type="Boolean"/>
+    <aura:attribute name="questionTextBoolean" type="Boolean"/>
+    <aura:attribute name="textResponseValue" type="String" />
+    <aura:attribute name="questionBooleanValue" type="Boolean"/> 
+    <aura:attribute name="questionOptions" type="In_Motion_Option__c[]" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <lightning:card class="slds-p-around_medium" title="{!v.question.Question__c}">
+        
+        <aura:if isTrue="{!v.questionBoolean}">
+            
+            <lightning:input 
+                class="field" 
+                type="toggle"
+                messageToggleActive="True"
+                messageToggleInactive="False"
+                checked="{!v.questionBooleanValue}"
+                onchange="{!c.questionAnswered}" />
+
+            <aura:set attribute="else">
+                
+                <aura:if isTrue="{!v.questionTextBoolean}">
+
+                    <lightning:input 
+                        class="field"
+                        value="{!v.textResponseValue}" 
+                        onchange="{!c.questionAnswered}" />
+
+                    <aura:set attribute="else">
+                        
+                        <br/>
+                
+                        <aura:iteration items="{!v.questionOptions}" var="option">
+
+                            <ui:inputCheckbox label="{!option.Value__c}" change="{!c.checkboxOnchange}"/>
+                            <br/>
+
+                        </aura:iteration>
+
+                    </aura:set>
+                    
+                </aura:if>
+                
+            </aura:set>
+        </aura:if> 
+            
+    </lightning:card>
+
+</aura:component>

@@ -1,0 +1,296 @@
+<apex:page id="pg" standardController="rstk__sopack__c" extensions="rstk.ControllerExtnSOPackPrint" sideBar="true" action="{!doBeforePageLoad}" >
+<head>
+<style>
+    @page {
+        size:portrait;
+        margin-top: 30px;
+        margin-bottom: 30px;
+    
+    }
+    body, table, th, td, div { 
+        font:normal normal 95%/1.0 arial, times new roman, verdana; 
+    }
+    body {
+        counter-reset: pg 0;
+    }
+    table {
+        cell-padding: 0;
+        cell-spacing: 0;
+    }
+    #main {
+        margin:auto;
+        width:700px;
+        background:#ffffff;
+    }
+    .headerSect {
+        width:700px;
+    }
+    .logoDiv {
+        height:95px;
+        width:323px;
+    }
+    .logoDiv img {
+        display: block;
+        height: 100%;
+    }
+    .cmpLogo {
+        max-height:90px;
+        max-width:315px;
+    }
+    .header {
+        width:350px;
+        border: 1px solid;
+        padding: 10px;
+    }
+    .formTitle {
+        float:left;
+        font-weight: bold;
+        font-size: 140%;
+        padding-left:4px;
+    }
+    .pageNumSect {
+        float:right;
+        counter-increment: pg;
+    }
+    div.pageNumSect:before {
+        content: "Page " counter(pg) " of " ;
+    
+    }
+    .headerInfo {
+        margin-top:24px;
+        padding: 2px;
+    }
+    .hdrInfoLbl {
+        font-weight: bold;
+    }
+    .hdrInfoData {
+        font-weight: normal;
+    }
+    td {
+        padding: 2px;
+    }
+    .addressSect {
+        background-color: #000000;
+        width:700px;
+        margin-top:6px;
+        margin-right:2px;
+    }
+    .addressSect th {
+        text-align:center;
+        font-weight: bold;
+        background-color:#000000;
+        color:#ffffff;
+        padding: 2px;
+    } 
+    .addressSect td {
+        background-color:#ffffff;
+    } 
+    .termsSect {
+        width:700px;
+        margin-top:6px;
+        border: 1px solid;
+    }
+    .termsSect td {
+        vertical-align:top;
+    }
+    .termsSect td:nth-child(1) {
+        width: 17%;
+        font-weight: bold;
+    }
+    .termsSect td:nth-child(2) {
+        width: 33%;
+    }
+    .termsSect td:nth-child(3) {
+        width: 15%;
+        font-weight: bold;
+    }
+    .termsSect td:nth-child(4) {
+        width: 35%;
+    }
+    table.lines {
+        width:700px;
+        table-layout:fixed;
+        background-color: #ffffff;
+        margin-top:6px;
+        margin-right:2px;
+        border-top: 1px solid;
+        border-bottom: 1px solid;
+        border-right: 1px solid;
+    }
+    table.lines td {
+        background-color:#ffffff;
+        vertical-align:top;
+        padding: 2px;
+        border-left: 1px solid black;
+    }
+    table.lines tr.lines_header_row th {
+        background-color:#000000;
+        color:#ffffff;
+        padding: 3px;
+        text-align:center;
+        font-weight:bold;
+    }
+    table.lines tr.lines_content_row td {
+        text-align: right;
+    }
+    table.lines tr.lines_content_row td.col_empty {
+        color: white;
+    }
+    table.lines tr.lines_content_row td.col_sm_indent {
+        padding-left: 1em;
+    }
+    table.lines tr.lines_content_row td.col_order {
+        text-align: left;
+    }
+    table.lines tr.lines_content_row td.col_uom {
+        text-align: center;
+    }
+    table.lines tr.lines_content_row td.col_product {
+        white-space: wrap;
+        text-align: left;
+    }
+
+    table.footerSect {
+        width:700px;
+        margin-top:6px;
+        margin-right:2px;
+        border-top: 1px solid;
+        border-bottom: 1px solid;
+        border-right: 1px solid;
+    }
+    table.footerSect td {
+        margin-top: 6px;
+        border-left: 1px solid black;
+    }
+    table.footerSect td td {
+        border: none;
+    }
+    //230
+    .totalLabel {
+        font-weight: bold;
+        width: 80px;
+    }
+    .totalAmt {
+        text-align:right;
+        width: 150px;
+    }
+    .totalSect td {
+        border: 0;
+    }
+</style>
+</head>
+<body>
+<div id="main">
+<apex:repeat value="{!pages}" var="page">
+    <div class="headerSect" style="{!IF(page.pageNum>1,'page-break-before:always;','')}">
+      <table cellspacing="0" cellpadding="0" border="0">
+      <tr><td>
+        <div class="logoDiv" width="100%" height="100%">
+            <apex:image styleClass="cmpLogo" value="{!relatedTo.rstk__companylogo__c}" rendered="{!!ISBLANK(relatedTo.rstk__companylogo__c)}"/>
+        </div>
+      </td><td>
+        <div class="header">
+            <div class="formTitle">Packing Slip {!relatedTo.rstk__packslip__c}</div>
+            <div class="pageNumSect">{!pages.size}</div>
+            <apex:panelGrid styleClass="headerInfo" columnClasses="hdrInfoLbl,hdrInfoData" columns="2" width="100%">
+                <apex:outputText value="Order Date"/>
+                <apex:outputText value="{0,date,short}">
+                  <apex:param value="{!relatedTo.rstk__prtdate__c}"/>
+                </apex:outputText>
+                <apex:outputText value="Order Number"/>
+                <apex:outputText value="{!relatedTo.rstk__salesorder__c}"/>
+                <apex:outputText value="Shipper Number"/>
+                <apex:outputText value="{0,Number,0}">
+                    <apex:param value="{!relatedTo.rstk__shipper__c}"/>
+                </apex:outputText>
+                <apex:outputText value="Container ID"/>
+                <apex:outputText value="{!relatedTo.rstk__containerid__c}"/>
+            </apex:panelGrid>
+        </div>
+      </td></tr></table>
+    </div>
+    <table class="addressSect" cellspacing="1">
+        <tr>
+            <th>Ship To</th><th></th>
+        </tr>
+        <tr width="100%">
+            <td valign="top" width="50%">
+            <apex:panelGrid columns="1" width="100%">
+                <apex:outputText value="{!relatedTo.rstk__name__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address1__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address2__c}" rendered="{!!ISBLANK(relatedTo.rstk__address2__c)}"/>
+                <apex:outputText value="{!relatedTo.rstk__address3__c}" rendered="{!!ISBLANK(relatedTo.rstk__address3__c)}"/>
+                <apex:outputText value="{0}, {1}  {2}">
+                    <apex:param value="{!relatedTo.rstk__city__c}"/>
+                    <apex:param value="{!relatedTo.rstk__state__c}"/>
+                    <apex:param value="{!relatedTo.rstk__zip__c}"/>
+                </apex:outputText>
+                <apex:outputText value="{!relatedTo.rstk__country__c}" rendered="{!!ISBLANK(relatedTo.rstk__country__c)}"/>
+                <apex:outputText value="Phone: {0}" rendered="{!!ISBLANK(relatedTo.rstk__phone__c)}">
+                    <apex:param value="{!relatedTo.rstk__phone__c}"/>
+                </apex:outputText>
+            </apex:panelGrid>
+            </td>
+            <td valign="top" width="50%">
+            <apex:panelGrid columnClasses="hdrInfoLbl,hdrInfoData" columns="2" width="100%">
+                <apex:outputText value="Carrier"/>
+                <apex:outputText value="{!relatedTo.rstk__carrierdesc__c}"/>
+                <apex:outputText value="Ship Method"/>
+                <apex:outputText value="{!relatedTo.rstk__shipviadesc__c}"/>
+                <apex:outputText value="F.O.B."/>
+                <apex:outputText value="{!relatedTo.rstk__fobdesc__c}"/>
+                <apex:outputText value="Freight Terms"/>
+                <apex:outputText value="{!relatedTo.rstk__frttermdesc__c}"/>
+                <apex:outputText value="PO Number"/>
+                <apex:outputText value="{!relatedTo.rstk__custpo__c}"/>
+                <apex:outputText value="Reference Number"/>
+                <apex:outputText value="{!relatedTo.rstk__custref__c}"/>
+            </apex:panelGrid>
+        </td>
+        </tr>
+    </table>
+    <table border="0" cellspacing="0" cellpadding="0" class="lines">
+        <tr class="lines_header_row">
+            <th width="15%">Order Line</th>
+            <th width="65%">Product</th>
+            <th width="10%">UOM</th>
+            <th width="10%">Quantity</th>
+        </tr>
+        <apex:repeat var="l" value="{! page.lines }">
+        <tr class="lines_content_row">
+            <!-- Order Line Column -->
+            <td class="col_order">
+                <apex:outputText value="{!l.rstk__salesorder__c}" rendered="{!!ISBLANK(l.rstk__salesorder__c)}"/>
+            </td>
+            <!-- Product Column -->
+            <apex:variable var="isProductIndent" value="{! LEFT(l.rstk__product__c,2)='**' }"/>
+            <apex:variable var="productClass" value="{! 'col_product' + IF(l.rstk__product__c=' ',' col_empty','') + IF(isProductIndent,' col_sm_indent', '') }"/>
+            <apex:variable var="productDisplayValue" value="{! IF(isProductIndent, RIGHT(l.rstk__product__c,LEN(l.rstk__product__c)-2), IF(l.rstk__product__c=' ','X',l.rstk__product__c))}"/>
+            <td class="{! productClass }">
+                {!productDisplayValue}
+            </td>
+            <!-- UOM Column -->
+            <td class="col_uom">
+                {!l.rstk__uom__c} 
+            </td>
+            <!-- Quantity Column -->
+            <td class="col_qty">
+                <apex:outputText value="{0,Number,###,###,###,##0}">
+                    <apex:param value="{!l.rstk__quantity__c}"/>
+                </apex:outputText> 
+            </td>
+        </tr>
+        </apex:repeat>
+    </table>
+</apex:repeat>
+<apex:outputPanel rendered="{!!ISBLANK(relatedTo.rstk__comments__c)}}">
+<table class="footerSect" cellpadding="0" cellspacing="0">
+  <tr><td width="460px" valign="top">
+      <div style="overflow:hidden;max-height:85px;"><apex:outputText value="{!relatedTo.rstk__comments__c}"/>
+      </div>
+  </td></tr>
+</table>
+</apex:outputPanel>
+</div>
+</body>
+</apex:page>

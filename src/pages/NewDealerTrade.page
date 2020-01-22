@@ -1,0 +1,35 @@
+<apex:page standardController="dealer__Dealer_Trade__c" extensions="DealerTrade_EXT">
+
+    <apex:pageMessages />
+
+    <apex:form id="detailBlock">
+
+    <apex:actionFunction name="save" action="{!save}"/>
+    
+        <apex:pageBlock title="New Dealer Trade">
+           <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save" id="btnSave" onclick="disableBtn('btnSave','Saving...');save();"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:inputField value="{!dealer__Dealer_Trade__c.dealer__Stock_No__c}"/>
+                <apex:inputField value="{!dealer__Dealer_Trade__c.dealer__Outbound_Location__c}"
+                    label="Vehicle's Location"/>
+                <apex:inputField value="{!dealer__Dealer_Trade__c.dealer__Store_Location__c}"
+                    label="Requested by Store"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"/>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+        function disableBtn(btn, newText) {
+            var btnselector = 'input[id$='+btn+']';
+            $jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+            if (newText.length>0) $jq(btnselector).val(newText);        
+        }
+    </script>
+
+
+</apex:page>

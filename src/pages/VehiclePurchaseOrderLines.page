@@ -1,0 +1,156 @@
+<!--
+
+2016-02-17 RedTeal		RT4 - Made changes to support alternative general ledger objects so vehicle po's can
+							  be done by non-FF users
+
+2016-06-07 RedTeal		RT5 - Added support for creating a new vehicle inventory record from a vehicle template
+
+2016-12-14	|Jarrett Kuljis		|
+Add editable dimmension 1
+
+2018-06-12	B. Leaman	BLL1 - Adjust column widths; placeholder color; 
+-->
+<apex:page showHeader="false" sidebar="false" controller="VehiclePOLines">
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+    <script type="text/javascript">__sfdcSessionId = '{!$Api.Session_Id}';</script>
+	<apex:includeScript value="/soap/ajax/30.0/connection.js"/>
+	<apex:includeScript value="/soap/ajax/30.0/apex.js"/>
+	<style type="text/css">
+	.aright {
+		text-align: right
+	}
+	::placeholder {	/* BLL1a */
+		color: #333; 	/* BLL1c */ 
+	}
+    ::-webkit-input-placeholder {
+		color: #333; 	/* BLL1c */ 
+    }
+
+    :-moz-placeholder { /* Firefox 18- */
+		color: #333; 	/* BLL1c */ 
+    }
+    
+    ::-moz-placeholder {  /* Firefox 19+ */
+		color: #333; 	/* BLL1c */ 
+    }
+    
+    :-ms-input-placeholder {  
+		color: #333; 	/* BLL1c */ 
+    }
+	</style>
+
+    <apex:form id="vehiclePurchaseOrderForm"> 
+    <apex:pageMessages id="messages"/>    
+    <apex:actionFunction action="{!savePO}" name="savePO" oncomplete="createVehicle();"/>
+    <apex:actionFunction action="{!createVehicleFromTemplate}" name="createVehicle" />
+	<apex:pageBlock id="page" mode="maindetail" rendered="{!NOT(ISBLANK(po.Id))}">    
+
+		<apex:pageBlockButtons location="bottom" >
+			<apex:actionStatus id="SaveButtonStatus">
+				<apex:facet name="stop" >
+					<apex:outputPanel id="buttons">
+						<apex:commandButton action="{!addLine}" value="Add Line" status="SaveButtonStatus" reRender="plines,messages"  />
+						<apex:commandButton action="{!saveLines}" value="Save Lines" status="SaveButtonStatus" reRender="plines,messages" />
+						<apex:commandButton action="{!acceptPO}" value="Accept Purchase Order" status="SaveButtonStatus" 
+						title="Balances must equal out to zero. Disabled if PO is already accepted."
+						reRender="messages,jLines,buttons" disabled="{!NOT(ISBLANK(po.dealer__Accepted_DateTime__c))}" />
+						<apex:commandButton action="{!createPayableInvoice}" value="Create Payable Invoice" status="SaveButtonStatus" reRender="messages,jLines,buttons" />						
+					</apex:outputPanel>
+				</apex:facet>
+				<apex:facet name="start">
+					<apex:outputPanel >
+						<apex:commandButton value="Saving..." disabled="true" style="width:250px;"/>
+					</apex:outputPanel>
+				</apex:facet>
+			</apex:actionStatus>		
+		</apex:pageBlockButtons>	
+
+	<apex:outputPanel id="plines">
+		
+
+		<apex:pageBlockSection id="receivePoLines" >
+				<apex:inputField id="template-input" label="Template" value="{!po.Vehicle_Inventory_Template__c}" />
+				<apex:commandButton value="Create Vehicle from Template" onclick="savePO();" oncomplete="setTimeout(function() {window.top.location.href='/apex/purchaseorder?id={!po.Id}';},2000);"/>
+				<apex:inputField value="{!po.dealer__Invoice_Amount__c}" />
+				<apex:outputField value="{!po.dealer__Vendor__c}" />
+				<apex:inputField value="{!po.dealer__Invoice_Date__c}" />
+				<apex:inputField value="{!po.dealer__Invoice_Number__c}" />			
+		</apex:pageBlockSection>
+
+<div style="overflow:auto; width:100%;">
+	    <apex:pageBlockSection collapsible="false" title="Purchase Lines" columns="1" >
+			<apex:outputText label="Balance" value="{!balance}" />     
+			<apex:pageBlockTable value="{!lines}" var="l">
+				<apex:column headerValue="Row">
+					<apex:outputText value="{!l.indexCount}" />
+				</apex:column>
+		        <apex:column headerValue="Description" width="250px"><!-- BLL1c width="350px" -->
+					<apex:inputText value="{!l.lineDescription}" style="width:250px;" required="true" /><!-- BLL1c width:350px; -->
+				</apex:column>
+				<apex:column headerValue="Amount" headerClass="aright" width="80px;"><!-- BLL1c add width -->
+					<apex:inputText value="{!l.amount}" styleClass="aright" style="float:right;width:80px;" required="true" /><!-- BLL1c add width -->
+				</apex:column>
+				<apex:column width="80px;"><!-- BLL1c headerValue="Add to Chassis Cost" -->
+					<apex:facet name="header">Add to<br/>Chassis Cost</apex:facet>
+					<apex:inputCheckbox value="{!l.addToChassis}" />
+				</apex:column>
+				<apex:column width="80px;"><!-- BLL1c headerValue="Add to Conversion Cost" -->
+					<apex:facet name="header">Add to<br/>Conversion Cost</apex:facet>
+					<apex:inputCheckbox value="{!l.addToConversion}" />
+				</apex:column>	                
+		        <apex:column headerValue="GL Account#" width="250px">
+                    <!--RT4-->
+		            <apex:inputField value="{!l.template.General_Ledger_Acct__c}" html-placeholder="{!l.glAccount.name}"
+		                             required="{!ISBLANK(l.glAccount.name)}"  style="width:250px;" /><!-- BLL1c was 350px -->
+				</apex:column>
+				<apex:column headerValue="Dimension" width="100px">
+					<apex:inputField value="{!l.template.Dimension_1__c}" html-placeholder="{!loc.Financial_Force_Dimension_1__r.Name}" required="{!ISBLANK(loc.Financial_Force_Dimension_1__r.Name)}" 
+						style="width:100px;" /><!-- BLL1c add width -->
+				</apex:column>
+
+				<apex:column >
+					<apex:commandLink value="Delete" action="{!deleteLine}" styleClass="btn"
+		                              style="color:black;text-decoration:none" reRender="plines"
+		                              immediate="true">
+						<apex:param name="indexCount" value="{!l.indexCount}" assignTo="{!indexCount}"  />
+					</apex:commandLink>
+				</apex:column>				
+			</apex:pageBlockTable>
+	    	<p>Note: you must click Save for your edits and deletes to be retained.</p>
+		</apex:pageBlockSection>
+</div>
+	</apex:outputPanel>
+	</apex:pageBlock>
+	
+	<apex:pageBlock >
+		<apex:outputPanel id="jLines">
+			<apex:pageBlockSection collapsible="false" columns="1">
+			<p>Buttons disabled? See below for any Journal record(s) already accepted against this PO.</p>        
+			<apex:pageBlockTable value="{!journalHeaders}" var="j">
+				<apex:column headerValue="Journal Name">
+					<apex:outputlink value="/{!j.Id}" target="_blank" >{!j.Name}</apex:outputLink>
+				</apex:column>
+		        <apex:column headerValue="Description">
+					<apex:outputText value="{!j.c2g__JournalDescription__c}" />
+				</apex:column>
+				<apex:column headerValue="Date" >
+					<apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!j.c2g__JournalDate__c}" /></apex:outputText>
+				</apex:column>		
+			</apex:pageBlockTable>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Vehicle and Payable Invoice" columns="2" collapsible="false">
+				<apex:pageBlockSectionItem >
+					Existing Vehicle: <apex:outputLink value="/{!vehicleInv}" target="_blank">{!vehicleInv.Name}</apex:outputLink>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					Payable Invoice: <apex:outputLink value="/{!po.Payable_Invoice__c}" target="_blank">{!po.Payable_Invoice__r.Name}</apex:outputLink>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+		</apex:outputPanel>	
+	</apex:pageBlock>
+	
+		
+	</apex:form>
+
+</apex:page>

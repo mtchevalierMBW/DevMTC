@@ -1,0 +1,724 @@
+<!-- 
+* 2018-12-06    J. Pritt    JRP1  - Add Form Id Barcode 
+ -->
+<apex:page renderAs="PDF" standardController="dealer__Deal__c"  sidebar="false" applyHtmlTag="false" extensions="Deal_MBW2" 
+           applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">
+<html>
+<head>
+<title>SiennaRVWarrantyForm</title>
+<style>
+  .formdata {margin-left: .5em; font-family: 'PT Sans', Dialog; font-size: 11px;}
+  td.dataline {font-size:0.75em;padding-top:0px;} /* font-size:0.75em;padding-top:6px; */
+  td.underline {border-bottom: .02em solid black; }
+  @page {
+     size: letter;
+     margin: .2in;
+  }
+  .page-break {
+     display:block;
+     page-break-after:always;
+  }
+</style>
+</head>
+<body>
+<apex:image value="https://chart.googleapis.com/chart?cht=qr&chs=50x50&chl=Braun-Toyota+Rebate-Warranty&chld=L|0" style="float:left;"/><!-- JRP1 -->
+<table width="100%" align="left">
+<tr>
+<td style="background-color:silver" height="8px"></td>
+</tr>
+<tr>
+<td align="center" style="font-size:1.15em"><b>Sienna Rampvan/Scion xB Rampvan Warranty Registration</b> <br />
+<b>&#x00026; Mobility Assistance Reimbursement Form</b><br />
+<span style="padding-right:100px"><img src="{!$Resource.bravn}" width="150px" height="30px"/></span><span style="padding-left:100px"><img src="{!$Resource.toyota}" width="150px" height="30px"/></span>
+</td>
+</tr>
+<tr>
+<td align="center" style="font-size:0.9em" valign="top"><b>Fax Completed form and documentation to The Braun Corporation at 574-946-2373. </b> Rev. 5-16-2007 CHG</td>
+</tr>
+<tr>
+<td>
+<table width="100%">
+<tr>
+<td width="48%" style="background-color:silver;font-size:0.8em;padding-left:25px">CUSTOMER INFORMATION</td>
+<td width="4%"></td>
+<td width="48%" style="background-color:silver;font-size:0.8em;padding-left:25px">VEHICLE AND CONVERSION INFORMATION</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Name:________________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Name:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Buyer__r.Name+'  '+dealer__Deal__c.And_Or_Contract__c+'  '+dealer__Deal__c.dealer__Co_Buyer__r.Name}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Year, make and model:________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="10em;">Year, make and model:</td>
+  <td class="underline"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Year__c+' '+dealer__Deal__c.dealer__Make__c+' '+dealer__Deal__c.dealer__Model__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Address:_______________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="4em;">Address:</td>
+  <td class="underline"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Address__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Grade and package:_________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="9em;">Grade and package:</td>
+  <td class="underline"><span class="formdata">
+    &nbsp;
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="4em;">&nbsp;</td>
+  <td class="underline"><span class="formdata">
+    &nbsp;<!-- street address line 2 -->
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Vehicle ID Number (VIN):_______________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="11em;">Vehicle ID Number (VIN):</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__VIN__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!-- City:____________________State:________________ZIP:__________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td style="width:2.5em;">City:</td>
+  <td class="underline" style="width:11em;"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_City__c}"/>
+  </span></td>
+  <td style="width:2.5em; padding-left:.2em;">State:</td>
+  <td class="underline" style="width:3em;"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_State__c}"/>
+  </span></td>
+  <td style="width:2em; padding-left:.2em;">ZIP:</td>
+  <td class="underline"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Postal_Code__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Vehicle color (interior/exterior):_______________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="13em;">Vehicle color (interior/exterior):</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Int_Color__c+' / '+dealer__Deal__c.dealer__Ext_Color__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Phone:(__________)_________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Phone:</td>
+  <td class="underline"><span class="formdata">
+     <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}"/> 
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Date Of Delivery after conversion:____________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="14em;">Date Of Delivery after conversion:</td>
+  <td class="underline"><span class="formdata">
+    <apex:outputText value="{0,date,MM/dd/yyyy}">
+       <apex:param value="{!dealer__Deal__c.Proposed_Delivery_Date__c}"/>
+    </apex:outputText>
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!--  Fax:(__________)___________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Mobile</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline"><!-- Mileage on date Of Delivery after conversion:___________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="19em;">Mileage on date Of Delivery after conversion:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Mileage__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Email:(__________)_________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Email:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Email__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline">Rampvan model: 
+<img src="{!$Resource.box}" width="20px" height="15px"/>Sienna <img src="{!$Resource.box}" width="20px" height="15px"/>Scion xB</td>
+</tr>
+<tr>
+<td class="dataline">Will a disabled person drive this van?<img src="{!$Resource.box}" width="20px" height="15px"/>Yes<img src="{!$Resource.box}" width="20px" height="15px"/>No</td>
+<td></td>
+<td style="font-size:0.75em;padding-top:6px;">Rampvan conversion: 
+<img src="{!$Resource.box}" width="20px" height="15px"/>Infloor <img src="{!$Resource.box}" width="20px" height="15px"/>Foldout</td>
+</tr>
+<tr>
+<td class="dataline">Description of disabled customer's disability and limitations:</td>
+<td></td>
+<td align="left" valign="top" rowspan="4" style="font-size:0.75em;padding-top:6px;">
+<span><b><I>Toyota cannot update the in-service date (DOFU-date of first use) if either of the following apply to the vehicle:</I></b></span>
+<br />
+<span>• Is a used vehicle (2nd registered owner, regardless of mileage)</span>
+<br />
+<span>• Has over 799 miles on odometer at time of retail</span>
+<br />
+<span style="font-size:0.8em;">If the vehicle is not eligible for a DOFU update, it is no longer considered a new<br/>
+ vehicle and is therefore ineligible for mobility assistance.</span>
+</td>
+</tr>
+<tr>
+<td style="font-size:0.7em;padding-top:6px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;________________________________________________________</td>
+<td></td>
+</tr>
+<tr>
+<td style="font-size:0.7em;padding-top:6px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;________________________________________________________</td>
+<td></td>
+</tr>
+<tr>
+<td style="font-size:0.7em;padding-top:6px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;________________________________________________________</td>
+<td></td>
+</tr>
+</table></td>
+</tr>
+<!-- 2nd -->
+<tr>
+<td>
+
+<table width="100%">
+<tr>
+<td  width="48%" style="background-color:silver;font-size:0.8em;padding-left:25px">RAMPVAN DEALER INFORMATION</td>
+<td width="4%" style="padding-left:20px"></td>
+<td width="48%" style="background-color:silver;font-size:0.8em;padding-left:25px">ADAPTIVE EQUIPMENT </td>
+</tr>
+<tr>
+<td class="dataline"><!-- Dealership name:____________________________________________-->
+  <table border="0" style="width:100%;"><tr>
+  <td width="7.2em;">Dealership Name:</td>
+  <td class="underline"><span class="formdata">
+   <apex:outputText value="{!IF(  NOT(ISBLANK(location.Dealer_License_Name__c)), Location.Dealer_License_Name__c ,'MobilityWorks '+location.Name  )}" />
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td class="dataline">Please indicate if the vehicle has or will have any of the following:</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Dealer ID:____________________&nbsp;Territory:_____________________-->
+  <table border="0" style="width:100%;"><tr>
+  <td width="5em;">Dealer ID:</td>
+  <td class="underline"><span class="formdata">
+  <!-- dealer id -->
+  </span></td>
+  <td width="4.5em; padding-left:.5em;">Territory:</td>
+  <td class="underline"><span class="formdata">
+  <!-- territory -->
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td rowspan="2" style="font-size:0.7em;padding-top:6px;"><img src="{!$Resource.box}" width="20px" height="15px"/>
+Adaptive equipment, such as hand controls, special steer-<br/>ing and braking equipment, etc. (please describe):</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Address:___________________________________________________-->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Address:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Store_Location__r.dealer__Street__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+</tr>
+<tr>
+<td class="dataline"><!-- City:____________________State:________________ZIP:__________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td style="width:2.5em;">City:</td>
+  <td class="underline" style="width:11em;"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Store_Location__r.dealer__City__c}"/>
+  </span></td>
+  <td style="width:2.5em; padding-left:.2em;">State:</td>
+  <td class="underline" style="width:3em;"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Store_Location__r.dealer__State__c}"/>
+  </span></td>
+  <td style="width:2em; padding-left:.2em;">ZIP:</td>
+  <td class="underline"><span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Store_Location__r.dealer__Postal_Code__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td valign="top" style="font-size:0.7em;padding-top:6px;">_________________________________________________________</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Phone:(__________)_________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="3em;">Phone:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Store_Location__r.dealer__Main_Phone__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td style="font-size:0.7em;padding-top:6px;">_________________________________________________________</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Fax:(__________)___________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="2em;">Fax:</td>
+  <td class="underline"><span class="formdata">
+  (<span style="width:3em;">&nbsp;</span>)
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td valign="top" rowspan="2" style="font-size:0.7em;padding-top:6px;"><img src="{!$Resource.box}" width="20px" height="15px"/>
+Other powered aftermarket devices, such as audio/video equipment, security system, etc. (please describe):</td>
+</tr>
+<tr>
+<td class="dataline"><!-- Contact Person:_____________________________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="6.5em;">Contact Person:</td>
+  <td class="underline"><span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Salesperson_1_Name__c}"/>
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td style="font-size:0.7em;padding-top:6px;border-top:0.5px solid;border-bottom:0.5px solid;"></td>
+</tr>
+<tr>
+<td style="font-size:0.75em;padding-top:6px;"><!-- Distance (in miles) from customer's home:________________________ -->
+  <table border="0" style="width:100%;"><tr>
+  <td width="17.5em;">Distance (in miles) from customer's home:</td>
+  <td class="underline"><span class="formdata">
+  &nbsp;
+  </span></td>
+  </tr></table>
+</td>
+<td></td>
+<td style="font-size:0.7em;padding-top:6px;border-top:0.5px solid;border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td  style="background-color:silver;font-size:0.8em;padding-left:25px">ACKNOWLEDGEMENTS</td>
+</tr>
+<tr>
+<td style="margin-right:50px">
+<table width="100%">
+<tr>
+<td width="46%" style="font-size:0.8em;"><b>Rampvan Dealer Acknowledgement:</b></td>
+<td></td>
+<td width="51%" style="font-size:0.8em;"><b>Customer Acknowledgement:</b></td>
+</tr>
+<tr>
+<td style="font-size:0.7em;">I hereby acknowledge that I have shown and demonstrated the adap-<br/>tive equipment
+ installed on this vehicle,
+ and that the customer fully under-<br/>stands the aforementioned equipment and/or features. 
+ I also acknowl-<br/>edge that the pre-delivery preparation report has been sent to Braun.</td>
+ <td></td>
+ <td valign="top" rowspan="4" style="font-size:0.7em;padding-right:50px;border-bottom:0.5px solid;padding-bottm:30px">I hereby acknowledge that
+  I have been shown and demonstrated the equipment applicable to my vehicle, and that 
+  I fully understand and can
+ operate the aforementioned equipment and/or features.
+ <br />
+ I acknowledge I have been advised that the wheelchairs or driv-<br/>ers or
+ passengers may or may not maintain their integrity in the event of a collision, and that 
+ they may or may not have been tested and approved for such an event.
+ I am hereby releasing The Braun Corporation, and its bonafide dealers and/or subsidiaries, 
+ of any and all liability, incidental or consequential, including damage
+ to or injury of my person(s) and/or possessions, should such an event occur.
+ <br />
+  I also acknowledge I have read and understand this entire form, including all disclaimers and the Braun Factory Limited Warranty on the reverse,
+ and all of the information I have provided is correct.
+ </td>
+ </tr>
+ 
+<tr>
+<td style="font-size:0.8em;border-bottom:0.5px solid;padding-top:18px"></td>
+<td></td>
+
+</tr>
+
+<tr>
+<td valign="top" style="font-size:0.7em;"><I>Rampvan Dealer Representative's Signature </I><span style="padding-left:70px;">Date</span>
+<br />
+<div style="padding-top:5px">
+This vehicle purchase qualifies for a $1,000 reimbursement from Toyota Mobility. To claim this reimbursement, customer must provide the following to The Braun Corporation: 
+</div>
+</td>
+<td></td>
+
+</tr>
+
+<tr>
+<td style="font-size:0.7em;padding-left:40px">
+<img src="{!$Resource.box}" width="20px" height="15px"/>This form, completed and signed<br />
+<img src="{!$Resource.box}" width="20px" height="15px"/>Copy of vehicle sales or lease agreement<br />
+<img src="{!$Resource.box}" width="20px" height="15px"/>Copy of invoice detailing aftermarket modifications<br />
+<img src="{!$Resource.box}" width="20px" height="15px"/>Letter of authorization from lessor (if applicable)
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="font-size:0.7em;"><b>Toyota Motor Sales, USA, Inc. does not assume responsibility for 
+the quality, safety, or 
+efficiency of adaptive 
+equipment or installation, and cannot guarantee that such modifications com-ply with applicable 
+government safety standards.</b></td>
+<td></td>
+<td valign="top" style="font-size:0.7em;"><I>Customer's Signature</I> <span style="padding-left:70px;">Date</span></td>
+</tr>
+</table></td>
+</tr>
+
+<tr>
+<td style="padding-top:20px"> 
+<table width="100%" style="padding-top:20px;">
+<tr>
+<td style="background-color:silver;font-size:0.8em;padding-left:25px;">BRAUN FACTORY LIMITED WARRANTY</td>
+</tr>
+<tr>
+<td><!--  style="padding-right:50px" -->
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<!-- 1st block -->
+<td width="33%" style="padding-right:5px;">
+<table width="100%">
+<tr valign="top">
+<td style="font-size:0.65em">BRAUN FACTORY LIMITED WARRANTY</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;"><!-- text-align: justify; -->
+Braun warrants to the purchaser of the modified vehicle that structural metal fabrication 
+completed by Braun on or of the frame and ramp platform will not rust or corrode through or 
+otherwise fail due to rust or corrosion, for a period of seven years or 70,000 miles, whichever 
+occurs first.  Braun further warrants to the purchaser that the remainder of modifications and 
+alterations on the vehicle completed by Braun and associated parts and components thereto will be 
+free from defects in material and factory workmanship for a period of three years or 36,000 miles, 
+whichever occurs first.  The above periods of time or accumulation of mileage will commence upon first 
+delivery of the vehicle from Braun or a Braun dealer to the initial purchaser of the vehicle, or the date 
+the vehicle was first placed into service, whichever is earlier.</td></tr>
+<tr>
+<td>
+<table widht="100%" style="border-left:1px solid;border-right:1px solid;border-top:1px solid;border-left:1px solid;border-bottom:1px solid;" cellpadding="0" cellspacing="0" >
+<tr>
+<td style="font-size:0.58em;text-align: justify;">For purposes to establish the vehicle "IN SERVICE" date, the following guidelines shall apply: </td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;">
+&nbsp;&nbsp;1) Vehicles shall be defined as either <b>"NEW"</b><br /> &nbsp;&nbsp;&nbsp;or<b> "USED"</b>.<br /> 
+&nbsp;&nbsp;2) Based on its designation, "In Service" dates <br />&nbsp;&nbsp;&nbsp;shall differ.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>NEW VEHICLE:</b><br />
+&nbsp;&nbsp;1) Current production model year and up to one<br />
+&nbsp;&nbsp;(1) year prior. <b>AND</b><br />
+&nbsp;&nbsp;2) Must have less than 2000 miles as indicated on<br />
+&nbsp;&nbsp;the vehicle odometer, when the vehicle is<br />
+&nbsp;&nbsp; received at Braun.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>USED VEHICLE:</b><br />
+&nbsp;&nbsp;1) Any model year in excess of one (1), from the current production year. <b>OR</b><br />
+&nbsp;&nbsp;2) Any model year with excess of 2000 miles as indicated on the vehicle odometer, when the vehicle is received at Braun. 
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>NEW VEHICLE "In Service" Date:</b><br />
+&nbsp;&nbsp;"In Service" starts on the earlier of the:<br />
+&nbsp;&nbsp;1) date vehicle is registered / titled (this includes dealer demos which have been titled)<br />
+&nbsp;&nbsp;2) date a warranty claim or cumulative claims total in excess of $100.00 cost to Braun (this does not include PDI / Transport issues) <br />
+&nbsp;&nbsp;3) date, 2000+ miles is placed on the vehicle as indicated by the odometer<br />
+&nbsp;&nbsp;4) purchase date, by the first retail buyer, as indicated on the Braun Warranty Registration Card
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>USED VEHICLE  "In Service" Date</b><br />
+&nbsp;&nbsp;"In Service" starts immediately, on the date and mileage when the vehicle is shipped from Braun to the dealer.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>WARRANTY EXPIRATION</b><br />
+&nbsp;&nbsp;The Braun Warranty shall end on the earlier of:
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>NEW VEHICLE</b><br />
+&nbsp;&nbsp;1) 36 months from the "In Service" date <b>OR </b><br />
+&nbsp;&nbsp;2) 36,000 miles as indicated on the vehicle odometer
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:3px;"><b>USED VEHICLE</b><br />
+&nbsp;&nbsp;1) 36 months from the "In Service" date <b>OR</b><br />
+&nbsp;&nbsp;2) 36,000 additional miles, after shipment from Braun
+
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;">
+Braun agrees to pay for labor and parts to repair and replace any Braun factory-installed parts found 
+to be defective within the applicable warranty period or mileage, provided that the repair or replacement 
+is authorized by Braun and is performed by a Braun authorized service establishment.  <b>Any warranty work 
+performed by any person or entity who is not Braun authorized must first be approved by Braun to be covered 
+under this warranty.</b>  Braun will not honor any warranty claim for repair or replacement of parts unless said 
+claim is submitted with a factory-issued Warranty Claim Form and said repairs or replacement of parts is 
+completed by a Braun authorized service technician.  The name and location of your nearest Braun authorized 
+service technician can be obtained by either written or telephone contact with Braun, at the following address 
+or telephone number.</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:30px">The Braun Corporation<br /> 631 West 11th Street<br /> Winamac, IN 46996<br /> (574) 946-6153 </td>
+</tr>
+<tr>
+<td style="font-size:0.58em;">
+Braun makes no guarantee or representation as to the location of the nearest Braun authorized service 
+technician, or as to the convenience of having work done at such locations.  Braun reserves the right 
+to designate where any warranty work is performed.  Braun also reserves the right to examine any defective 
+workmanship or part prior to authorization of necessary repairs.  If Braun exercises this right, Braun will 
+make any inspection as expediently as possible and at no cost to the owner.
+</td>
+</tr>
+</table>
+</td>
+<!-- 2nd block -->
+<td valign="top" width="34%" style="padding-right:5px;padding-left:5px;">
+<table width="100%">
+<tr>
+<td style="font-size:0.58em">
+Braun reserves the right to make changes in design or improvements to its products or parts thereof 
+without obligation to make or install such changes or improvements in or upon products previously 
+manufactured or sold by Braun.  This warranty is valid only in the United States of America.</td>
+</tr>
+<tr>
+<td style="font-size:0.58em"><b>WHAT IS NOT COVERED BY THIS LIMITED WARRANTY</b></td>
+</tr>
+<tr>
+<td style="font-size:0.58em">1.  The above stated warranties are the<b> ENTIRE</b> express warranties made by Braun.  
+Specifically, Braun does<b> NOT</b> warrant any other part or portion of the vehicle other than the portion of 
+the vehicle's frame Braun fabricates, and the modifications and alterations Braun makes to the vehicle, 
+including associated parts and components.  Without limitation, this warranty does not cover the vehicle's 
+frame, engine, transmission, transaxle, front and rear wheel drive components, restraint systems 
+(including seat belts and air bags), brakes, battery, heating system, air conditioning system, tires, 
+ignition system, emission systems, electronic and computer systems, or any other part or component of your 
+vehicle, except for those parts fabricated, modified or altered by Braun and then only to the extent of such 
+fabrication, modification or alteration.  This warranty is <b>NOT</b> intended to replace or substitute any other 
+warranties issued by the original manufacturer of the vehicle or other suppliers of parts or components 
+thereto.<b>  Warranty claims regarding problems with any part or portion of your vehicle not fabricated, 
+modified or altered by Braun must be brought against the original manufacturer of the vehicle. </b> Consult 
+the owner's manual provided by the manufacturer of your vehicle for information regarding those warranties.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">2.  This warranty shall not cover any defect or problem existing in the 
+vehicle at the time it arrives from the original manufacturer for subsequent fabrication, modification or 
+alteration by Braun, including, without limitation, any defect or problem that should have been discovered 
+by the manufacturer or releasing dealer in a pre-delivery inspection. Warranty claims regarding such 
+pre-existing problems must be brought against the original manufacturer of the vehicle.  Consult the 
+owner's manual provided by the manufacturer of your vehicle for information regarding those warranties. 
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">3.  This warranty shall not apply to parts or workmanship that may become 
+defective due to misuse, neglect, improper maintenance, accident or other casualty, modifications or 
+alterations or unauthorized repairs.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">4.  This warranty shall not extend to parts or workmanship that may become 
+defective because of the failure to operate the vehicle and Braun modifications and alterations in accordance 
+with the printed instructions of Braun or because of operation of the same beyond their capacity.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">5.  This warranty does not cover maintenance of Braun modifications 
+and alterations.
+  Maintenance is to be performed at the owner's expense. 
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em">6. BRAUN SHALL NOT BE LIABLE FOR ANY INCIDENTAL OR CONSEQUENTIAL DAMAGES 
+RESULTING FROM ANY DEFECTIVE PART OR WORKMANSHIP WARRANTED HEREUNDER.  WITHOUT LIMITATION, BRAUN SHALL 
+NOT BE LIABLE FOR EXPENSES INCURRED FOR TOWING, TRAVEL, LODGING, MEALS, CAR RENTAL, LOST WAGES OR ANY 
+OTHER EXPENSE OR INCONVENIENCE INCURRED AS A RESULT OF ANY LOSS OF USE OF THE VEHICLE OR FOR ANY OTHER REASON.  
+THIS WARRANTY ONLY APPLIES TO THE REPAIR AND REPLACEMENT OF BRAUN FACTORY DEFECTIVE COMPONENTS AND LABOR 
+ASSOCIATED THEREWITH, IF EXPRESSLY PROVIDED.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">Some states do not allow the exclusion or limitation of incidental
+ or consequential damages, so the above limitation or exclusion may not apply to you.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">7.Braun neither assumes nor authorizes any person to assume for it,
+ any obligation or warranty other than that herein stated.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em">LIMITATION OF IMPLIED WARRANTIES
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em"> ANY IMPLIED WARRANTY, 
+INCLUDING, BUT NOT LIMITED TO, ANY IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A 
+PARTICULAR PURPOSE, IS LIMITED IN DURATION TO THE STATED PERIODS OF THESE WRITTEN WARRANTIES.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">Some states do not allow limitations on how long an implied warranty
+ lasts, so the above limitation may not apply to you.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em"><b>REQUIREMENT THAT WARRANTY CARD BE RETURNED </b>
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em"><b>THE WARRANTY REGISTRATION CARD MUST BE COMPLETED BY YOUR BRAUN DEALER AND BE</b> 
+</td>
+</tr>
+</table>
+</td>
+<!-- 3rd block -->
+<td valign="top" width="33%" style="padding-left:5px;">
+<table width="100%">
+<tr>
+<td style="font-size:0.5em">
+RECEIVED BY BRAUN WITHIN 30 DAYS OF DELIVERY TO THE FINAL CUSTOMER (ALONG WITH THE DEALER'S PREDELIVERY 
+INSPECTION REPORT PREVIOUSLY FILED WITH BRAUN 15 DAYS AFTER VEHICLE DELIVERY TO THEM) TO VALIDATE ANY OF 
+THE ABOVE STATED WARRANTIES.</td>
+</tr>
+<tr>
+<td style="font-size:0.5em">
+REPAIRS RESULTING FROM COLLISION MUST BE PERFORMED AT BRAUN AUTHORIZED FACILITY</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+Any Braun vehicle involved in a collision shall be repaired at the owner's expense, at a Braun approved 
+facility.  Failure to do so will automatically void all warranties on any Braun fabrication, modification, 
+or alteration (or parts and components thereof) damaged as a result of such collision.  If your vehicle is 
+involved in a collision and is repaired in a facility other than a Braun approved facility, an inspection will 
+be required by Braun or Braun authorized representatives in order to keep all warranties in effect for any 
+Braun fabrication, modification or alteration (or parts and components thereof) not damaged as a result of 
+such collision.  The cost of such inspection shall be borne by the vehicle owner.</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">SUBSEQUENT PURCHASERS<br />
+If you are the second or later transferee of a Braun conversion vehicle, you may transfer the remaining 
+warranty, if any, into your name.  To do this, you must obtain a Transfer of Warranty Application from 
+Braun (or found at the back of the owner's manual).  There is no cost to transfer the remaining warranty.  
+Application for a warranty transfer must be made within thirty days from the date of transfer by the 
+subsequent transferee.  Proof of the date of transfer and mileage must accompany the transfer of warranty
+ application.  NOTE:  Braun requires a copy of the Transfer of Vehicle Title and an Odometer Statement to
+  validate the warranty.  Unless a Transfer of Warranty is properly obtained by a subsequent transferee, 
+  none of the Braun warranty shall be extended to said transferee.</td>
+</tr>
+<tr>
+<td style="font-size:0.58em"><b>CONDITIONS FOR CONTINUED WARRANTY COVERAGE</b><br />
+Continued validation of the above stated warranties up and until the applicable warranty period or mileage, 
+whichever comes first, for any given warranty contained herein, is subject to the following conditions:</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+(i)  if a nonconformity covered by this warranty is discovered, continues to exist, or recurs, 
+where such nonconformity has been subject to repair on two (2) previous occasions, you, as owner 
+of the above stated warranty, must notify Braun's central office service department of such nonconformity 
+before causing the same to be repaired for a third time;</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+(ii)  if the vehicle containing Braun fabrications, modifications, or alterations covered by this warranty 
+is out of service by reason of repair of any nonconformity covered by this warranty, whether it is the same 
+nonconformity or a combination of different nonconformities, for a cumulative total of twenty (20) days, 
+regardless of any interruption of days, you, as owner of the above stated warranty, within three (3) days of 
+the expiration of the twentieth day, must notify Braun's central office service department that the subject 
+vehicle has been out of service by reason of repair of any nonconformity covered by this warranty for 
+such time; and</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+(iii)  if there has been seven (7) attempts to repair any nonconformity covered by this warranty, whether or 
+not it is the same nonconformity or a combination of different nonconformities, you, as owner of the above 
+stated warranty, must notify Braun's central office service department if a nonconformity covered by this 
+warranty is subsequently discovered, continues to exist, or recurs before causing such nonconformity to be 
+repaired.</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+All notices required to be given to the Braun central office service department should be directed to the 
+following address or telephone number:</td>
+</tr>
+<tr>
+<td style="font-size:0.58em;padding-left:30px">The Braun Corporation<br />Service Department
+<br />631 West 11th Street<br />Winamac, IN 46996<br />(574) 946-6153</td>
+</tr>
+<tr>
+<td style="font-size:0.58em">
+Failure to provide the requisite notice when applicable shall void the above stated warranties, including 
+warranty coverage for any repairs performed where notice was required to be given to Braun before causing 
+such repairs, regardless of whether or not the warranty period or mileage has expired for any given warranty.
+</td>
+</tr>
+<tr>
+<td style="font-size:0.5em"><b>YOUR RIGHTS UNDER STATE LAW</b><br />
+This warranty gives you specific legal rights, 
+and you may also have other rights which vary from state to state.
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+
+</td>
+</tr>
+</table>
+<apex:image value="https://chart.googleapis.com/chart?cht=qr&chs=50x50&chl=Braun-Toyota+Rebate-Warranty&chld=L|0" style="float:left;"/><!-- JRP1 -->
+</body>
+</html>
+</apex:page>

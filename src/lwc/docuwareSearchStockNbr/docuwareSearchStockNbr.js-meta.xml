@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata" fqn="DocuwareSearchStockNbr">
+    <apiVersion>46.0</apiVersion>
+    <isExposed>true</isExposed>
+	<masterLabel>DocuWare Search Stock Nbr</masterLabel>
+	<targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+	<targetConfigs>
+		<targetConfig targets="lightning__RecordPage">
+			<property name="docuwareViewer" type="String" datasource="V,RLV,SRLV,D,DH,WFTL,WFST,SWT,SWO,IND,B,DL" default="RLV" label="DocuWare Result View"/>
+			<!-- property name="docuwareCabinetGuid" type="String" default="3821f170-ecc4-4b9d-bdec-d15f838338c1" label="Cabinet GUID"/ -->
+			<!-- property name="docuwareResultListId" type="String" default="6cb70053-e999-4477-9697-853c205ebc3c" label="Result List GUID"/ -->
+		</targetConfig>
+	</targetConfigs>
+</LightningComponentBundle>

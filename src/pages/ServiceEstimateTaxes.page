@@ -1,0 +1,160 @@
+<apex:page standardController="dealer__Service_Estimate__c" 
+			extensions="ServiceEstimateTaxes_EXT"
+			sidebar="true" showHeader="false" standardStylesheets="true" >
+<style>
+#taxtable {
+	border-spacing: 0;
+}
+#taxtable th {
+	background-color: #f0f0f0;
+	font-weight: normal;
+}
+#taxtable th, #taxtable td {
+	border: 1px solid #e0e0e0;
+	padding: 3pt 1em 3pt 1em;
+}
+#taxtable th.alignright, #taxtable td.alignright {
+	text-align: right;
+}
+/* #taxtable tr:nth-child(odd) {background-color: #f0f0f0;} */
+
+/* rounded table corners */
+#taxtable tr:first-child th:first-child {
+  border-radius: 5px 0 0 0 !important;
+}
+#taxtable tr:first-child th:last-child {
+  border-radius: 0 5px 0 0 !important;
+}
+#taxtable tr:last-child th:first-child {
+  border-radius: 0 0 0 5px !important;
+}
+#taxtable tr:last-child th:last-child {
+  border-radius: 0 0 5px 0 !important;
+}
+input.btn.highlight {
+	background:none;
+	background-color: orange !important;
+}
+input.btn.highlight:disabled {
+	background:none;
+	background-color: #eee !important;
+	color:#333;
+	border:1px solid #ddd;
+}
+div#errormessages {
+	padding: 0px 0px 5px 1em;
+}
+div#errormessages > div {
+	color: darkred;
+	border: 1px solid darkred;
+	border-radius:3px;
+	padding 3px;
+	background-color: MistyRose;
+}
+
+</style>
+
+<div id="errormessages"></div>
+
+<apex:outputPanel layout="block">
+	<apex:outputPanel layout="block" style="display:inline-block; margin-left:3em;"
+		rendered="{!IF(AND(dealer__Service_Estimate__c.dealer__Status__c!='Accepted',dealer__Service_Estimate__c.dealer__Status__c!='Finalized'),'true','false')}">
+	<apex:form >
+	<!-- apex : actionFunction name="calculateTaxes" action=" { ! CalculateTaxes } " oncomplete="reloadPage();"/ -->
+	<apex:commandButton value="Calc Taxes" onclick="this.disabled=true;disableBtn(this,'Processing...');calcTaxes();"
+		id="btn_calctax" styleClass="{!IF(AND(needToCalculateTaxes,dealer__Service_Estimate__c.dealer__Status__c!='Accepted'), 'highlight', 'lowlight')}"/>
+	</apex:form>
+	</apex:outputPanel>
+
+	<apex:outputPanel layout="block" rendered="{!AND(taxresult!=null,JurisdictionTypes!=null)}"
+		style="float:left; margin-right:3em;">
+	<table id="taxtable">
+		<tr>
+			<th>Jurisdiction</th>
+			<th>Name</th>
+			<th class="alignright">Taxable amount</th>
+			<th class="alignright">Tax rate</th>
+			<th class="alignright">Calculated Tax</th>
+		</tr>
+		<apex:variable var="n" value="{!0}"/>
+		<apex:repeat value="{!JurisdictionTypes}" var="j">
+			<tr>
+				<td>
+					{!j}
+				</td>
+				<td>
+					{!Jurisdictions[n]}
+				</td>
+				<td class="alignright">
+					<apex:outputText value="{0, number, currency}">
+						<apex:param value="{!TaxableAmounts[n]}"/>
+					</apex:outputText>
+				</td>
+				<td class="alignright">
+					<apex:outputText value="{0, number, 0.000} %">
+						<apex:param value="{!TaxPcts[n]}"/>
+					</apex:outputText>
+				</td>
+				<td class="alignright">
+					<apex:outputText value="{0, number, currency}">
+						<apex:param value="{!TaxAmts[n]}"/>
+					</apex:outputText>
+				</td>
+			</tr>
+			<apex:variable var="n" value="{!n+1}"/>
+		</apex:repeat>
+		<tr>
+			<th colspan="4" class="alignright">
+				Total
+			</th>
+			<th class="alignright">
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!TotalTax}"/>
+				</apex:outputText>
+			</th>
+		</tr>
+	</table>
+	</apex:outputPanel>
+</apex:outputPanel>
+
+<apex:outputPanel style="display:{!IF(debug,'block','none')};">
+Old hash: {!dealer__Service_Estimate__c.TaxHash__c}<br/>
+New hash: {!hash}<br/>
+Tax calculated: {!dealer__Service_Estimate__c.TaxCalcDT__c}<br/>
+{!dealer__Service_Estimate__c.TaxResults_JSON__c}<br/>
+</apex:outputPanel>
+
+<apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"/>
+<script type="text/javascript">
+	$jq = jQuery.noConflict();
+	function disableBtn(btn, newText) {
+		$jq(btn).each(function(idx) {$jq(this).data('oldValue', $jq(this).val());});
+		$jq(btn).prop('disabled',true).addClass('btnDisabled');
+		if (newText.length>0) $jq(btn).val(newText);		
+	}
+	function enableBtn(btnselector) {
+		$jq(btnselector).prop('disabled',false).removeClass('btnDisabled');
+		$jq(btnselector).each(function(idx) {$jq(this).val($jq(this).data('oldValue'));});
+	}
+	function calcTaxes() {
+		//calculateTaxes();
+		console.log('Calling ServiceEstimateTaxes_EXT.CalculateTaxes'); 
+		ServiceEstimateTaxes_EXT.CalculateTaxes('{!dealer__Service_Estimate__c.Id}', function(result, event) {
+		console.log('Returned from ServiceEstimateTaxes_EXT.CalculateTaxes'); 
+		console.log(event);
+			if (event.status) {
+				reloadPage();
+			} else {
+				$jq('#errormessages').html($jq('#errormessages').html() + '<div>' + event.message + '</div>');
+				enableBtn('input[id$="btn_calctax"]');
+			}
+		});
+	}
+	function reloadPage() {
+		window.top.location='/{!dealer__Service_Estimate__c.Id}'; /*  + '?_ms=' + new Date().getTime(); */
+		//setTimeout(function() {window.top.location='/{!dealer__Service_Estimate__c.Id}' + '?_ms=' + new Date().getTime();}, 
+		//   500);
+	}
+</script>
+
+</apex:page>

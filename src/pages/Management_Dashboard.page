@@ -1,0 +1,415 @@
+<!-- 
+	2015-12-29	B. Leaman	BLL1 - Chg Proposed_Delivery_Month__c to include year.
+	2016-01-15	D. Ray		DR1 - Replaced Total_Price__c with Total_Before_Payments__c
+	2018-02-12	B. Leaman	W-000583 BLL2 - Fix error on missing task subject.
+	2019-04-03	B. Leaman	W-000637 BLL3 replace KendoUI with dealer__Kendo2016a (unmarked)
+	DashboardTRS actions: read_deals, read_sales_ups, read_tasks
+ -->
+<apex:page showHeader="true" sidebar="true" title="Management Dashboard" lightningStylesheets="true" 
+	controller="ManagementDashboard" docType="html-5.0" >
+	<base target="_blank" />
+	
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+    <!-- INclude Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__Kendo2016a,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.min.css')}"/>  
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016aFULL2015,'/styles/kendo.common.min.css')}"/> -->
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__MomentJS)}" />
+
+    <!-- FONT-AWESOME -->
+    <apex:stylesheet value="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+    <div id="force">	
+
+		<!-- Dashboard Report -->
+	    <!-- <apex:outputPanel layout="none" rendered="{!showDashboard}"> -->
+		    <h3>Management Dashboard</h3>
+
+			<!-- , footerTemplate: 'Total: #=sum#',  aggregates: ['sum'] -->
+			<!-- data-toolbar="[ { template: dealModel.dealToolbarTemplate } ]" -->
+	    	<div class="row">
+		    	<div class="col-md-12">
+					<div id="dealsList" class="table" data-role="grid"
+						 data-columns=""
+						 data-sortable="true"
+		                 data-bind="source: deals"
+		                 style="height: 400px"></div>
+		    	</div>
+		    </div>
+
+		    <div class="row">
+		    	<div class="col-sm-6 col-md-6">
+		    		<h4>Today’s and Past Due Tasks</h4>
+					<div id="taskList" class="table" data-role="grid"
+		                 data-columns="[
+		                                 { 'field': 'ActivityDate',title:'Due Date', template:taskModel.taskDateTemplate, width: 85 },
+		                                 { 'field': 'Who.Name', title:'Customer' },
+		                                 { title:'What' , template: taskModel.supLinkTemplate},
+		                                 { 'field': 'Owner.Name',title:'Owner' },
+		                                 { 'field': 'Subject',template: taskModel.taskSubjectTemplate },
+		                              ]"
+		                 data-bind="source: tasks"
+		                 data-sortable="true"
+		                 style="height: 300px"></div>
+		    	</div>
+
+		    	<div class="col-sm-6 col-md-6">
+		    		<h4>Pending Opportunities</h4>
+					<div id="salesUpsList" class="table" data-role="grid"
+		                 data-columns="[
+		                                 { 'field': 'Name', title: 'Name', template: salesUpModel.supNameTemplate, width: 300},
+										 { 'field': 'Decision_Date__c', title: 'Decision Date', format: '{0:MM/dd/yyyy}' },
+		                                 { 'field': 'dealer__Salesperson_1__r.Name', title: 'Owner'},
+		                                 { 'field': 'dealer__Source__c', title: 'Source'},
+		                              ]"
+                         data-sortable="true" 
+		                 data-bind="source: salesUps"
+		                 style="height: 300px"></div>
+		                 <!-- { 'field': 'Decision_Date__c', title: 'Decision Date', template: salesUpModel.decisionDateTemplate}, -->
+		    	</div>
+		    </div>
+	    <!-- </apex:outputPanel> -->
+    </div>
+
+    <!-- Deal Templates -->
+	    <script type="text/x-kendo-template" id="dealToolbarTemplate">
+	    	<span>Units Sold: #= dealModel.deals.aggregates().Name.count # <br /></span>
+	    </script>
+	    <script type="text/x-kendo-template" id="dealNameTemplate">
+	    	<a href="/#:Id#" tartget="_blank">#: Name #</a>
+	    </script>
+	    <script type="text/x-kendo-template" id="dealCustTemplate">
+			# if(typeof dealer__Buyer__c == 'undefined') { #
+				#= kendo.toString('No Cust') #
+			# } else { #
+		    	<a href="/#:dealer__Buyer__c#" tartget="_blank">#: dealer__Buyer__r.Name #</a>
+			# } #
+	    </script>
+
+    <!-- Sales Up Templates -->
+	    <script type="text/x-kendo-template" id="supNameTemplate">
+	    	<a href="/#:Id#" tartget="_blank">#: Name #</a>
+	    </script>
+	    <script type="text/x-kendo-template" id="decisionDateTemplate">
+			<span>
+				# if(typeof Decision_Date__c == 'undefined') { #
+					#= kendo.toString('') #
+				# } else { #
+					#= moment(Decision_Date__c).format('M/D/YYYY') #
+				# } #
+	    	</span>
+	    </script>
+
+    <!-- Task Templates -->
+	    <script type="text/x-kendo-template" id="taskDateTemplate">
+	    	<span>#= moment(ActivityDate).format('M/D/YYYY') #</span>
+	    </script>
+	    <script type="text/x-kendo-template" id="taskSubjectTemplate">
+	    	<a href="/#:Id#" tartget="_blank">#: Subject #</a>
+	    </script>
+	    <script type="text/x-kendo-template" id="supLinkTemplate">
+			<span>
+			# if(typeof What == 'undefined') { #
+				#= kendo.toString('No What') #
+			# } else { #
+		    	<a href="/#:What.Id#" tartget="_blank">#: What.Name #</a>
+			# } #
+	    	</span>
+	    </script>
+
+	<script type="text/javascript">
+		$dt = jQuery.noConflict();
+
+		// Default Year is Current Year
+		// BLL1d var yearStr = moment().year();
+
+		$dt(document).ready(function(){
+
+		});
+
+		/************************
+			Dashboard Setup
+		 */
+		var dealMoCols = [];
+		var dealAggregates = [ 
+			{field: "Total_Before_Payments__c", aggregate: "sum"},
+			{field: "Name", aggregate: "count"} ,
+			{field: "Total_Proposal_Gross__c", aggregate: "sum"} 
+		];
+
+		// *** Deal Table
+	    var dealModel = kendo.observable({
+	        deals: new kendo.data.DataSource({
+	            schema: {
+					parse: function(response) {
+
+						var newResponse = [];
+
+						for (var i = 0; i < response.length; i++) {
+
+							// Add salesperson field if not assigned.
+							if(typeof response[i].dealer__Store_Location__c == 'undefined') {
+								response[i].dealer__Store_Location__r = {
+									Name: 'Unassigned'
+								}
+							}
+
+							// Add salesperson field if not assigned.
+							if(typeof response[i].dealer__Salesperson_1__r == 'undefined') {
+								response[i].dealer__Salesperson_1__r = {
+									Name: 'Unassigned'
+								}
+							}
+
+							// if( response[i].dealer__Status__c != 'Won - Delivered' || response[i].dealer__Status__c != 'Won - Posted' ) {
+
+								// Create Monthly Columns
+								if(typeof response[i].Proposed_Delivery_Month__c != 'undefined') {
+
+									// Are we in current month?
+									var today = moment();
+									var delivery = moment(response[i].Proposed_Delivery_Date__c);
+
+									// Is this current month or future?
+									if( delivery.isSame( today ,'month') || delivery.isAfter( today ,'month') ) {
+
+										// Add month value
+										//BLL1d response[i][response[i].Proposed_Delivery_Month__c+yearStr] = response[i].dealer__Total_Gross__c;
+                                        //response[i][response[i].Proposed_Delivery_Month__c] = response[i].dealer__Total_Gross__c; // BLL1a
+                                        response[i][response[i].Proposed_Delivery_Month__c] = response[i].Commissionable_Gross__c; //MarinerTek
+                                        
+								    	// Is month already in Array?
+								    	if( dealMoCols.indexOf( response[i].Proposed_Delivery_Month__c ) == -1 ) {
+
+								    		// Add to array
+								    		dealMoCols.push( response[i].Proposed_Delivery_Month__c );
+
+								    		// Add aggregate field
+								    		//BLL1d dealAggregates.push( {field: response[i].Proposed_Delivery_Month__c+yearStr, aggregate: "sum"} );
+								    		dealAggregates.push( {field: response[i].Proposed_Delivery_Month__c, aggregate: "sum"} );
+								    	}
+
+								    	newResponse.push(response[i]);
+									} 
+								} 
+							// }
+
+						}
+
+						// Finally Return
+						return newResponse;
+					}
+	            },
+	            transport: {
+	                read: {
+	                    url: "/apex/DashboardTRS",
+						data: {
+	                    	action: 'read_deals'
+	                    }
+	                }
+	            },
+	            group: { field: 'dealer__Store_Location__r.Name' , aggregates: dealAggregates},
+	            aggregate: dealAggregates
+	        }),
+	        dealNameTemplate: kendo.template($dt("#dealNameTemplate").html()),
+	        dealCustTemplate: kendo.template($dt("#dealCustTemplate").html()),
+	        dealToolbarTemplate: kendo.template($dt("#dealToolbarTemplate").html()),
+	        currencyFormat: "{0:c0}"
+	    });
+
+	    // READ data then create monthly gross columns
+		dealModel.deals.read().then(function() {
+		    var grossMonthStr = "";
+
+		    // $dt.each( dealModel.deals.data(), function(i,deal){
+		    // 	// Is month already in Array?
+		    // 	if( dealMoCols.indexOf( deal.Proposed_Delivery_Month__c ) == -1 ) {
+		    // 		// Add to array
+		    // 		dealMoCols.push( deal.Proposed_Delivery_Month__c );
+		    // 	}
+		    // });
+
+			// Loop through the months array and create column strings
+		    $dt.each( dealMoCols, function(i,mo){
+		    	//BLL1d var colStr = "{ field: '"+mo+yearStr+"', title: '"+mo+"-"+yearStr+"', format: dealModel.currencyFormat, width: 90 , aggregates: ['sum'], groupFooterTemplate: '#= kendo.toString(sum,\"c0\") #', footerTemplate: '#= kendo.toString(dealModel.deals.aggregates()."+mo+yearStr+".sum,\"c0\") #'},";
+		    	var colStr = "{ field: '"+mo+"', title: '"+mo.replace('_','-')+"', format: dealModel.currencyFormat, width: 90 , aggregates: ['sum'], groupFooterTemplate: '#= kendo.toString(sum,\"c0\") #', footerTemplate: '#= kendo.toString(dealModel.deals.aggregates()."+mo+".sum,\"c0\") #'},";
+		    	// , template: '<span class=\"gdp\">#= kendo.toString( (dealer__Total_Gross__c > 0)?dealer__Total_Gross__c:null ,\"c0\")# </span>'
+				grossMonthStr += colStr;
+		    });
+
+		    // Create column string
+			var columns = "[ \
+	    		{ field: 'dealer__Store_Location__r.Name', title: 'Store', hidden: 'true'}, \
+	            { field: 'dealer__Salesperson_1__r.Name', title: 'Owner', width: 120}, \
+	            { field: 'Name', title: 'Proposal', template: dealModel.dealNameTemplate, width: 80}, \
+	            { title: 'Customer', template: dealModel.dealCustTemplate}, \
+	            { field: 'dealer__Status__c',title: 'Status', width: 140 }, \
+	            { field: 'Total_Before_Payments__c',title: 'Sale Amt', format: dealModel.currencyFormat, width: 120 , aggregates: ['sum'], groupFooterTemplate: '#=kendo.toString(sum,\"c0\") #', footerTemplate: '#= kendo.toString(dealModel.deals.aggregates().Total_Before_Payments__c.sum,\"c0\") #'}, \
+	            "+ grossMonthStr +" \
+	    	]"; 
+    		// { field: 'dealer__Store_Location__r.Name', title: 'Store', groupHeaderTemplate: 'Store: #= dealer__Store_Location__r.Name #', hidden: 'true'}, \
+
+            // { field: 'dealer__Model__c',title: 'Model' ,width: 120}, \
+
+            /*
+		    $dt.each( dealMoCols, function(i,mo){
+		    	var colStr = "{ field: '"+mo+yearStr+"', title: '"+mo+"-"+yearStr+"', format: cDealModel.currencyFormat, width: 90 , aggregates: ['sum'], groupFooterTemplate: '#= kendo.toString(sum) #', footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates()."+mo+yearStr+".sum) #'},";
+				grossMonthStr += colStr;
+		    });
+			var columns = "[ \
+	    		{ field: 'locName', title: 'Store', hidden: 'true'}, \
+	            { field: 'salesPersonName', title: 'Owner', width: 120}, \
+	            { field: 'Name', title: 'Proposal', template: cDealModel.dealNameTemplate, width: 80}, \
+	            { title: 'Customer', template: cDealModel.dealCustTemplate}, \
+	            { field: 'status',title: 'Status', width: 140 }, \
+	            { field: 'totalPrice',title: 'Sale Amt', format: cDealModel.currencyFormat, width: 120 , aggregates: ['sum'], groupFooterTemplate: '#=kendo.toString(sum) #', footerTemplate: '$#= cDealModel.deals.aggregates().totalPrice.sum #'}, \
+	            "+ grossMonthStr +" \
+	    	]"; 
+			*/
+
+	    	// Add string to declarations in DOM
+	    	$dt("#dealsList").attr('data-columns', columns );
+
+		    kendo.bind($dt("#dealsList"), dealModel);
+
+
+				// dataBound: function(e) {
+
+				// 	// Collapse rows by default
+				//     if (this.dataSource.group().length > 0) {
+				//         var GrpList = $dt(".k-grouping-row");
+
+				//         for (var i = 0; i < GrpList.length; i++) {
+				//             if (GrpList[i]) {
+				//                 this.collapseGroup(GrpList[i]);
+				//             }
+				//         }
+
+				//     }
+				// }
+
+		});
+
+		// *** Sales Up Table
+	    var salesUpModel = kendo.observable({
+	        salesUps: new kendo.data.DataSource({
+	            schema: {
+	            	model: {
+	            		id: "Id",
+	            		fields: {
+                            Decision_Date__c: {type: 'date'},
+	            		}
+	            	},
+					parse: function(response) {
+						for (var i = 0; i < response.length; i++) {
+							if(typeof response[i].dealer__Customer_Account__r == 'undefined') {
+								response[i].dealer__Customer_Account__r = {
+									Name: 'No Client Assigned'
+								}
+							}
+							if(typeof response[i].dealer__Salesperson_1__r == 'undefined') {
+								response[i].dealer__Salesperson_1__r = {
+									Name: 'Unassigned'
+								}
+							}
+						}
+						return response;
+					}
+	            },
+	            transport: {
+	                read: {
+	                    url: "/apex/DashboardTRS",
+						data: {
+	                    	action: 'read_sales_ups'
+	                    }
+	                }
+	            },
+	            sort: {
+		            field: "Decision_Date__c",
+		            dir: "asc"
+		        }
+	        }),
+	        supNameTemplate: kendo.template($dt("#supNameTemplate").html()),
+	        decisionDateTemplate: kendo.template($dt("#decisionDateTemplate").html())
+	    });
+	    kendo.bind($dt("#salesUpsList"), salesUpModel);
+
+
+		// *** Task Table
+	    var taskModel = kendo.observable({
+	        tasks: new kendo.data.DataSource({
+	            schema: {
+					parse: function(response) {
+						for (var i = 0; i < response.length; i++) {
+							if(typeof response[i].Who == 'undefined') {
+								response[i].Who = {
+									Name: 'Unassigned'
+								}
+							}
+							// BLL2
+							//console.log(response[i].Subject);
+							if(typeof response[i].Subject == 'undefined') {
+								response[i].Subject = '[no subject]';
+							}
+							// BLL2 end
+						}
+						return response;
+					}
+	            },
+	            transport: {
+	                read: {
+	                    url: "/apex/DashboardTRS",
+						data: {
+	                    	action: 'read_tasks'
+	                    }
+	                }
+	            }
+	        }),
+	        taskDateTemplate: kendo.template($dt("#taskDateTemplate").html()),
+	        taskSubjectTemplate: kendo.template($dt("#taskSubjectTemplate").html()),
+	        supLinkTemplate: kendo.template($dt("#supLinkTemplate").html())
+	    });
+	    kendo.bind($dt("#taskList"), taskModel);
+
+	</script>
+
+	<style type="text/css">
+		#force h1,#force h2,#force h3,#force h4,#force h5 {
+			margin: 0 0 .25em 0;
+			display: block;
+		}
+
+		#force table {
+			font-size: 12px;
+		}
+
+		#force td, #force th {
+	        padding: .5em .6em .4em .6em; 
+		}
+
+		.dgp {
+			color: green;
+		}
+		.fgp {
+			color: #AF8417;
+		}
+
+		#force th.k-hierarchy-cell, .k-grid .k-hierarchy-col {
+			width: 50px;
+		}
+
+		.k-group ul li {
+			margin-left: 0;
+		}
+	</style>
+</apex:page>

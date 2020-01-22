@@ -1,0 +1,9 @@
+<aura:event type="APPLICATION" description="Event template">
+    
+    <aura:attribute name="questionResultText" type="String" />
+    <aura:attribute name="questionResultBoolean" type="Boolean" />
+    <aura:attribute name="questionId" type="Id" />
+
+    <aura:attribute name="questionOptionId"  type="Id" />
+    <aura:attribute name="questionOptionState" type="Boolean" />
+</aura:event>

@@ -1,0 +1,572 @@
+<apex:page renderAs="PDF" applyBodyTag="false" standardStylesheets="false" standardController="dealer__Appraisal__c">
+
+<head>
+
+    <style type="text/css">
+
+        body {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 12px;
+    }
+    td {
+        font-family: Tahoma, Geneva, sans-serif;
+        padding: 5px;
+    }
+    th {
+        font-family: Tahoma, Geneva, sans-serif;
+        text-align: left;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    form {
+        margin:0px;
+        padding:0px;
+    }
+
+    table {
+        font-size:12.0pt;
+        font-family:"Times New Roman";
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 100%;
+        margin:0px;
+        display:inline;
+    }
+    @page {
+    /* Landscape orientation */
+    size:portrait;
+    margin: 0.1in 0.75in 0.25in 0.75in;
+
+       @bottom-left {
+            width: 600px;
+            font-size: 12px;
+            content: "Vehicle Purchase Agreement";
+        }
+        @bottom-right {
+        width: 200px;
+        font-size: 12px;
+        content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+
+    @media print {
+        .printClear {
+            background-color: none;
+            
+        }
+        .dontsplit { page-break-inside: avoid !important; }
+   }
+    </style>
+    <title></title>
+  </head>
+  <body>
+    <div class="WordSection1">
+      <p class="MsoNormal" align="center" style=
+      'margin-bottom:0in;margin-bottom:.0001pt; text-align:center;line-height:normal'>
+      <strong><u><span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>VEHICLE
+      PURCHASE AGREEMENT</span></u></strong>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        The parties to this contract, entitled Vehicle Purchase
+        Agreement ("Agreement") are as follows.&nbsp; The "Seller"
+        is the individual, individuals, or entity specified below
+        on the Seller line.&nbsp; The Buyer is
+        MobilityWorks.&nbsp;</span>
+      </p>
+    </div>
+    <!--
+    <div class="WordSection2">
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Buyer: &nbsp;_____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Address: ____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp; ____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;line-height: normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Phone: _____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Seller:&nbsp; _____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Address: ____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp; ____________________________</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Phone: _____________________________</span>
+      </p>
+    </div>
+    -->
+
+    <div>
+    <br />
+    <br />
+
+    <table width="100%" style='font-size:12.0pt;font-family:"Times New Roman"'>
+    <tr width="100%">
+        <td width="15%" style="text-align:right;">Buyer:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.Dealer_License_Name__c}" /></td>
+        <td width="10%"></td>
+        <td width="15%" style="text-align:right;">Seller:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.Name}" /></td>
+    </tr>
+    <tr width="100%">
+        <td width="15%" style="text-align:right;">Address:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.dealer__Street__c}" /></td>
+        <td width="10%"></td>
+        <td width="15%" style="text-align:right;">Address:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.PersonMailingStreet}" /></td>
+    </tr>
+    <tr width="100%">
+        <td width="15%" style="text-align:right;"><br /></td>
+        <td width="30%" style="border-bottom:1px solid black;">
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.dealer__City__c}" />&nbsp;
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.dealer__State__c}" />&nbsp;
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.dealer__Postal_Code__c}" />
+            
+        </td>
+        <td width="10%"></td>
+        <td width="15%" style="text-align:right;"><br /></td>
+        <td width="30%" style="border-bottom:1px solid black;">
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.PersonMailingCity}" />&nbsp;
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.PersonMailingState}" />&nbsp;
+            <apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.PersonMailingPostalCode}" />&nbsp;          
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="15%" style="text-align:right;">Phone:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Store_Location__r.dealer__Main_Phone__c}" /></td>
+        <td width="10%"></td>
+        <td width="15%" style="text-align:right;">Phone:</td>
+        <td width="30%" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Veh_Owner__r.Phone}" /></td>
+    </tr>              
+    </table>
+    </div>
+    <p>
+      <span style=
+      'font-size:12.0pt;font-family:"Times New Roman"'><br clear=
+      "all" style='page-break-before:auto' /></span>
+    </p>
+    <div class="WordSection3">
+      <p class="MsoNormal" align="center" style=
+      'margin-bottom:0in;margin-bottom:.0001pt; text-align:center;line-height:normal'>
+      <strong><u><span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>TERMS and
+      CONDITIONS</span></u></strong>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;text-indent:.25in;line-height:normal'>
+      <span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>IN
+      CONSIDERATION of the mutual promises and other valuable
+      consideration exchanged by the Parties as set forth herein,
+      the Parties, intending to be legally bound, hereby agree as
+      follows.</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.0in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        1.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Vehicle
+        Description:</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+        <table width="100%">
+        <tr>    
+            <td width="10%">a.</td>
+            <td width="10%">Make:</td>
+            <td width="50%;" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Make__c}" /></td>
+        </tr>
+        </table>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+        <table width="100%">
+        <tr>    
+            <td width="10%">b.</td>
+            <td width="10%">Model:</td>
+            <td width="50%;" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Carline__c}" /></td>
+        </tr>
+        </table>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+        <table width="100%">
+        <tr>    
+            <td width="10%">c.</td>
+            <td width="10%">Year:</td>
+            <td width="50%;" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Year__c}" /></td>
+        </tr>
+        </table>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+        <table width="100%">
+        <tr>    
+            <td width="10%">d.</td>
+            <td width="10%">Mileage:</td>
+            <td width="50%;" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__Last_Odometer__c}" /></td>
+        </tr>
+        </table>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+        <table width="100%">
+        <tr>    
+            <td width="10%">e.</td>
+            <td width="10%">VIN:</td>
+            <td width="50%;" style="border-bottom:1px solid black;"><apex:outputField value="{!dealer__Appraisal__c.dealer__Service_Vehicle__r.dealer__VIN__c}" /></td>
+        </tr>
+        </table>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.0in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        2.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Purchase
+        Price: &nbsp; Seller acknowledges
+        receipt of the Purchase Price from Buyer in a form
+        acceptable to Seller.</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-top:0in;margin-right:0in;margin-bottom:0in; margin-left:1.0in;margin-bottom:.0001pt;text-align:justify;text-indent:-.5in; line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:1.0in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        3.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller's
+        Representations, Warranties, Disclosures, and
+        Responsibilities:</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        a.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>The
+        vehicle is sold by Seller to Buyer used.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        b.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller
+        shall provide Buyer with an Odometer Disclosure Statement
+        that complies with state and federal law.&nbsp; Seller has
+        completed and signed the Odometer Disclosure Statement
+        attached to this Agreement.&nbsp; Seller affirmatively
+        represents that all information provided on the Odometer
+        Disclosure Statement is true and accurate.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        c.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller
+        shall provide Buyer with the vehicle title, registration,
+        and any other pertinent documents required for the transfer
+        of title, free of all liens and encumbrances.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        d.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller
+        warrants that Seller has clear title to the vehicle
+        described in this Agreement, free of all liens or
+        encumbrances, and that Seller is passing title to Buyer
+        free and clear of all liens and encumbrances.</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        e.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller
+        shall remain liable to any lienholders on the vehicle
+        described in this Agreement until all liens and
+        encumbrances are paid in full.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        f.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller has
+        read and understands the attached Carfax Report.&nbsp;
+        Seller affirmatively represents that it is an accurate
+        history of the vehicle.&nbsp; Seller further represents
+        that Seller is not aware of any accidents, incidents, or
+        damage to the vehicle not specifically referenced in the
+        Carfax Report.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:.5in;margin-bottom: 0in;margin-left:1.5in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        g.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Seller
+        affirmatively represents and warrants that the vehicle is
+        in good condition with no damage, and that it has only
+        normal wear and tear.&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;text-indent:-.5in;line-height:normal'>
+      <span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:.75in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        4.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Indemnification:
+        Should Seller breach this Agreement, Seller shall pay Buyer
+        all damages resulting from the breach.&nbsp; This shall
+        include all reasonable attorney fees, costs, and expenses,
+        caused by the breach.&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;text-indent:-.5in;line-height:normal'>
+      <span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:.75in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        5.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Integration:
+        This Agreement, including the attachments mentioned in it,
+        sets forth the entire agreement between the parties with
+        regard to the purchase of the vehicle referenced in this
+        Agreement.&nbsp; As such, this Agreement supersedes all
+        prior representations or agreements, oral or written, and
+        it shall be binding upon and operate to the benefit of the
+        successors and assigns of the parties.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'text-align:justify;text-indent:-.5in'>
+        <span style=
+        'font-size:12.0pt;line-height:115%;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:.75in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        6.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Acknowledgment
+        &amp; Miscellaneous: The parties acknowledge that they have
+        had an adequate opportunity to read, study, and fully
+        understand this Agreement, and to consult an attorney if
+        desired.&nbsp; As such, this Agreement is fully understood
+        and voluntarily accepted by the parties.&nbsp; The parties
+        further agree that this Agreement may be signed in multiple
+        counter parts, and that it does not require the original
+        signature of each individual on the same document to be
+        valid.&nbsp; This Agreement was reviewed and/or drafted by
+        all parties such that it is a mutually drafted document
+        that shall not be construed against any party as the
+        primary drafter of it.&nbsp; Should any portion of this
+        Agreement be found to be unenforceable, that shall not
+        affect the enforceability of any other provision of this
+        Agreement.&nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'text-align:justify;text-indent:-.5in'>
+        <span style=
+        'font-size:12.0pt;line-height:115%;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoListParagraph" style=
+      'margin-top:0in;margin-right:0in;margin-bottom: 0in;margin-left:.75in;margin-bottom:.0001pt;text-align:justify;text-indent: -.5in;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        7.<span style=
+        'font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+        <span style=
+        'font-size:12.0pt;font-family:"Times New Roman"'>Jurisdiction:
+        By entering into this Agreement the parties submit to the
+        jurisdiction and venue of the Summit County Court of Common
+        Pleas in Summit County, Ohio for any dispute about the
+        vehicle, the parties, or this Agreement.&nbsp; The parties
+        agree that the Summit County Court of Common Pleas has
+        personal and subject matter jurisdiction over them, and
+        that the Court has exclusive jurisdiction over any disputes
+        arising between the parties regarding the vehicle or this
+        Agreement.&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;text-indent:.25in;line-height:normal'>
+      <span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>By signing
+      below, I acknowledge that I have carefully read this
+      Agreement, and I fully understand it and agree to its
+      terms.&nbsp; This document has been read to me in a language
+      that I understand, if necessary, such that I fully understand
+      the terms of this Agreement, and I will not, at anytime in
+      the future, make a claim that I did not understand this
+      Agreement when I signed it.&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;text-indent:.25in;line-height:normal'>
+      <span style=
+      'font-size:12.0pt; font-family:"Times New Roman"'>&nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Buyer's Signature:
+        _____________________________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Date: &nbsp;<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                <apex:param value="{!TODAY()}" /> 
+            </apex:outputText></span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        &nbsp;</span>
+      </p>
+      <p class="MsoNormal" style=
+      'margin-bottom:0in;margin-bottom:.0001pt;text-align: justify;line-height:normal'>
+      <span style='font-size:12.0pt;font-family:"Times New Roman"'>
+        Seller's Signature:
+        _____________________________________&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Date: &nbsp;<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                <apex:param value="{!TODAY()}" /> 
+            </apex:outputText>
+        </span>
+      </p>
+    </div>
+  </body>
+
+</apex:page>

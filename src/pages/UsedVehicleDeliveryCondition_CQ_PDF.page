@@ -1,0 +1,219 @@
+<apex:page renderAs="PDF" standardController="CommercialQuote__c"  sidebar="false" applyHtmlTag="false" 
+			extensions="CQ_EXT" applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">           
+<html>
+<head>
+<title>UsedVehicleDeliveryConditionCQ</title>
+<style>
+ @page{size:letter Portrait; 
+          @bottom-left {content:"{!CommercialQuote__c.Name}"; font-size:0.7em;
+          }
+          
+   
+  }
+  .formdata {margin-left: .5em; font-size: 14px;} 
+</style>
+</head>
+<body>
+<div>
+<table align="left" width="100%">
+<tr>
+<td align="center"><font style="font-size:1.3em;"><b>USED VEHICLE DELIVERY CONDITION ACKNOWLEDGEMENT</b></font>
+</td>
+</tr>
+<tr>
+<td style="padding-top:10px;padding-right:30px">
+<table width="100%" align="left" border="1" cellpadding="0" cellspacing="0" style="font-size:0.8em">
+<tr>
+<td colspan="5" align="left" valign="top" height="40px" >Customer(s) Name(s)
+  <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.Customer__r.Name}"/>  
+  </span>
+</td>
+</tr>
+<tr>
+<td colspan="4" height="50px" valign="top">
+<table width="100%">
+<tr>
+<td width="50%" align="left" valign="top">Address (Street)
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.Street__c}"/>
+    </span>
+</td>
+<td width="20%" align="left" valign="top">City
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.City__c}"/>
+    </span>
+</td>
+<td width="15%" align="left" valign="top">State
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.State__c}"/>
+    </span>
+</td>
+<td width="15%" align="left" valign="top">Zip
+    <br/><span class="formdata">
+    <apex:outputText value="{!CommercialQuote__c.Zip__c}"/>
+    </span>
+</td>
+</tr>
+</table>
+</td>
+<td width="20%" align="left" valign="top">Contract Date 
+    <br/><span class="formdata">
+    <apex:outputText value="{0,date,MM/dd/yyyy}">
+       <apex:param value="{!CommercialQuote__c.Delivery_Date__c}"/>
+    </apex:outputText>
+    </span>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td style="padding-top:10px;padding-right:30px">
+<table width="100%" align="left" border="1" cellpadding="0" cellspacing="0" style="font-size:0.8em">
+<tr>
+<td height="45px" valign="top" align="left" width="10%">Year
+  <br/><span class="formdata">
+  <apex:outputText value="{!veh.dealer__Year__c}"/>
+  </span>
+</td>
+<td width="25%" valign="top" align="left">Make
+  <br/><span class="formdata">
+  <apex:outputText value="{!veh.dealer__Make__c}"/>
+  </span>
+</td>
+<td width="25%" valign="top" align="left">Model
+  <br/><span class="formdata">
+  <apex:outputText value="{!veh.dealer__Model__c}"/>
+  </span>
+</td>
+<td width="50%" valign="top" align="left">Vehicle Identilicalion Number (VIN)
+  <br/><span class="formdata">
+  <apex:outputText value="{!CommercialQuote__c.VIN__c}"/>
+  </span>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td style="font-size:0.9em" aling="center">
+<center><b>I, the undersigned, hereby acknowledge the following physical damage and/or 
+   cosmetic defects were<br/> present at the time I took delivery of the above 
+   described vehicle (hereinafter "Vehicle"):
+
+</b>
+</center>
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:5px;" aling="center">
+<center><b>Exterior</b></center>
+</td>
+</tr>
+<tr>
+<td style="padding-top:5px;" aling="center">
+<center><img src="{!$Resource.Cars}" width="250px" height="200px"/></center>
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:5px;" aling="center">
+Indicate Damage:&nbsp;&nbsp;&nbsp;&nbsp;
+D = Minor Dent/Ding&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+S = Minor Scratch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+P = Minor Paint Blemish
+</td>
+</tr>
+<tr>
+<td align="center">
+X = Major Damage or Paint Discoloration&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+G = Glass Damage
+</td>
+</tr>
+<tr>
+<td style="font-size:0.8em;padding-top:5px;">
+<img src="{!$Resource.box}" width="15px" height="12px"/>&nbsp;&nbsp;&nbsp;&nbsp;
+There are no visible damage and/or cosmetic defects on the exterior of the Vehicle.
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:5px;" aling="center">
+<center><b>Interior</b></center>
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:15px;" aling="left">
+Describe Damage (if none, write &#x0201C;note&#x0201D;):________________________________________________________
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:10px;" aling="left">
+____________________________________________________________________________________________
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:10px;" aling="left">
+____________________________________________________________________________________________
+</td>
+</tr>
+<tr>
+<td style="font-size:1em;padding-top:10px;" aling="left">
+____________________________________________________________________________________________
+</td>
+</tr>
+<tr>
+<td style="font-size:0.95em;padding-top:10px;" aling="left">
+<b>I understand that I may not be able to return the Vehicle pursuant to the Contract Cancellation
+         Option Agreement if the Vehicle has EXCESS WEAR AND TEAR. </b>
+</td>
+</tr>
+<tr>
+<td style="font-size:0.95em;padding-top:10px;" aling="left">
+<b>Any physical damage or cosmetic defect present on or inside the Vehicle but not
+ indicated above and any mechanical problems or defects caused by me may be deemed,
+ at the sole discretion of the selling dealer, EXCESS- WEAR AND TEAR and may render 
+ the Contract Cancellation- Agreement null null and void. </b>
+</td>
+</tr>
+<tr>
+<td style="padding-top:20px;">
+<table align="left" width="100%" >
+<tr>
+<td width="10%" aling="left"></td>
+<td width="25%" aling="left" style="border-bottom:0.5px solid;"></td><td width="5%"></td>
+
+<td width="45%" align="left" style="border-bottom:0.5px solid;"><img src="{!$Resource.Sign}" width="30px" height="20px"/></td>
+<td width="15%"></td>
+</tr>
+<tr>
+<td width="10%" aling="left"></td>
+<td width="25%" aling="left" valign="top" style="font-size:0.7em">Date</td><td width="5%"></td>
+
+<td width="45%" align="left" valign="top" style="font-size:0.7em">Customers's Signature</td>
+<td width="15%"></td>
+</tr>
+<tr>
+<td width="10%" aling="left"></td>
+<td width="25%" aling="left" style="border-bottom:0.5px solid;padding-top:50px;"></td><td width="5%"></td>
+
+<td width="45%" align="left" valign="bottom" style="border-bottom:0.5px solid;"><img src="{!$Resource.Sign}" width="30px" height="20px"/></td>
+<td width="15%"></td>
+</tr>
+<tr>
+<td width="10%" aling="left"></td>
+<td width="25%" aling="left" valign="top" style="font-size:0.7em;">Date</td><td width="5%"></td>
+
+<td width="45%" align="left" valign="top" style="font-size:0.7em">Dealer Representative's Signature</td>
+<td width="15%"></td>
+</tr>
+
+</table>
+</td>
+</tr>
+</table>
+
+</div>
+</body>
+
+</html>
+</apex:page>

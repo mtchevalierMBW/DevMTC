@@ -1,0 +1,28 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  12/4/2018
+    Work Item:     W-000421
+    File Name:     ContentVideoPlayer.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global">
+
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+  <aura:attribute name="content" type="Content__c" />
+
+  <aura:attribute name="videoSource" type="String" />
+  
+  <div class="slds-p-around_x-small">
+    <center>
+      <video width="600" controls="controls">
+        <source src="{!v.videoSource}" type="video/mp4" />
+      </video>
+    </center>
+  </div>
+
+</aura:component>

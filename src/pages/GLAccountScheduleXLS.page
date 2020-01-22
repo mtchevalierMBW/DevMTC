@@ -1,0 +1,57 @@
+<apex:page controller="GLAccountSchedule_CTLR" tabStyle="c2g__codaTransaction__c" 
+      contenttype="application/x-excel#AccountSchedule.xls">
+
+    <apex:pageMessages />
+   
+    <apex:outputPanel id="report">
+    
+        <apex:outputPanel >
+            <div style="border-bottom: 2px solid silver; font-size:14px; font-weight: bold;">
+                Accounts: {!GLAcctCodeStr}<br/>
+                Locations: {!Dim1CodeStr}<br/>
+                Through:&nbsp;
+                <apex:outputText value="{0,date,MM/dd/yyyy}">
+                   <apex:param value="{!lookuph.c2g__JournalDate__c}"/>
+                </apex:outputText>
+            </div>
+            <table class="schedule">
+                <tr>
+                    <th class="center">Date</th>
+                    <th>Source</th>
+                    <th>Control#</th>
+                    <th>GL Acct-Dim1</th>
+                    <th>Transaction Id-Line</th>
+                    <th>Line reference</th>
+                    <th class="right">Value</th>
+                    <th class="right">Balance</th>
+                    <th>Customer Acct</th>
+                    <th>Days old</th>
+                </tr>
+                <apex:repeat value="{!Report}" var="r">
+                    <tr class="{!IF(MOD(r.groupcount,2)==0,'even','odd')}">
+                      <td>
+                            <apex:outputText value="{0,date,MM/dd/yyyy}">
+                             <apex:param value="{!r.trnDate}"/>
+                            </apex:outputText>
+                      </td>
+                      <td class="center">{!r.trnSource}</td>
+                      <td>{!r.trnControlNbr}</td>
+                      <td>{!r.glaReportingCode}-{!r.dim1ReportingCode}</td>
+                      <td><a href="/{!r.trnLineId}">{!r.trnName}-{!r.trnLineNo}</a></td>
+                      <td>{!r.trnLineReference}</td>
+                      <td class="number">{!r.trnValue}</td>
+                      <td class="number">
+                          <apex:outputText rendered="{!r.controlTotal!=null}" value="{!r.controlTotal}"/>
+                      </td>
+                      <td>{!r.accountName}</td>
+                      <td>
+                          <apex:outputText rendered="{!r.daysOld!=null}" value="{!r.daysOld}"/>
+                      </td>
+                    </tr> 
+                </apex:repeat>
+            </table>
+        </apex:outputPanel>
+
+    </apex:outputPanel>
+    
+</apex:page>

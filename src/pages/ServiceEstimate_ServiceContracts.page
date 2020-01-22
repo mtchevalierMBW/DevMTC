@@ -1,0 +1,18 @@
+<apex:page standardController="dealer__Service_Estimate__c" extensions="ServiceVehicleESC_EXT">
+	    <apex:pageBlock rendered="{!ServiceContracts.size>0}">
+	    	<!-- apex:pageBlockSection columns="1" title="Service contracts" -->
+	    	<apex:pageBlockTable value="{!ServiceContracts}" var="esc">
+	    		<apex:column value="{!esc.dealer__Deductable__c}"/>
+	    		<apex:column value="{!esc.dealer__Status__c}"/>
+	    		<apex:column value="{!esc.dealer__Expiration_Months__c}"/>
+	    		<apex:column value="{!esc.dealer__End_Date__c}"/>
+	    		<apex:column value="{!esc.dealer__Expiration_Mileage__c}"/>
+	    		<apex:column value="{!esc.dealer__Description__c}"/>
+	    		<apex:column >
+	    			<apex:facet name="header">Service Contract</apex:facet>
+	    			<apex:outputLink value="/{!esc.Id}">{!esc.Name}</apex:outputLink>
+	    		</apex:column>
+	    	</apex:pageBlockTable>
+	    	<!-- ServiceContracts/apex:pageBlockSection -->
+	    </apex:pageBlock>
+</apex:page>

@@ -1,0 +1,83 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId,lightning:actionOverride"
+	controller="CashierProcess">
+
+<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<aura:attribute name="cashierId" type="String"/>
+	<aura:attribute name="accountId" type="String"/>
+	<aura:attribute name="documentId" type="String"/>
+	<!--aura:attribute name="location" type="Object"/>
+	<aura:attribute name="locationId" type="String"/>
+	<aura:attribute name="locAbbrev" type="String"/ -->
+	<aura:attribute name="inmodal" type="boolean" default="false"/>
+	<aura:attribute name="showForm" type="boolean" default="false"/>
+	<aura:attribute name="settings" type="Object" /><!--BLL1-->
+
+	<lightning:overlayLibrary aura:id="overlayLib"/>
+
+	<!-- recordId="{!v.recordId}" -->
+	<aura:if isTrue="{!v.showForm}">
+
+	<lightning:recordEditForm recordId="{!v.cashierId}" objectApiName="dealer__Cashering__c"  
+		aura:id="recordform" onsuccess="{!c.recordSaved}" onerror="{!c.recordSaveError}"
+		onload="{!c.recordLoaded}">
+
+		<lightning:card class="slds-p-around_small">
+			<aura:set attribute="footer">
+				<lightning:button aura:id="cancelbutton" variant="neutral" name="btncancel" 
+					type="button" label="Cancel" onclick="{!c.cancel}"/>
+				<lightning:button aura:id="recordsavebutton" variant="brand" name="btnsave" 
+					type="button" label="Save" onclick="{!c.saveRecord}"/>
+			</aura:set>
+
+			<lightning:messages/>
+			<lightning:inputField fieldName="dealer__Location__c" aura:id="location" disabled="{!not(v.settings.showcorporateentry)}"/><!--BLL1c-->
+
+			<div class="slds-grid slds-wrap slds-gutters">
+				<div class="slds-col slds-size_1-of-2">
+					<lightning:inputField fieldName="dealer__Customer__c" aura:id="customer"/>
+				</div>
+				<div class="slds-col slds-size_1-of-2">
+					<lightning:inputField fieldName="Method_of_Payment__c" aura:id="methodofpay"/>
+				</div>
+				<div class="slds-col slds-size_1-of-2">
+					<lightning:inputField fieldName="dealer__Amount__c" aura:id="amount"/>
+				</div>
+				<div class="slds-col slds-size_1-of-2">
+					<div class="slds-form-element__control">
+						<lightning:inputField fieldName="dealer__Deposit__c" aura:id="deposit"/>
+					</div>
+				</div>
+				<div class="slds-col slds-size_1-of-2">
+					<lightning:inputField fieldName="dealer__Credit_Card_Authorization_Code__c" aura:id="authcode"/>
+				</div>
+				<!--BLL1-->
+				<div class="slds-col slds-size_1-of-2">
+					<div class="slds-form-element__control" style="{!v.settings.showcorporateentry?'display:inlineblock;':'display:none;'}">
+						<lightning:inputField fieldName="Corporate_Entry__c" aura:id="corporate" />
+					</div>
+				</div>
+				<!--BLL1 end-->
+				<!--BLLx-->
+				<div class="slds-col slds-size_1-of-2">
+					<div class="slds-form-element__control" style="{!v.settings.showcorporateentry?'display:inlineblock;':'display:none;'}">
+						<lightning:inputField fieldName="dealer__Close_Date__c" aura:id="closedate" />
+					</div>
+				</div>
+				<!--BLLx end-->
+			</div>
+
+			<div style="display:none;">
+				<lightning:inputField fieldName="dealer__Company_Number__c" aura:id="compabbrev" />
+				<lightning:inputField fieldName="dealer__Deal__c" aura:id="deal" />
+				<lightning:inputField fieldName="dealer__Service_Repair_Order__c" aura:id="sro" />
+				<lightning:inputField fieldName="dealer__Rental_Agreement__c" aura:id="rental" />
+				<lightning:inputField fieldName="dealer__Payment_Method__c" aura:id="paymentmethod" />
+			</div>
+
+		</lightning:card>
+
+	</lightning:recordEditForm>
+	</aura:if>
+
+</aura:component>

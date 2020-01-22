@@ -1,0 +1,47 @@
+.THIS.hidden  {
+	display:none !important;
+}
+.THIS a.slds-path__link {color:white;}
+.THIS a.slds-path__link:hover {color:white;}
+.THIS a.slds-path__link:visited {color:white;}
+.THIS#dealHeader {
+	border:1px solid #aaa !important;
+	box-shadow: 2px 2px 2px #999 !important;
+	background-color:#eee!important;
+}
+.THIS .slds-page-header__name-title h1 {
+	font-size:12pt;
+}
+.THIS#financetable {
+	border: 1px solid #aaa;
+	border-radius:3px;
+}
+/* darken table stripes */
+.THIS.slds-table_striped tbody tr:nth-of-type(even)>th {
+	background-color: #bbb !important;
+}
+.THIS .slds-table thead th {
+	background-color: rgba(27, 82, 151, .8);
+	color:white;
+}
+.THIS #loanDivId {padding: .5rem 1rem; }
+.THIS #leaseDivId {padding: .5rem 1rem; }
+.THIS textarea#notestextarea {
+	min-height:72px;
+}
+.THIS h1, .THIS h2, .THIS h3, .THIS h4 .THIS h5 .THIS h6 { font-weight:bold; }
+.THIS .slds-gutters {
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+}
+.THIS .slds-spinner.spinner-25pct {
+	top: 25%;
+}
+.THIS .slds-button[disabled], .THIS .slds-button:disabled {
+    color: rgb(192,192,220);
+}
+/*
+.THIS .btn_label_above {
+	display:block;
+}
+*/

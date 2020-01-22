@@ -1,0 +1,333 @@
+<apex:page controller="ConcurPayableUpload" doctype="html-5.0" showHeader="true" standardStylesheets="true" >
+
+
+<style>
+.pageTitle {
+	font-size: 16pt;
+	margin-bottom: 5px;
+}
+
+input.btn.formbutton {
+	margin: 3px 2em 3px 0;
+	padding:8px;
+}
+.center { text-align:center; }
+.right { text-align:right; }
+fieldset > table > tbody > tr > td {display:block;}
+fieldset {margin-top:-10px;}
+
+.modaloverlay {
+	display:none;
+	position: fixed;
+	z-index: 1;
+	left:0;
+	top:0;
+	height: 100%;
+	width: 100%;
+	background-color: silver;
+	background-color: rgb(128,128,128,0.5);	/* with opacity */
+}
+.modaloverlay img {
+	display:block;
+	margin:auto;
+	margin-top:250px;
+}
+</style>
+
+
+<!-- jQuery -->
+<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"/>
+<!-- Kendo grid -->
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.common.min.css" />
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.default.min.css" />
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/jszip.min.js"/>
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/kendo.all.min.js" />
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+
+// used to remove link html from the vehicle column
+function striptags(e) {
+   	var sheet = e.workbook.sheets[0];
+		for (var i = 1; i < sheet.rows.length; i++) {
+   		var row = sheet.rows[i];
+   		for(var c = 0; c<row.cells.length; c++) {
+			var v = row.cells[c].value;
+			if (typeof(v)!='undefined' && v!=null) {
+			
+				//v = v.substring(v.indexOf('>')+1, v.lastIndexOf('<'));
+				v = v.replace(/<[^>]*>/g,"");
+			
+			}
+			row.cells[c].value = v;
+		}
+	}
+}
+
+
+function setupErrorTable() {
+	console.log($jq('table#baddatatable'));
+	$jq('table#baddatatable').kendoGrid({
+		sortable:true, scrollable:false,
+		toolbar: ["excel"],
+           excel: {
+               fileName: "ConcurPayableUpload_Errors_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+               filterable: true
+           },
+           	excelExport: striptags,
+			columns:[
+				{field:"PONumber", attributes:{"class":"left"}},
+				{field:"Vendor", attributes:{"class":"left"}},
+				{field:"Invoice", attributes:{"class":"left"}},
+				{field:"InvoiceAmt", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"ShippingAmt", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"PartNumber", attributes:{"class":"left"}},
+				{field:"ItemQty", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"TotalPrice", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"Freight", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"NMEDA", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"ErrorMessages", attributes:{"class":"left"}}
+			]
+	});
+}
+
+function setupDataTable() {
+	console.log($jq('table#gooddatatable'));
+	$jq('table#gooddatatable').kendoGrid({
+		sortable:true, scrollable:false,
+		toolbar: ["excel"],
+           	excel: {
+               fileName: "ConcurPayableUpload_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+               filterable: true
+           	},
+           	excelExport: striptags,
+			columns:[
+				{field:"PONumber", attributes:{"class":"left"}},
+				{field:"Vendor", attributes:{"class":"left"}},
+				{field:"Invoice", attributes:{"class":"left"}},
+				{field:"InvoiceAmt", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"ShippingAmt", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"PartNumber", attributes:{"class":"left"}},
+				{field:"ItemQty", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"TotalPrice", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"Freight", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"NMEDA", attributes:{"class":"right"}, headerAttributes:{style:"text-align:right;"}},
+				{field:"WarningMessages", attributes:{"class":"left"}}
+			]
+	});
+}
+
+function disableBtn(btn, newText) {
+		var btnselector="input[id$='" + btn + "']";
+		$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+		if (newText.length>0) $jq(btnselector).val(newText);		
+}
+	
+function overlayscreen() {
+ console.log('showing overlay');
+ document.getElementById("modelprocessing").style.display="block";
+}
+function removeoverlay() {
+ console.log('hiding overlay');
+ document.getElementById("modelprocessing").style.display="none";
+}
+</script>
+
+
+<div id="modelprocessing" class="modaloverlay">
+	<!-- img src="https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif"/ -->
+	<apex:image id="theImage" value="{!$Resource.Spinner}" width="100" height="100" alt="Description of image here"/>	
+</div>
+
+<apex:actionStatus id="processingstatus" onstart="overlayscreen();" onstop="removeoverlay();"/>
+
+<apex:form id="mainform">
+
+		<!-- apex:actionFunction name="SubmitCSV" action="{!submitCSV}"> </apex:actionFunction> -->
+		
+
+<apex:pageBlock title="Concur Matched PO/Invoice Upload" mode="detail">
+	<apex:pageMessages />
+
+	<apex:pageBlockSection columns="1">
+		<apex:pageBlockSectionItem >
+		This form is used to upload a CSV spreadsheet of matched invoices ready for payment from Concur.
+		</apex:pageBlockSectionItem>
+	</apex:pageBlockSection>
+
+	<apex:pageBlockSection columns="2" rendered="{!NOT(haveData)}">
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel >Select csv file to upload</apex:outputLabel>
+			<apex:inputFile value="{!csvBlob}" filename="{!fileName}"/>
+		</apex:pageBlockSectionItem>
+	</apex:pageBlockSection>
+
+	<apex:pageBlockSection rendered="{!haveData}">
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel >File name uploaded: </apex:outputLabel>
+			<apex:outputText value="{!fileName}"/>
+		</apex:pageBlockSectionItem>
+	</apex:pageBlockSection>
+
+
+<!-- TODO -->
+
+	<apex:pageBlockButtons location="top">
+		<apex:commandButton action="{!startOver}" value="Reset Form" styleclass="formbutton" immediate="true"/>
+	</apex:pageBlockButtons>
+	<apex:pageBlockButtons location="bottom">
+		<apex:commandButton id="btn_submit" action="{!submitCSV}" value="Submit/Audit CSV" rendered="{!NOT(haveData)}" styleclass="formbutton"/>
+		<apex:commandButton id="btn_process" value="Process Upload" 
+			rendered="{!AND(haveGoodData,NOT(dataSubmitted),NOT(processComplete))}" 
+			action="{!processUpload}" rerender="datablock,mainform" status="processingstatus"
+			styleclass="formbutton" disabled="{!IF(haveGoodData,'false','true')}"/>
+	</apex:pageBlockButtons>
+
+</apex:pageBlock>
+</apex:form>
+	
+<apex:pageBlock mode="maindetail">
+
+	<apex:pageBlockSection id="errorblock" title="Errors ({!errorRcds.size})" columns="1" rendered="{!haveData}">
+		<apex:outputPanel style="width:100%;" id="baddata">
+		<table id="baddatatable">
+				<tr>
+					<th>PO Number</th>
+					<th>Vendor</th>
+					<th>Invoice</th>
+					<th>Invoice Amt</th>
+					<th>Shipping Amt</th>
+					<th>Part Number</th>
+					<th>Item Qty</th>
+					<th>Total Price</th>
+					<th>Freight</th>
+					<th>NMEDA</th>
+					<th>Warning Messages</th>
+				</tr>
+				
+				<apex:repeat value="{!errorRcds}" var="data">
+				<tr>
+					<td>
+						<apex:outputText value="{!data.PONumber}" rendered="{!data.po.Id=null}"/>
+						<apex:outputLink value="/{!data.po.Id}" target="_blank" rendered="{!NOT(data.po.Id=null)}">
+							<apex:outputText value="{!data.PONumber}"/>
+						</apex:outputLink>
+					</td>
+					<td><apex:outputText value="{!data.VendorName}"/></td>
+					<td><apex:outputText value="{!data.InvoiceNbr}"/></td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.InvoiceAmt}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.ShippingAmt}"/>
+						</apex:outputText>
+					</td>
+					<td><apex:outputText value="{!data.PartNbr}"/></td>
+					<td>
+						<apex:outputText value="{0,number,0}">
+						<apex:param value="{!data.ItemQty}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.TotalPrice}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.LineShippingAmt}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.NMEDAAmt}"/>
+						</apex:outputText>
+					</td>
+					<td><apex:outputText value="{!data.errorMsgStr}"/></td>
+				</tr>
+				</apex:repeat>
+				
+		</table>
+		<script type="text/javascript">
+		setupErrorTable();
+		</script>
+		</apex:outputPanel>
+
+	</apex:pageBlockSection>
+
+	
+	<apex:pageBlockSection id="datablock" title="{!IF(processComplete,'Processed','Ready to process')} ({!readyRcds.size})"  columns="1" rendered="{!haveData}">
+		<apex:outputPanel style="width:100%;" id="gooddata">
+		<table id="gooddatatable">
+				<tr>
+					<th>PO Number</th>
+					<th>Vendor</th>
+					<th>Invoice</th>
+					<th>Invoice Amt</th>
+					<th>Shipping Amt</th>
+					<th>Part Number</th>
+					<th>Item Qty</th>
+					<th>Total Price</th>
+					<th>Freight</th>
+					<th>NMEDA</th>
+					<th>Warning Messages</th>
+				</tr>
+				
+				<apex:repeat value="{!readyRcds}" var="data">
+				<tr>
+					<td>
+						<apex:outputText value="{!data.PONumber}" rendered="{!data.po.Id=null}"/>
+						<apex:outputLink value="/{!data.po.Id}" target="_blank" rendered="{!NOT(data.po.Id=null)}">
+							<apex:outputText value="{!data.PONumber}"/>
+						</apex:outputLink>
+					</td>
+					<td><apex:outputText value="{!data.VendorName}"/></td>
+					<td><apex:outputText value="{!data.InvoiceNbr}"/></td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.InvoiceAmt}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.ShippingAmt}"/>
+						</apex:outputText>
+					</td>
+					<td><apex:outputText value="{!data.PartNbr}"/></td>
+					<td>
+						<apex:outputText value="{0,number,0}">
+						<apex:param value="{!data.ItemQty}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.TotalPrice}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.LineShippingAmt}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,currency}">
+						<apex:param value="{!data.NMEDAAmt}"/>
+						</apex:outputText>
+					</td>
+					<td><apex:outputText value="{!data.warningMsgStr}"/></td>
+				</tr>
+				</apex:repeat>
+				
+		</table>
+		<script type="text/javascript">
+		setupDataTable();
+		</script>
+		</apex:outputPanel>
+	</apex:pageBlockSection>
+
+
+</apex:pageBlock>
+
+</apex:page>

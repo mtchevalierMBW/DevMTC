@@ -1,0 +1,768 @@
+<!-- W-000579 
+2019-09-17	B. Leaman	W-000606 BLL1 - F&I only proposal ESC Financing Cost to hit F&I GP only. New field for F&I Loan Acq COST.
+-->
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId"
+	controller="CreditApplicationProcess">
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	
+	<!-- dealer__Deal__c -->
+	<aura:attribute name="dealFields" type="Object"/> 
+	<aura:attribute name="dealError" type="String"/> 
+	<force:recordData aura:id="dealEditor" 
+		recordId="{!v.recordId}" 
+		fields="Id,Name,RecordType.Name,dealer__Vehicle__c,dealer__Vehicle__r.Name,dealer__Buyer__c,dealer__Buyer__r.Name,Conversion_Description__c,Contract_Type__c,dealer__Buyer__r.BillingStreet,dealer__Buyer__r.BillingCity,dealer__Buyer__r.BillingState,dealer__Buyer__r.BillingPostalCode,dealer__Co_Buyer__c,dealer__Co_Buyer__r.Name,dealer__Co_Buyer__r.BillingStreet,dealer__Co_Buyer__r.BillingCity,dealer__Co_Buyer__r.BillingState,dealer__Co_Buyer__r.BillingPostalCode,dealer__Deal_Type__c,Proposed_Delivery_Date__c,dealer__VIN__c,dealer__F_I_Manager__c,dealer__F_I_Manager__r.Name,Credit_Application_Received__c,Credit_Application_Status__c,dealer__Sales_Lead__c,Contract_APR__c,Contract_Buy_Rate__c,Contract_Number_of_Payments__c,Contract_Type__c,Contract_Amount_Financed__c,Contract_Monthly_Payment__c,Contract_Total_of_Payments__c,Contract_Finance_Charge__c,Credit_App_Missing_Items__c,Credit_App_Incomplete__c,ChassisMSRP__c,ConversionMSRP__c,ChassisResidualPct__c,ConversionResidualPct__c,ChassisResidualAmt__c,ConversionResidualAmt__c,Chassis_Price__c,Conversion_Price__c,LeaseDispositionFee__c,LeaseMoneyFactor__c,DesiredUpfrontCash__c,LeaseUpfrontSalesTax__c,TaxOnCostReduction__c,LeasePmtBeforeTax__c,LeaseMonthlySalesTax__c,TotalUpfrontCash__c,dealer__First_Payment_Date__c,LeasePmtDueDOM__c,Contract_LeaseEndDate__c,LeaseEarlyTerminationFee__c,Finance_Reserve__c,LeaseLatePmtFee__c,LeaseMilesIncluded__c,LeaseMilesOverageRate__c,CIT_Lender_Funded__c,CIT_Reviewed_Archive__c,dealer__Finance_Institution_Account__c,dealer__Finance_Institution_Account__r.Name,Credit_Application_Notes__c,LeaseAcquisitionFee__c,LoanAcquisitionCost__c,Recourse_Required__c,dealer__Down_Pymt__c,ESC_Loan_Cost__c"
+		targetFields="{!v.dealFields}" 
+		targetError="{!v.dealError}" 
+		recordUpdated="{!c.dealRcdUpdated}" 
+		mode="EDIT" 
+	/>
+
+	<!-- dealer__Sales_Up__c -->
+	<aura:attribute name="solutionoppId" type="Id"/>
+	<aura:attribute name="soloppFields" type="Object"/> 
+	<aura:attribute name="soloppError" type="String"/> 
+	<force:recordData aura:id="soloppEditor"
+		recordId="{!v.solutionoppId}"
+		fields="Id,Name,Credit_Score__c,Guarantor_Credit_Score__c"
+		targetFields="{!v.soloppFields}"
+		targetError="{!v.soloppError}"
+		recordUpdated="{!c.soloppRcdUpdated}"
+		mode="EDIT"
+	/>
+
+	<!-- dealer__Credit_Application__c -->
+	<aura:attribute name="creditappId" type="Id"/>
+	<aura:attribute name="creditappFields" type="Object"/> 
+	<aura:attribute name="creditappError" type="String"/> 
+	<force:recordData aura:id="creditappEditor"
+		recordId="{!v.creditappId}"
+		fields="Id,Name,Application_Status__c,Finance_Company__c,Finance_Company__r.Name,Proposal__c,Solution_Opportunity__c,dealer__Store_Location__c,Application_Received__c,Credit_App_Submitted__c,Decision_Received__c,Items_Missing__c, Notes__c,Counter_Offer__c,Offer_APR__c,Offer_Buy_Rate__c,Offer_Down_Pmt__c,Offer_Payment__c,Offer_Principle__c,Offer_Term__c,VIN__c,Lease_Money_Factor__c,Credit_Accepted__c,Recourse_Required__c"
+		targetFields="{!v.creditappFields}"
+		targetError="{!v.creditappError}"
+		recordUpdated="{!c.creditappRcdUpdated}"
+		mode="EDIT"
+	/>
+
+	<!-- aura:attribute name="newCreditAppId" type="String"/ -->
+	<aura:attribute name="creditapps" type="Object[]"/>
+	<!--aura:attribute name="financecompanies" type="Object[]"/ -->
+	<aura:attribute name="showNewCreditAppForm" type="Boolean" default="true"/>
+	<aura:attribute name="overallStatus" type="String"/>
+
+	<!-- main layout -->
+<aura:attribute name="mainspinner" type="boolean" default="false"/>
+<!-- spinner start... style=Brand Medium (blue dots) -->
+<aura:if isTrue="{!v.mainspinner}">
+   <div aura:id="mainSpinnerId" class="slds-spinner_container">
+	   <div class="slds-spinner_brand slds-spinner slds-spinner_large slds-is-relative spinner-25pct" role="alert">
+		   <span class="slds-assistive-text">Loading</span>
+		   <div class="slds-spinner__dot-a"></div>
+		   <div class="slds-spinner__dot-b"></div>
+	   </div>
+   </div>
+</aura:if>
+<!-- spinner end -->    
+
+	<!-- overall status/progress -->
+	<lightning:card>
+		<div class="slds-grid slds-gutters">
+			<div class="slds-col slds-size_9-of-12">
+				<!-- component: status/progress bar -->
+				<c:Proposal_CreditAppStatusBar recordId="{!v.recordId}" aura:id="statusBar"/>
+			</div>
+			<div class="slds-col slds-size_3-of-12 slds-path__action">
+				<button class="{!v.dealFields.Credit_Application_Received__c==null ? 'slds-button slds-button_brand' : 'slds-button slds-button_neutral'}" 
+					data-receivedate="{!v.dealFields.Credit_Application_Received__c}"
+					onclick="{!c.applicationReceived}">
+					Application Received
+				</button>
+			</div>
+		</div>
+	</lightning:card>
+
+	<!-- proposal header -->
+	<div id="dealHeader" class="slds-page-header slds-theme_shade">
+		<div class="slds-media__body">
+			<div class="slds-page-header__name">
+				<div class="slds-page-header__name-title">
+					<h1>{!v.dealFields.RecordType.Name} Proposal: <b>{!v.dealFields.Name}</b></h1>
+				</div>
+			</div>
+			<div class="slds-page-header__name-meta slds-grid slds-gutters">
+				<div class="slds-col">
+					<label class="slds-form-element__label">Proposed Delivery</label>
+					<div class="slds-form-element__control">
+						<span class="slds-form-element__static">
+						<lightning:formattedDateTime value="{!v.dealFields.Proposed_Delivery_Date__c}" year="numeric" month="numeric" day="numeric"/>
+						</span>
+					</div>
+				</div>
+				<div class="slds-col">
+					<label class="slds-form-element__label">Buyer Account</label>
+					<div class="slds-form-element__control">
+						<span class="slds-form-element__static">
+						{!v.dealFields.dealer__Buyer__r.Name}
+						</span>
+					</div>
+				</div>
+				<div class="slds-col">
+					<label class="slds-form-element__label">Co-Buyer Account</label>
+					<div class="slds-form-element__control">
+						<span class="slds-form-element__static">
+						{!v.dealFields.dealer__Co_Buyer__r.Name}
+						</span>
+					</div>
+				</div>
+				<div class="slds-col">
+						<label class="slds-form-element__label">Proposal Type</label>
+						<div class="slds-form-element__control">
+							<span class="slds-form-element__static">
+							{!v.dealFields.dealer__Deal_Type__c}
+							</span>
+						</div>
+					</div>
+				<div class="slds-col">
+					<label class="slds-form-element__label">Vehicle</label>
+					<div class="slds-form-element__control">
+						<span class="slds-form-element__static">
+						{!v.dealFields.dealer__Vehicle__r.Name}
+						</span>
+					</div>
+				</div>
+				<div class="slds-col">
+					<label class="slds-form-element__label">VIN</label>
+					<div class="slds-form-element__control">
+						<span class="slds-form-element__static">
+						{!v.dealFields.dealer__VIN__c}
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+		
+	<!-- error messages on save -->
+	<div style="display:block;color:red">
+		<ui:outputText value="{!v.dealError}"/>
+		<ui:outputText value="{!v.soloppError}"/>
+		<ui:outputText value="{!v.creditappError}"/>
+	</div>
+
+	<br/>
+	
+	<!-- Add new finance company to list -->
+	<aura:if isTrue="{!v.overallStatus!='Delivered'}">
+		<div class="slds-grid slds-gutters slds-wrap">
+			<div class="slds-col slds-size_8-of-12">
+				<aura:if isTrue="{!v.showNewCreditAppForm}">
+				<lightning:recordEditForm aura:id="newcreditapp"
+					objectApiName="dealer__Credit_Application__c"
+					onsubmit="{!c.newCreditAppSave}"
+					onsuccess="{!c.newCreditAppSuccess}"
+					onerror="{!c.newCreditAppError}"
+					class="slds-card__body_inner"
+					onload="{!c.loadedCreditApp}"
+				>
+				<div class="slds-grid slds-gutters">
+					<div class="slds-col slds-size_6-of-12">
+						<lightning:inputField fieldName="Finance_Company__c" aura:id="newca_financecompany"/>
+						<div style="display:none;">
+							<lightning:inputField fieldName="Proposal__c" aura:id="newca_proposal"/>
+							<lightning:inputField fieldName="Solution_Opportunity__c" aura:id="newca_solopp"/>
+							<lightning:inputField fieldName="Application_Status__c" aura:id="newca_status"/>
+							<lightning:inputField fieldName="Application_Received__c" aura:id="newca_apprcvd"/>
+							<lightning:inputField fieldName="VIN__c" aura:id="newca_vin"/>
+						</div>
+					</div>
+					<div class="slds-col slds-size_6-of-12">
+						<label class="slds-form-element__label">&nbsp;</label>
+						<div>
+						<lightning:button onclick="{!c.addNewCreditApp}" label="Add Finance Company"/>
+						</div>
+					</div>
+				</div>
+				<lightning:messages/>
+				</lightning:recordEditForm>
+				</aura:if>
+			</div>
+		</div>
+	</aura:if>
+
+	<br/>
+
+	<!-- list of credit apps for this proposal -->
+	<!-- Id,Name, Finance_Company__c, Finance_Company__r.Name,
+		Application_Received__c, Credit_App_Submitted__c, Credit_App_Completed__c, Decision_Received__c,
+		Items_Missing__c, Notes__c -->
+	<div id="financetable">
+		<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+		<thead>
+			<tr class="slds-line-height_reset">
+				<th scope="col">Finance Company</th>
+				<th scope="col">Status</th>
+				<th scope="col">Received</th>
+				<th scope="col">Submitted</th>
+				<th scope="col">Decision Received</th>
+				<!-- th scope="col">Missing</th -->
+				<th scope="col">Notes</th>
+				<th scope="col">
+					Actions
+					<button style="background:transparent;border:0;float:right;"><lightning:Icon iconName="utility:refresh" variant="bare" size="xx-small" onclick="{!c.refreshCreditApplications}"></lightning:Icon></button>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<aura:iteration items="{!v.creditapps}" var="ca"> 
+				<tr class="slds-hint-parent">
+					<th data-label="Finance Company" scope="row">
+						<ui:outputText value="{#ca.Finance_Company__r.Name}"/>
+					</th>
+					<td data-label="Status">
+						<ui:outputText value="{#ca.Application_Status__c}"/>
+					</td>
+					<td data-label="Received">
+						<lightning:formattedDateTime value="{#ca.Application_Received__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+							minute="2-digit" time-zone-name="short" hour12="true"/>
+					</td>
+					<td data-label="Submitted">
+						<lightning:formattedDateTime value="{#ca.Credit_App_Submitted__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+							minute="2-digit" time-zone-name="short" hour12="true"/>
+					</td>
+					<td data-label="Decision Received">
+						<aura:if isTrue="{#ca.Decision_Received__c!=null}">
+						<lightning:formattedDateTime value="{#ca.Decision_Received__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+							minute="2-digit" time-zone-name="short" hour12="true"/>
+						</aura:if>
+					</td>
+					<!-- td data-label="Missing">
+						<ui:outputText value="{#ca.Items_Missing__c}"/>
+					</td -->
+					<td data-label="Notes">
+						<ui:outputText value="{#ca.Notes__c}"/>
+					</td>
+					<td data-label="Actions">
+						<aura:if isTrue="{#and(ca.Application_Received__c!=null, ca.Different_VIN__c==false)}">
+							<button class="{#ca.Credit_App_Submitted__c==null ?  'slds-button slds-button_brand' : 'slds-button slds-button_neutral'}" 
+								data-targetid="{#ca.Id}" 
+								data-fincomp="{#ca.Finance_Company__r.Name}"
+								data-submitdate="{#ca.Credit_App_Submitted__c}"
+								onclick="{!c.submitCreditApp}">Submit</button>
+						</aura:if>
+						<aura:if isTrue="{#and(ca.Credit_App_Submitted__c!=null, ca.Different_VIN__c==false)}">
+							<button class="{#ca.Decision_Received__c==null ?  'slds-button slds-button_brand' : 'slds-button slds-button_neutral'}" 
+								data-targetid="{#ca.Id}" 
+								data-fincomp="{#ca.Finance_Company__r.Name}"
+								data-decisiondate="{#ca.Decision_Received__c}"
+								onclick="{!c.decisionModal}">Decision</button>
+						</aura:if>
+						<aura:if isTrue="{#and(or(ca.Application_Status__c=='Approved',ca.Application_Status__c=='Countered',ca.Application_Status__c=='Delivered'), ca.Different_VIN__c==false)}">
+							<button class="{#if(ca.Application_Status__c=='Delivered', 'slds-button slds-button_neutral', 'slds-button slds-button_success')}"
+								data-targetid="{#ca.Id}" 
+								data-fincomp="{#ca.Finance_Company__r.Name}"
+								onclick="{!c.acceptOffer}">Accept</button>
+						</aura:if>
+						<aura:if isTrue="{#ca.Different_VIN__c==true}">
+							VIN: {#ca.VIN__c}
+						</aura:if>
+						<div style="float:right;">
+							<button style="border:0;background:transparent;" data-targetid="{#ca.Id}" onclick="{!c.editCreditApp}">
+								<lightning:icon iconName="utility:edit" size="x-small" alternativeText="Edit"/>
+							</button>
+							<button style="border:0;background:transparent;" data-targetid="{#ca.Id}" onclick="{!c.deleteCreditApp}">
+								<lightning:icon iconName="utility:delete" size="x-small" alternativeText="Delete"/>
+							</button>
+						</div>
+					</td>
+				</tr>
+			</aura:iteration>
+		</tbody>
+		</table>
+	</div>
+
+	<br/>
+
+	<!-- Set type of financing, manager, VIN, proposal abd solopp-level stuff -->
+	<lightning:card title="Credit data" iconName="custom:custom83" class="slds-p-around_small">
+		<!-- Start buttons off as disabled, enable in c.doInit -->
+		<aura:set attribute="actions">
+			<lightning:button aura:id="stdbutton" variant="brand" type="button" name="saveProposal" 
+				label="Save" onclick="{!c.saveData}"/>
+		</aura:set>
+		<div class="slds-grid slds-gutters slds-wrap">
+			<!-- conditional row 1 -->
+			<!-- CIT reviewed archive, CIT lender funded -->
+			<aura:if isTrue="{!v.overallStatus=='Delivered'}">
+				<div class="slds-col slds-size_2-of-12">
+					<lightning:input type="date" value="{!v.dealFields.CIT_Reviewed_Archive__c}"
+						label="CIT Reviewed/Archive"/>
+				</div>
+				<div class="slds-col slds-size_2-of-12">
+					<lightning:input type="date" value="{!v.dealFields.CIT_Lender_Funded__c}"
+						label="CIT Lender Funded"/>
+				</div>
+				<div class="slds-col slds-size_8-of-12">&nbsp;</div>
+			</aura:if>
+
+			<!-- row 2 -->
+			<div class="slds-col slds-size_2-of-12">
+				<lightning:select label="Loan or Lease" name="contracttype" value="{!v.dealFields.Contract_Type__c}"
+					onchange="{!c.contractTypeChange}">
+					<!-- aura:iteration items="{#v.financeoptions}" var="finopt">
+						<option text="{#finopt}" value="{#finopt}"></option>
+					</aura:iteration -->
+					<option text="please select..." value=""></option>
+					<option text="Loan" value="Loan"></option>
+					<option text="Lease" value="Lease"></option>
+				</lightning:select>
+			</div>
+			<div class="slds-col slds-size_2-of-12">
+				<lightning:input type="number" label="FICO score"
+					value="{!v.soloppFields.Credit_Score__c}" maxlength="3"/>
+			</div>
+			<div class="slds-col slds-size_2-of-12">
+				<lightning:input type="number" label="Guarantor/Co-buyer score"
+					value="{!v.soloppFields.Guarantor_Credit_Score__c}" maxlength="3"/>
+			</div>
+			<div class="slds-col slds-size_6-of-12">
+				<lightning:recordEditForm recordId="{!v.recordId}" objectApiName="dealer__Deal__c" aura:id="fimanagerform"
+					onsuccess="{!c.fimanagerSaved}" onerror="{!c.fimanagerSaveError}" onload="{!c.fimanagerLoaded}">
+					<div style="width:50%; margin-right:2em; display:inline-block;">
+						<lightning:inputField fieldName="dealer__F_I_Manager__c" label="F&amp;I Manager"
+							onchange="{!c.fimanagerChanged}"/>
+					</div>
+					<lightning:button type="submit" label="Re-assign F&amp;I Manager" aura:id="reassignbtn"/>
+					<lightning:messages/>
+				</lightning:recordEditForm>
+			</div>
+			
+			<!-- row 3 -->
+			<div class="slds-col slds-size_2-of-12">
+				<label class="sds-form-element__label">Application incomplete</label>
+				<lightning:input type="checkbox" checked="{!v.dealFields.Credit_App_Incomplete__c}" />
+			</div>
+			<div class="slds-col slds-size_4-of-12">
+				<lightning:textarea label="What is missing from the credit application?"
+					value="{!v.dealFields.Credit_App_Missing_Items__c}"/>
+			</div>
+			<div class="slds-col slds-size_4-of-12">
+				<lightning:textarea label="Credit Application Notes"
+					value="{!v.dealFields.Credit_Application_Notes__c}"/>
+			</div>
+			<div class="slds-col slds-size_2-of-12">&nbsp;</div>
+		</div>
+		
+	</lightning:card>
+
+
+	<!-- General financing section from proposal : Loan -->
+	<div class="slds-box hidden" aura:id="loanSection" id="loanDivId">
+	<lightning:card title="Loan" class="slds-box slds-p-around_small">
+	<!-- Start buttons off as disabled, enable in c.doInit -->
+		<div>
+			<!-- grid -->
+			<div class="slds-grid slds-gutters slds-wrap">
+
+				<!-- row 1 -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="sds-form-element__label">Finance Company</label>
+					<div class="slds-form-element__control slds-form-element__static">
+						{!v.dealFields.dealer__Finance_Institution_Account__r.Name}
+					</div>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Amt Financed/Adjusted Cap Cost"
+						value="{!v.dealFields.Contract_Amount_Financed__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="APR" 
+						value="{!v.dealFields.Contract_APR__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Down Payment" 
+						value="{!v.dealFields.dealer__Down_Pymt__c}"/>
+				</div>
+
+				<!-- row 2 -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Monthly Pmt"
+						value="{!v.dealFields.Contract_Monthly_Payment__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="number" maxlength="3" label="Term"
+							value="{!v.dealFields.Contract_Number_of_Payments__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="text" label="Buy Rate"
+							value="{!v.dealFields.Contract_Buy_Rate__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Finance Reserve"
+						value="{!v.dealFields.Finance_Reserve__c}"/>
+				</div>
+
+				<!-- row 3 -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Total of payments"
+						value="{!v.dealFields.Contract_Total_of_Payments__c}" />
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Finance Charge"
+						value="{!v.dealFields.Contract_Finance_Charge__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Acquisition Fee"
+						value="{!v.dealFields.LeaseAcquisitionFee__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<!--BLL1-->
+					<aura:if isTrue="{!v.dealFields.dealer__Deal_Type__c!='Financial Products'}">
+						<lightning:input type="text" label="Acquisition COST"
+							value="{!v.dealFields.LoanAcquisitionCost__c}"/>
+					</aura:if>
+					<aura:if isTrue="{!v.dealFields.dealer__Deal_Type__c=='Financial Products'}">
+						<lightning:input type="text" label="ESC Loan COST"
+							value="{!v.dealFields.ESC_Loan_Cost__c}"/>
+					</aura:if>
+					<!--BLL1 end-->
+				</div>
+
+				<!-- row 4 -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="sds-form-element__label">Recourse Required</label>
+					<div class="slds-form-element__control slds-form-element__static">
+						<lightning:input type="checkbox" checked="{!v.dealFields.Recourse_Required__c}" />
+					</div>
+				</div>
+				<div class="slds-col slds-size_9-of-12">&nbsp;</div>
+	
+			</div>
+		</div>
+	</lightning:card>
+	</div>
+
+	<!-- General financing section from proposal : Lease -->
+	<div class="slds-box hidden" aura:id="leaseSection" id="leaseDivId">
+	<lightning:card title="Lease" class="slds-p-around_small">
+		<!-- Start buttons off as disabled, enable in c.doInit -->
+		<div>
+			<div class="slds-grid slds-gutters slds-wrap slds-box">
+				<!-- heading row -->
+				<div class="slds-col slds-size_1-of-1">
+					<h3>Residuals</h3>
+				</div>
+				<!-- row 1 -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="slds-form-element__label">Chassis Price</label>
+					<div class="slds-form-element__control slds-form-element__static">
+					<lightning:formattedNumber style="currency" currencyCode="USD"
+						value="{!v.dealFields.Chassis_Price__c}"/>
+					</div>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Chassis MSRP"
+						value="{!v.dealFields.ChassisMSRP__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Chassis Residual Pct"
+						value="{!v.dealFields.ChassisResidualPct__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<label class="slds-form-element__label">Chassis Residual Amt</label>
+					<div class="slds-form-element__control slds-form-element__static">
+					<lightning:formattedNumber style="currency" currencyCode="USD" 
+						value="{!v.dealFields.ChassisResidualAmt__c}"/>
+					</div>
+				</div>
+				<!-- row 2 -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="slds-form-element__label">Conversion Price</label>
+					<div class="slds-form-element__control slds-form-element__static">
+					<lightning:formattedNumber style="currency" currencyCode="USD"
+						value="{!v.dealFields.Conversion_Price__c}" />
+					</div>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Conversion MSRP"
+						value="{!v.dealFields.ConversionMSRP__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Conversion Residual Pct"
+						value="{!v.dealFields.ConversionResidualPct__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<label class="slds-form-element__label">Conversion Residual Amt</label>
+					<div class="slds-form-element__control slds-form-element__static">
+					<lightning:formattedNumber style="currency" currencyCode="USD"
+						value="{!v.dealFields.ConversionResidualAmt__c}"/>
+					</div>
+				</div>
+			</div>
+
+			<div class="slds-grid slds-gutters slds-wrap slds-box" style="margin-top:12pt;">
+				<!-- heading row -->
+				<div class="slds-col slds-size_1-of-1">
+					<h3>Lease payments</h3>
+				</div>
+				<!-- row 1 -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="sds-form-element__label">Finance Company</label>
+					<div class="slds-form-element__control slds-form-element__static">
+						{!v.dealFields.dealer__Finance_Institution_Account__r.Name}
+					</div>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Adjusted CAP Cost"
+						value="{!v.dealFields.Contract_Amount_Financed__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Lease money factor"
+						value="{!v.dealFields.LeaseMoneyFactor__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Desired up-front cash"
+						value="{!v.dealFields.DesiredUpfrontCash__c}"/>
+				</div>
+	
+				<!-- row 2 -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Down Payment" 
+						value="{!v.dealFields.dealer__Down_Pymt__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Lease acquisition fee"
+						value="{!v.dealFields.LeaseAcquisitionFee__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Lease disposition fee"
+						value="{!v.dealFields.LeaseDispositionFee__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+				</div>
+
+				<!-- row 3 sales tax -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:select value="{!v.dealFields.LeaseSalesTaxHandling__c}" label="Sales tax handling">
+							<option text="Capitalized" value="Capitalized"></option>
+							<option text="Due up front" value="Due on Delivery"></option>
+							<option text="Monthly" value="Monthly"></option>
+					</lightning:select>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Up-front Sales Tax"
+						value="{!v.dealFields.LeaseUpfrontSalesTax__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Tax on Cap Cost Reduction"
+						value="{!v.dealFields.TaxOnCostReduction__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Monthly sales tax"
+						value="{!v.dealFields.LeaseMonthlySalesTax__c}"/>
+				</div>
+	
+
+				<!-- row 4 -->
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="text" label="Monthly payment"
+						value="{!v.dealFields.Contract_Monthly_Payment__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Number of payments"
+						value="{!v.dealFields.Contract_Number_of_Payments__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Lease pmt before tax"
+						value="{!v.dealFields.LeasePmtBeforeTax__c}"/>
+				</div>
+
+				<!-- row 5 -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Total of payments"
+						value="{!v.dealFields.Contract_Total_of_Payments__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Finance charge"
+						value="{!v.dealFields.Contract_Finance_Charge__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Total up-front cash"
+						value="{!v.dealFields.TotalUpfrontCash__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Finance reserve"
+						value="{!v.dealFields.Finance_Reserve__c}"/>
+				</div>
+			</div>
+
+			<!-- Other lease terms -->
+			<div class="slds-grid slds-wrap slds-gutters slds-box" style="margin-top:12pt;">
+				<!-- heading row -->
+				<div class="slds-col slds-size_1-of-1">
+					<h3>Other lease terms</h3>
+				</div>
+				<!-- row -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="First payment date" 
+						value="{!v.dealFields.dealer__First_Payment_Date__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="text" label="Payment day of month due" 
+						value="{!v.dealFields.LeasePmtDueDOM__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="text" label="Lease end date" 
+						value="{!v.dealFields.Contract_LeaseEndDate__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+						<lightning:input type="text" label="Early termination fee" 
+						value="{!v.dealFields.LeaseEarlyTerminationFee__c}"/>
+				</div>
+
+				<!-- row -->
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Late payment fee" 
+						value="{!v.dealFields.LeaseLatePmtFee__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Miles included" 
+						value="{!v.dealFields.LeaseMilesIncluded__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					<lightning:input type="text" label="Miles overage rate" 
+						value="{!v.dealFields.LeaseMilesOverageRate__c}"/>
+				</div>
+				<div class="slds-col slds-size_3-of-12">
+					&nbsp;
+				</div>
+
+				<!-- row -->
+				<div class="slds-col slds-size_3-of-12">
+					<label class="sds-form-element__label">Recourse Required</label>
+					<div class="slds-form-element__control slds-form-element__static">
+						<lightning:input type="checkbox" checked="{!v.dealFields.Recourse_Required__c}" />
+					</div>
+				</div>
+				<div class="slds-col slds-size_9-of-12">&nbsp;</div>
+
+			</div>
+
+		</div>
+
+	</lightning:card>
+	</div>			
+						
+<aura:attribute name="decisionspinner" type="boolean" default="false"/>
+
+		<!-- Financing specifics modal -->
+		<div aura:id="ca_modal" class="hidden" style="height:640px;">
+			<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" 
+				aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+
+				<!-- spinner start... style=Brand Medium (blue dots) -->
+				<aura:if isTrue="{!v.decisionspinner}">
+				   <div aura:id="decisionSpinnerId" class="slds-spinner_container">
+					   <div class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative" role="alert">
+						   <span class="slds-assistive-text">Loading</span>
+						   <div class="slds-spinner__dot-a"></div>
+						   <div class="slds-spinner__dot-b"></div>
+					   </div>
+				   </div>
+				</aura:if>
+				<!-- spinner end -->    
+
+				<div class="slds-modal__container">
+					<header class="slds-modal__header">
+						<button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close"
+							onclick="{!c.hideDecisionModal}">
+							<lightning:icon icon-name="action:close" size="medium" alternative-text="Close"/>
+						</button>
+				  		<h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
+							  Proposal {!v.dealFields.Name} : {!v.creditappFields.Finance_Company__r.Name}
+						</h2>
+					</header>
+
+					<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+						<div class="slds-grid slds-gutters slds-wrap">
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="text" id="pmt" label="Principle Amt"
+									value="{!v.creditappFields.Offer_Principle__c}"/>
+							</div>
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="text" id="pmt" label="Monthly Pmt"
+									value="{!v.creditappFields.Offer_Payment__c}"/>
+							</div>
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="number" id="term" label="Term (mths)"
+									value="{!v.creditappFields.Offer_Term__c}"/>
+							</div>
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="text" id="pmt" label="Down Pmt"
+									value="{!v.creditappFields.Offer_Down_Pmt__c}"/>
+							</div>
+
+							<!-- Loan : rate, buy rate -->
+							<aura:if isTrue="{!v.dealFields.Contract_Type__c=='Loan'}">
+								<div class="slds-col slds-size_1-of-4">
+									<lightning:input type="text" id="rate" label="Rate"
+										value="{!v.creditappFields.Offer_APR__c}"/>
+								</div>
+								<div class="slds-col slds-size_1-of-4">
+									<lightning:input type="text" id="rate" label="Buy Rate"
+										value="{!v.creditappFields.Offer_Buy_Rate__c}"/>
+								</div>
+							</aura:if>
+
+							<!-- Lease : money factor -->
+							<aura:if isTrue="{!v.dealFields.Contract_Type__c=='Lease'}">
+								<div class="slds-col slds-size_1-of-4">
+									<lightning:input type="text" id="rate" label="Money factor"
+										value="{!v.creditappFields.Lease_Money_Factor__c}"/>
+								</div>
+							</aura:if>
+
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="text" id="acqfee" label="Acquisition fee"
+									checked="{!v.creditappFields.Acquisition_fee__c}" />
+							</div>
+
+							<div class="slds-col slds-size_1-of-4">
+								<lightning:input type="text" id="acqcost" label="Acquisition COST"
+									checked="{!v.creditappFields.Acquisition_COST__c}" />
+							</div>
+
+							<div class="slds-col slds-size_1-of-4">
+								<label class="slds-form-element__label">Recourse Required</label>
+								<lightning:input type="checkbox" id="recoursereq" 
+									checked="{!v.creditappFields.Recourse_Required__c}" />
+							</div>
+
+							<div class="slds-col slds-size_1-of-4">
+								<label class="slds-form-element__label">Counter offer</label>
+								<lightning:input type="checkbox" id="counteroffer" 
+									checked="{!v.creditappFields.Counter_Offer__c}" />
+							</div>
+
+						</div>
+						<lightning:textarea label="Notes" aura:id="notestextarea"
+							value="{!v.creditappFields.Notes__c}" maxlength="255"/>
+					</div>
+					
+					<footer class="slds-modal__footer">
+						<lightning:button 
+							onclick="{!c.hideDecisionModal}">Cancel</lightning:button>
+						<lightning:button variant="destructive"
+							onclick="{!c.decisionDeclined}">Declined</lightning:button>
+						<lightning:button variant="success"
+							onclick="{!c.decisionApproved}">Approved</lightning:button>
+					</footer>
+				</div>
+			</section>
+			<div class="slds-backdrop slds-backdrop_open"></div>
+		</div>
+
+
+	<!-- /lightning:card -->
+
+		
+</aura:component>

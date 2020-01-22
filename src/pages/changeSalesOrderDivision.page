@@ -1,0 +1,102 @@
+<!-- 
+  MobilityWorks (c) - 2018 
+
+  Programmer: Alexander Miller
+  Description: Page to handle the change of a Sales Order Header
+        from one division to another.
+
+Alexander Miller - AMILLER1 - 6/12/2018 - update to not need new name
+-->
+<apex:page controller="changeSalesOrderDivisionController" docType="html-5.0">
+
+  <apex:pageMessages ></apex:pageMessages>
+
+  <apex:form id="form1">
+    
+    <apex:pageBlock id="headerBlock1">
+
+      <h1>Sales Order Header Division Change Tool</h1> 
+      <br/>
+      <br/> 
+      <br/> 
+
+      <apex:pageBlockSection columns="3">
+          
+          <!-- Sales Order Name typed in -->
+          <apex:inputText value="{!chosenSalesOrder}" list="{!autocompleteList}" styleClass="autocomplete" id="SalesOrderInput" html-placeholder="Sales Order Name">
+            <apex:actionsupport event="onchange" action="{!generateChosenSalesOrderInfoFromInput}" rerender="divisionSelectList,blank_output,link,tableSection,theTable"/>
+          </apex:inputText> 
+
+          <!-- List Of Divisions Available -->
+          <apex:selectList id="divisionSelectList" size="1" value="{!chosenDivisionSelection}" disabled="{!canValidate}">
+            <apex:actionSupport event="onchange" action="{!resetValidation}" reRender="link,blank_output,newOrderCheckId,tableSection,theTable"/>
+            <apex:selectOptions value="{!divisonList}"></apex:selectOptions>
+          </apex:selectList> 
+
+          <!-- When validation passes at least partially, set this to show up for a new name-->
+            <!-- AMILLER1 -->
+          	<!-- <apex:pageBlockSectionItem id="newOrderCheckId">
+              
+              <apex:inputText value="{!newSalesOrderName}" html-placeholder="New Sales Order #">
+                <apex:actionSupport event="onchange" action="{!isNameAvailable}" rerender="form1"/>
+              </apex:inputText>
+              
+              <apex:image id="confirmationImage" value="{!nameApprovedImage}" rendered="{!nameApproved}"/>
+            
+            </apex:pageBlockSectionItem> -->
+          	<!-- AMILLER1 -->
+          
+          </apex:pageBlockSection> 
+
+      <br/>
+      <br/>
+
+      <apex:pageBlockSection id="tableSection" columns="3">
+        <h1>Status: </h1> {!processingStatus} 
+
+        <!-- <apex:commandButton action="{!validate}" value="Validation Check" id="theButton" disabled="{!canValidate}"/> -->
+
+        <!-- <apex:commandButton action="{!run}" value="Transfer" id="theButton2" disabled="{!canTransfer}"/> -->
+        <apex:commandButton action="{!run}" value="Transfer" id="theButton2"/>
+
+      </apex:pageBlockSection> 
+
+      <br/> 
+
+      <apex:pageBlockTable value="{!listOfLineWrappers}" var="lineItem" id="theTable" width="100%">
+
+            <apex:column >
+              <apex:facet name="header">Status</apex:facet>
+                <apex:image value="/img/msg_icons/confirm32.png" rendered="{!lineItem.existsInNewDivision}"/>
+                <apex:image value="/img/msg_icons/error32.png" rendered="{!NOT(lineItem.existsInNewDivision)}"/>
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">Original Product</apex:facet>
+                        {!lineItem.oldProduct.Name}
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Original Division</apex:facet>
+                        {!lineItem.oldProductDivisionName}
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">New Product</apex:facet>
+                        {!lineItem.newProduct.Name}
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">New Division</apex:facet>
+                        {!lineItem.newProduct.rstk__soprod_div__r.Name}
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Price</apex:facet>
+                        ${!lineItem.soLine.rstk__soline_price__c}
+            </apex:column>
+            <apex:column value="{!lineItem.soLine.rstk__soline_qtyorder__c}"/>
+
+    </apex:pageBlockTable>
+
+    </apex:pageBlock>
+           
+  </apex:form>
+
+</apex:page>

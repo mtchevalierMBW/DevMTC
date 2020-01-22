@@ -1,0 +1,130 @@
+<apex:page controller="RentalVehicleDepreciation_CTLR">
+    <h1>Vehicle Depreciation</h1>
+    <apex:form >
+    <script src="https://use.fontawesome.com/22da5c8c72.js"></script>
+    <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/css/theme.jui.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+          $jq = jQuery.noConflict();
+          function disableBtn(btn, newText) {
+                 $jq('[id$=cmdSubmit_Top]').prop('disabled',true).addClass('btnDisabled');
+                 $jq('[id$=cmdSubmit_Bottom]').prop('disabled',true).addClass('btnDisabled');
+                 if (newText.length>0) $jq('[id$=cmdSubmit_Top]').val(newText);        
+                 if (newText.length>0) $jq('[id$=cmdSubmit_Bottom]').val(newText);  
+          }
+    </script>
+    <apex:includeScript value="//code.jquery.com/jquery-2.1.1.min.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.widgets.js"/>
+        <apex:pageMessages />
+        <apex:pageBlock title="Vehicles To Depreciate" id="PageContent">
+
+                <script>
+                    $(document).ready(function(){
+                        $("table").tablesorter({
+                        headerTemplate : '{content} {icon}',
+                        cssIconAsc : 'fa fa-caret-up',
+                        cssIconDesc : 'fa fa-caret-down'
+                  });
+                    });
+                </script>
+            <div align="center" draggable="false" >
+                <apex:actionFunction name="post" action="{!submitDepreciation}" rerender="PageContent" />
+                <apex:commandButton value="Depreciate All" id="cmdSubmit_Top" immediate="true"
+                	disabled="{!NOT(allowSubmit)}"
+                	rendered="{!ShowDepreciateTable}" onclick="disableBtn(this,'Processing...');post();"/>
+            </div>
+
+            <apex:pageBlock title="Depreciation" mode="detail" rendered="{!ShowDepreciateTable}">
+                <table class="list sortable" width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr class="headerRow" >
+                        <th style="width: 10%; text-align: center;cursor:pointer;">Status</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Description</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Year</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Make</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Model</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Company</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Rental Vehicle Costs</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Rental Depreciation Exp</th>
+                        <th style="width: 10%;text-align: center;cursor:pointer;">Rental New Vehicle Costs</th>
+                        <th style="width: 9%;text-align: center;cursor:pointer;">Insurance Start Date</th>
+                        <th style="width: 1%;text-align: center;cursor:pointer;">Last Depreciation Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat value="{!Vehicles}" var="v">
+                    
+                        <tr class="dataRow even first">
+                            <td style="text-align:center"><apex:outputText value="{!v.dealer__Status_Code__c}"/></td>
+                            <td style="text-align:center">
+                                <apex:outputLink value="/{!v.Id}" target="_blank">
+                                    <apex:outputText value="{!v.Name}" />
+                                </apex:outputLink>
+                            </td>
+                            <td style="text-align:center"><apex:outputText value="{!v.dealer__Year__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!v.dealer__Make__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!v.dealer__Model__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!v.dealer__Store_Location__r.Name}"/></td>
+                            <td style="text-align:center"><apex:outputText value="${!v.Rental_Vehicle_Costs__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="${!v.Rental_Depreciation_Exp__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="${!v.Rental_New_Vehicle_Cost__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{0,date,MM/dd/yy}"><apex:param value="{!v.Insurance_Start_Date__c}" /></apex:outputText></td>
+                            <td style="text-align:center"><apex:outputText value="{0,date,MM/dd/yy}"><apex:param value="{!v.Last_Depreciation_Date__c}" /></apex:outputText></td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+                </table>
+            </apex:pageBlock>
+              
+            <div align="center" draggable="false" >
+                <apex:commandButton value="Depreciate All" id="cmdSubmit_Bottom" rerender="PageContent" rendered="{!ShowDepreciateTable}" onclick="disableBtn(this,'Processing...');post();"/>
+            </div>
+           
+            <apex:pageBlock title="Summary" mode="detail" rendered="{!ShowSummaryTable}">
+                <table class="list sortable" width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr class="headerRow" >
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Floorplan</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Status</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Description</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Year</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Make</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Model</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Company</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Rental Vehicle Costs</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Rental Depreciation Exp</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Rental New Vehicle Costs</th>
+                        <th style="width: 9%;text-align:center;cursor:pointer;">Insurance Start Date</th>
+                        <th style="width: 1%;text-align:center;cursor:pointer;">Last Depreciation Date</th>
+                        <th style="width: 1%;text-align:center;cursor:pointer;">Submit Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <apex:repeat value="{!SummaryList}" var="s">
+                        <tr class="dataRow even first">
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.Chassis_Floorplan__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Status_Code__c}"/></td>
+                            <td style="text-align:center">
+                                <apex:outputLink value="/{!s.vehicle.Id}" target="_blank">
+                                    <apex:outputText value="{!s.vehicle.Name}" />
+                                </apex:outputLink>
+                            </td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Year__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Make__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Model__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Store_Location__r.Name}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.Rental_Vehicle_Costs__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.Rental_Depreciation_Exp__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.Rental_New_Vehicle_Cost__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{0,date,MM/dd/yy}"><apex:param value="{!s.vehicle.Insurance_Start_Date__c}" /></apex:outputText></td>
+                            <td style="text-align:center"><apex:outputText value="{0,date,MM/dd/yy}"><apex:param value="{!s.vehicle.Last_Depreciation_Date__c}" /></apex:outputText></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.Status}"/></td>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:pageBlock>
+        </apex:pageBlock> 
+    </apex:form>
+</apex:page>

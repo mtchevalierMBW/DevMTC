@@ -1,0 +1,535 @@
+<apex:page renderAs="pdf" applyHtmlTag="false" showHeader="false" showChat="false" 
+	standardStylesheets="false" standardController="CommercialQuote__c" extensions="CQ_EXT">
+<html>
+<head>
+  <apex:stylesheet value="//fonts.googleapis.com/css?family=Open+Sans" />
+  <style type="text/css"> 
+
+    @page {
+      size:portrait;
+      margin: 0.125in;
+    }
+
+    body {
+    font-family: 'PT Sans', Dialog;
+    font-size: 12px;
+    }
+
+    strong {
+      font-weight: 700;
+    }
+
+    table {
+      border-right:  1px solid #000;
+      border-bottom:  1px solid #000;
+    }
+
+    table table {
+      width: 100%;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+    td, th {
+      border-top: 1px solid #000;
+      border-left: 1px solid #000;
+      padding: 2px 4px;
+      border-bottom: 0;
+      border-right: 0;
+
+      color: #444;
+    }
+
+    table table.right td {
+      border-left: 0;
+    }
+
+    table table.right {
+      border-left: 1px solid #000;
+    }
+
+    td:last-child {
+      border-right: 1px solid #000;
+    }
+
+    tr:last-child td {
+      border-bottom: 1px solid #000;
+    }
+
+    tr {
+      border-right: 1px solid #000;
+    }
+
+    .title_cell {
+      background-color: #444;
+      text-align: center;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .header_cell, th {
+      background-color: #DDD;
+    }
+
+    td.no_pad {
+      padding: 0;
+      border: 0;
+    }
+
+    .pull_right {
+      float: right;
+    }
+
+    .center_text {
+      text-align: center;
+    }
+
+    .disclaimer {
+      font-size: .8em;
+      color: #777;
+    }
+
+    .form_data {
+      font-family: 'Monaco', 'Courier New', Courier, monospace;
+      /*float: right;*/
+      /*font-size: 1.1em;*/
+      font-weight: bold;
+      margin-left: 5px;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <table cellspacing="0" cellpadding="0">
+    <tbody>
+      <tr>
+        <td colspan="6" width="50%" valign="top" class="no_pad">
+          <table cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td height="130" colspan="6" valign="bottom" align="center">
+                  <apex:image url="{!$Resource.MobilityWorksComLogo}" /><br />
+                  <strong> 4199 Kinross Lakes ParkwayRichfield, OH  44286</strong><br /><strong>(234) 312-2000  phone</strong></td>
+              </tr>
+              <tr>
+                <td class="title_cell" colspan="6">Sold To</td>
+              </tr>
+              <tr>
+                <td colspan="3">Date: <span class="form_data">{!CommercialQuote__c.Accepted_Date__c}</span></td>
+                <td colspan="3">PO#:<span class="form_data">{!CommercialQuote__c.Customer_Purchase_Order__c}</span></td>
+              </tr>
+              <tr>
+
+                <td colspan="6"><strong>Purchaser:</strong> <span class="form_data">{!CommercialQuote__c.Customer__r.Name}</span></td>
+              </tr>
+              <tr>
+                <td colspan="6"><strong>Street Address:</strong><span class="form_data">{!CommercialQuote__c.Street__c}</span></td>
+               </tr>
+              <tr>
+                <td colspan="4"><strong>City:</strong><span class="form_data">{!CommercialQuote__c.City__c}</span></td>
+                <td><strong>State:</strong><span class="form_data">{!CommercialQuote__c.State__c}</span></td>
+                <td><strong>Zip:</strong><span class="form_data">{!CommercialQuote__c.Zip__c}</span></td>
+              </tr>
+              <tr>
+                <td colspan="6"><strong>Contact Name:</strong> <span class="form_data">{!CommercialQuote__c.Contact__c}</span></td>
+              </tr>
+              <tr>
+                <td colspan="3">Phone #: <span class="form_data">{!CommercialQuote__c.Phone__c}</span></td>
+                <td colspan="3">Cell #:<span class="form_data">{!CommercialQuote__c.Mobile__c}</span></td>
+              </tr>
+              <tr>
+                <td colspan="6">Email: <span class="form_data">{!CommercialQuote__c.Email_Address__c}</span></td>
+              </tr>
+              <tr>
+                <td colspan="6">Contact Name:</td>
+              </tr>
+              <tr>
+                <td colspan="3">Phone #: </td>
+                <td colspan="3">Cell #:</td>
+              </tr>
+              <tr>
+                <td colspan="6">Email:   </td>
+              </tr>
+              <tr>
+                <td class="title_cell" colspan="6"><strong>Title Information</strong></td>
+              </tr>
+              <tr>
+                <td colspan="6">Purchaser: </td>
+              </tr>
+              <tr>
+                <td colspan="6">Street Address:</td>
+              </tr>
+              <tr>
+                <td colspan="3">City:</td>
+                <td colspan="2">State:</td>
+                <td>Zip:</td>
+              </tr>
+              <tr>
+                <td colspan="3">Phone #: </td>
+                <td colspan="3">Cell #:</td>
+              </tr>
+              <tr>
+                <td class="title_cell" colspan="6"><strong>Vehicle Information</strong></td>
+              </tr>
+              <tr>
+                <td class="header_cell">Year</td>
+                <td class="header_cell">Make</td>
+                <td class="header_cell">Model</td>
+                <td class="header_cell" colspan="3">Vin #</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="title_cell" colspan="6">Releasing Dealer</td>
+              </tr>
+              <tr>
+                <td colspan="6">Dealer:</td>
+              </tr>
+              <tr>
+                <td colspan="6">Street Address:</td>
+              </tr>
+              <tr>
+                <td colspan="3">City</td>
+                <td>State</td>
+                <td colspan="2">Zip</td>
+              </tr>
+              <tr>
+                <td colspan="3">Phone # </td>
+                <td colspan="3">Cell #</td>
+              </tr>
+            </tbody>
+          </table><!-- / table left column -->
+        </td>
+        <td colspan="2"  width="50%" valign="top" class="no_pad">
+          <table cellpadding="0" cellspacing="0" class="right">
+            <tbody>
+              <tr>
+                <td>Chassis Price</td>
+                <td><span class="form_data">{!CommercialQuote__c.Chassis_Price__c}</span></td>
+              </tr>
+              <tr>
+                <td>Dealer Cash ( Non Taxable)</td>
+                <td> - </td>
+              </tr>
+              <tr>
+                <td>GPC Rebate ( Non Taxable)</td>
+                <td> - </td>
+              </tr>
+              <tr>
+                <td><strong>Net Chassis Cost ( Taxable)</strong></td>
+                <td><strong>46,000.00</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Other Taxable charges</strong></td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>Doc Fee  </td>
+                <td>55.00</td>
+              </tr>
+              <tr>
+                <td>Smog Fee</td>
+                <td>50.00</td>
+              </tr>
+              <tr>
+                <td>Transportation </td>
+                <td> </td>
+              </tr>
+              <tr>
+                <td>Delivey Fee</td>
+                <td>0.00</td>
+              </tr>
+              <tr>
+                <td><strong>Taxable Cost</strong></td>
+                <td><strong> - </strong></td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>Sales Tax : County       <span class="pull_right">Rate: 8.00&#37; </span></td>
+                <td>3,688.40</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td><strong>Tax Exempt Charges</strong></td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>ADA Conversion </td>
+                <td>25,000.00</td>
+              </tr>
+              <tr>
+                <td>License &amp; Registration Fee</td>
+                <td>0.00</td>
+              </tr>
+              <tr>
+                <td>Smog Certification Fee</td>
+                <td>8.25</td>
+              </tr>
+              <tr>
+                <td>Weight Certification Fee ( Bus Only)</td>
+                <td>0.00</td>
+              </tr>
+              <tr>
+                <td>Tire Recyle fee @1.75 per tire (Bus Only)</td>
+                <td>0.00</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td><strong>Rebates After Tax</strong></td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td>Mobility Rebate </td>
+                <td>-1,200.00</td>
+              </tr>
+              <tr>
+                <td>Retail Rebate  </td>
+                <td>-1,500.00</td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+              <tr>
+                <td><strong>Total Cash Price Delivered</strong></td>
+                <td><strong>72,101.65</strong></td>
+              </tr>
+              <tr>
+                <td>Cash Deposit on Order</td>
+                <td> $  -00 </td>
+              </tr>
+              <tr>
+                <td>Cash Payment on Delivery</td>
+                <td> $  72,101.65 </td>
+              </tr>
+              <tr>
+                <td>Trade In Allowance </td>
+                <td> $  -00 </td>
+              </tr>
+              <tr>
+                <td>Cash Payment on Delivery</td>
+                <td> $  72,101.65 </td>
+              </tr>
+              <tr>
+                <td>Total Down Payment</td>
+                <td> $  -00 </td>
+              </tr>
+              <tr>
+                <td>Amount Financed</td>
+                <td> $  -00 </td>
+              </tr>
+              <tr>
+                <td>Amount to Invoice</td>
+                <td> $  72,101.65 </td>
+              </tr>
+              <tr>
+                <td>Actual Vehicle Price Chassis+Conversion-Rebates</td>
+                <td> $  68,300.00 </td>
+              </tr>
+            </tbody>
+          </table><!-- / table.right -->
+        </td>
+      </tr>
+      <!-- Quote Lines -->
+      <tr>
+        <td class="title_cell" colspan="9"><strong>Quote Detail</strong></td>
+      </tr>
+
+      <tr>
+        <td class="no_pad" colspan="9">
+
+          <table style="/*page-break-before:always;*/" cellspacing="0" cellpadding="0">
+            <tbody>
+              <tr>  
+                <td class="header_cell">QTY</td>
+                <td class="header_cell">Name</td>
+                <td class="header_cell">Description</td>
+                <!-- <td class="header_cell">Sell Price</td> -->
+                <!-- <td class="header_cell">Total</td> -->
+              </tr>
+
+              <!-- Wheelbase Options -->
+              <apex:outputText rendered="{!IF(LongWheelBaseSelectedItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Wheelbase Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!LongWheelBaseSelectedItems}" var="item">
+                <!-- <apex:outputText rendered="true"> -->
+                <!-- <apex:outputText rendered="{!IF(item.RecordTypeName__c=='Wheelbase Options', true, false)}"> -->
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                  <!-- <td>{!item.Selling_Price__c}</td> -->
+                  <!-- <td>{!item.Extended_Total__c}</td> -->
+                </tr>
+                <!-- </apex:outputText> -->
+              </apex:repeat>
+
+              <!-- Seating Options -->
+              <apex:outputText rendered="{!IF(AdditionalSeatingItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Seating Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!AdditionalSeatingItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Fabric Options -->
+              <apex:outputText rendered="{!IF(FabricItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Fabric Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!FabricItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Wheelchair Restraint Options -->
+              <apex:outputText rendered="{!IF(WheelChairRestraints.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Wheelchair Restraint Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!WheelChairRestraints}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Interior Upgrades -->
+              <apex:outputText rendered="{!IF(InteriorOptions.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Interior Upgrades</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!InteriorOptions}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Stanchion Poles -->
+              <apex:outputText rendered="{!IF(StantItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Stanchion Poles</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!StantItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Exterior Upgrades -->
+              <apex:outputText rendered="{!IF(ExtItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Exterior Upgrades</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!ExtItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Wheelchair Storage Options -->
+              <apex:outputText rendered="{!IF(ChairStorageItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Wheelchair Storage Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!ChairStorageItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+              <!-- Additional Safety Options -->
+              <apex:outputText rendered="{!IF(SafetyItems.Size > 0,true,false)}">
+                <tr><td colspan="9" align="center"><strong>Additional Safety Options</strong></td></tr>
+              </apex:outputText>
+              <apex:repeat value="{!SafetyItems}" var="item">
+                <tr>
+                  <td>{!item.Quantity__c}</td>
+                  <td style="font-size: 0.85em;">{!item.Commercial_Quote_Options__r.Name}</td>
+                  <td style="font-size: 0.75em;">{!item.Description__c}</td>
+                </tr>
+              </apex:repeat>
+
+            </tbody>
+          </table>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td class="title_cell" colspan="9">Notes and Delivery Instructions:</td>
+      </tr>
+      <tr>
+        <td height="50" colspan="9">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="9" class="disclaimer">All material is guaranteed to be as specified.   All work to be completed in a workmanlike manner according to standard practices.  Any alteration of deviation from above specifications involving extra costs will be executed only upon written orders, and will become an extra charge over and above the estimate.  All agreements contingent upon strikes, accidents or delays beyond our control.  Owner to carry fire, tornado and other necessary insurance.  Our workers  are fully covered by worker's compensation insurance.  All goods and services sold and accepted subject to warranty and terms and conditions published at:  <a href="http://www.mobilityworks.com/Commercial/terms-conditions.php">http://www.mobilityworks.com/Commercial/terms-conditions.php</a></td>
+      </tr>
+      <tr>
+        <td colspan="9">CREDIT CARDS WILL BE ACCEPTED FOR DEPOSITS ONLY.</td>
+      </tr>
+      <tr>
+        <td colspan="9"><strong>ALL REBATES HAVE BEEN CONSIDERED IN THIS QUOTE     This quote is good for _____ days.</strong></td>
+      </tr>
+      <tr>
+        <td class="header_cell" colspan="3">Mobility Works  Representative    </td>
+        <td class="header_cell" colspan="3">Date:    </td>
+        <td class="header_cell" colspan="">Purchaser signature    </td>
+        <td class="header_cell">Date:    </td>
+      </tr>
+      <tr >
+        <td height="35" colspan="6"></td>
+        <td height="35" colspan="3"></td>
+      </tr>
+      <tr>
+        <td colspan="6">Accepted by:</td>
+        <td colspan="3">Print name</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
+</apex:page>

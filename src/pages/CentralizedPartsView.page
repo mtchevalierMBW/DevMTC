@@ -1,0 +1,668 @@
+<!--
+    2016-02-09  RedTeal     RT1 - Added the proposal number that orders belong to 
+	2019-04-03	B. Leaman	W-000637 BLL1 replace KendoUI with dealer__Kendo2016a (unmarked)
+
+
+-->
+<apex:page showHeader="true" showChat="true" sidebar="true" controller="CentralizedParts" title="CPT - Dashboard">
+
+<!-- BLL 2018-08-30 lightning exp. cuts off drop-downs if screen is empty -->
+<style>
+body {min-height:600px;}
+</style>
+
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+    <!-- INclude Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__Kendo2016a,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.min.css')}"/>  
+
+    <apex:sectionHeader title="CPT - Control Center" subtitle="Centralized Parts Orders" />
+    <div id="force">
+        <div id="tools" class="row">
+
+            <!-- <div class="col-md-3"> -->
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-default dropdown-toggle" type="button" id="locationMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                        Selected Locations
+                        <small class="fCount text-muted">(X of X)</small>
+                        <span class="caret"></span>
+                    </button>
+                    
+                    <ul class="dropdown-menu-form dropdown-menu stores">
+
+                        <apex:repeat value="{!locations}" var="l">
+                        <li>
+                            <label for="location-{!l.Id}">
+                                <input type="checkbox" checked="checked" value="{!l.Name}" name="{!l.Id}" id="{!l.Id}" class="checkbox_input" /> 
+                                {!l.Name}
+                            </label>
+                        </li>
+                        </apex:repeat>
+
+                    </ul>
+                    
+                </div>
+            <!-- </div>                 -->
+
+            <!-- <div class="col-md-3"> -->
+                <!--
+                 <div class="dropdown">
+                        <button class="btn btn-sm btn-default dropdown-toggle" type="button" id="manufacturerMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Manufacturers
+                            <small class="fCount text-muted">(X of X)</small>
+                            <span class="caret"></span>
+                        </button>
+                        
+                        <ul class="dropdown-menu-form dropdown-menu  manufacturers">
+
+                            <apex:repeat value="{!mastermfg}" var="m">
+                            <li>
+                                <label for="manufacturer-{!m}">
+                                    <input type="checkbox" checked="checked" value="{!m}" name="{!m}" id="{!m}" class="checkbox_input" /> 
+                                    {!m}
+                                </label>
+                            </li>
+                            </apex:repeat>
+
+                        </ul>
+                        
+                </div>
+                -->
+            <!-- </div> -->
+
+            <!-- <div class="col-md-3"> -->
+                 <div class="dropdown">
+                        <button class="btn btn-sm btn-default dropdown-toggle" type="button" id="urgencyMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Urgency
+                            <small class="fCount text-muted">(X of X)</small>
+                            <span class="caret"></span>
+                        </button>
+                        
+                        <ul class="dropdown-menu-form dropdown-menu  urgencies">
+                            
+                            <li>
+                                <label for="u1">
+                                    <input type="checkbox" checked="checked" value="Ground" name="u1" id="u1" class="checkbox_input"/> 
+                                    Ground
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u2">
+                                    <input type="checkbox" checked="checked" value="3 Day" name="u2" id="u2" class="checkbox_input"/> 
+                                    3 Day
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u3">
+                                    <input type="checkbox" checked="checked" value="2 Day" name="u3" id="u3" class="checkbox_input"/> 
+                                    2 Day
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u4">
+                                    <input type="checkbox" checked="checked" value="Overnight" name="u4" id="u4" class="checkbox_input"/> 
+                                    Overnight
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u5">
+                                    <input type="checkbox" checked="checked" value="Saturday" name="u5" id="u5" class="checkbox_input"/> 
+                                    Saturday
+                                </label>
+                            </li>
+
+                            <li>
+                                <label for="u6">
+                                    <input type="checkbox" checked="checked" value="Saturday Overnight" name="u6" id="u6" class="checkbox_input"/> 
+                                    Saturday Overnight
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u7">
+                                    <input type="checkbox" checked="checked" value="N/A" name="u7" id="u7" class="checkbox_input"/> 
+                                    N/A
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u8">
+                                    <input type="checkbox" checked="checked" value="Drop-Ship" name="u8" id="u8" class="checkbox_input"/> 
+                                    Drop-Ship
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u9">
+                                    <input type="checkbox" checked="checked" value="Vendor" name="u9" id="u9" class="checkbox_input"/> 
+                                    Vendor
+                                </label>
+                            </li>
+                            
+                            <li>
+                                <label for="u10">
+                                    <input type="checkbox" checked="checked" value="Transfer" name="u10" id="u10" class="checkbox_input"/> 
+                                    Transfer
+                                </label>
+                            </li>  
+                            
+                            <li>
+                                <label for="u11">
+                                    <input type="checkbox" checked="checked" value="Reassign" name="u11" id="u11" class="checkbox_input"/> 
+                                    Reassign
+                                </label>
+                            </li>                                                                                                                                          
+                        </ul>
+                        
+                </div>
+            <!-- </div>             -->
+        </div>
+    </div>
+    <apex:pageBlock >
+    <apex:form >
+
+    <!-- End User Comments
+
+        Select any combination of the following
+
+            - Company (Location)
+            - Vendor
+            - Urgency
+    
+    -->
+    <!-- Tab Strip -->
+    <div class="k-content">
+    <div id="tabstrip">
+        <ul>
+            <li id="open" class="k-state-active">
+                Open Requisitions
+            </li>
+            <li id="incomplete">
+                Incomplete
+            </li>
+            <li id="inprocess">
+                In-Process
+            </li>
+            <li id="received">
+                Received
+            </li>
+            <li id="myoders">
+                My Orders
+            </li>
+        </ul>
+        <!-- Open Requisitions -->
+
+        <apex:outputPanel layout="none" id="tableWrap" >
+            <div>
+                <div class="orderview">
+                    <apex:pageBlockTable var="o" value="{!OpenOrders}">
+                    <!--
+                        <apex:column headerValue="Merge Orders">
+                            <apex:inputCheckbox id="mE" styleClass="merge_check" html-data-order-id="{!o.Id}" />
+                        </apex:column>  
+                    -->
+                        <apex:column headerValue="Action">
+                            <apex:commandLink value="Accept" action="{!accept}" styleClass="btn" style="text-decoration:none;">
+                                <apex:param name="firstParam" assignTo="{!acceptedId}" value="{!o.dealer__Order__c}" />
+                            </apex:commandLink>
+                        </apex:column>
+
+                        <apex:column headerValue="Order">
+                            <apex:outputLink value="/{!o.dealer__Order__c}"><apex:outputText value="{!o.dealer__Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        
+                        <apex:column value="{!o.dealer__Order_Date__c}" headerValue="Order Date" />
+                        
+                        <apex:column value="{!o.dealer__Order__r.dealer__Company__c}" headerValue="Company"/>
+
+                        <apex:column headerValue="Proposal">
+                            <apex:outputLink value="/{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__c}">
+                                <apex:outputText value="{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__r.Name}" />
+                            </apex:outputLink>
+                        </apex:column>
+
+                        <apex:column headerValue="RO Line">
+                            <apex:outputLink value="/apex/servicerepairorder2?id={!o.Repair_Order_ID__c}"><apex:outputText value="{!o.dealer__Parts_Line__r.Name}" /></apex:outputLink>
+                        </apex:column>
+
+                        <apex:column value="{!o.dealer__Parts_Line__r.dealer__Pay_Type__c}" headerValue="Payment Type" />
+
+                        
+                        <apex:column value="{!o.Line_Urgency__c}" headerValue="Shipping Needs" />
+                        <apex:column value="{!o.Manufacturer__c}" headerValue="Manufacturer" />
+                        <apex:column headerValue="Part#">
+                            <apex:outputLink value="/{!o.dealer__Parts_Inventory__c}"><apex:outputText value="{!o.dealer__Parts_Inventory__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Quantity_Ordered__c}" headerValue="Quantity" />
+                        <apex:column value="{!o.Owner.Name}" headerValue="Owner" />
+                    </apex:pageBlockTable>
+                </div>
+            </div>
+
+            <!-- Incomplete Requisitions -->
+            <div>
+                <div class="orderview">
+                    <apex:pageBlockTable var="o" value="{!Incomplete}">
+                        <apex:column headerValue="Order">
+                            <apex:outputLink value="/{!o.dealer__Order__c}"><apex:outputText value="{!o.dealer__Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Order_Date__c}" headerValue="Order Date" />
+                        <apex:column value="{!o.dealer__Order__r.dealer__Company__c}" headerValue="Company"/>
+
+                        <apex:column headerValue="Proposal">
+                            <apex:outputLink value="/{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__c}">
+                                <apex:outputText value="{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__r.Name}" />
+                            </apex:outputLink>
+                        </apex:column>
+
+                        <apex:column headerValue="RO Line">
+                            <apex:outputLink value="/apex/servicerepairorder2?id={!o.Repair_Order_ID__c}"><apex:outputText value="{!o.dealer__Parts_Line__r.Name}" /></apex:outputLink>
+                        </apex:column>      
+                        
+                        <apex:column value="{!o.dealer__Parts_Line__r.dealer__Pay_Type__c}" headerValue="Payment Type" />
+
+                        <apex:column value="{!o.Line_Urgency__c}" headerValue="Shipping Needs" />
+                        <apex:column value="{!o.Manufacturer__c}" headerValue="Manufacturer" />
+                        <apex:column headerValue="Part#">
+                            <apex:outputLink value="/{!o.dealer__Parts_Inventory__c}"><apex:outputText value="{!o.dealer__Parts_Inventory__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Quantity_Ordered__c}" headerValue="Quantity" />
+                        <apex:column headerValue="Purchase Order">
+                            <apex:outputLink value="/{!o.dealer__Purchase_Order__c}"><apex:outputText value="{!o.dealer__Purchase_Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.Owner.Name}" headerValue="Owner" />
+                    </apex:pageBlockTable>
+                </div>
+            </div>              
+
+            <!-- In-Process Requisitions -->
+            <div>
+                <div class="orderview">
+                    <apex:pageBlockTable var="o" value="{!InProcessOrders}">
+                        <apex:column headerValue="RO Line">
+                            <apex:outputLink value="/apex/servicerepairorder2?id={!o.Repair_Order_ID__c}"><apex:outputText value="{!o.dealer__Parts_Line__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Order">
+                            <apex:outputLink value="/{!o.dealer__Order__c}"><apex:outputText value="{!o.dealer__Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Order_Date__c}" headerValue="Order Date" />
+                        <apex:column value="{!o.dealer__Order__r.dealer__Company__c}" headerValue="Company"/>
+
+
+                        <apex:column headerValue="Proposal">
+                            <apex:outputLink value="/{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__c}">
+                                <apex:outputText value="{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__r.Name}" />
+                            </apex:outputLink>
+                        </apex:column>
+                        
+                        <apex:column value="{!o.dealer__Parts_Line__r.dealer__Pay_Type__c}" headerValue="Payment Type" />
+
+                        <apex:column value="{!o.Line_Urgency__c}" headerValue="Shipping Needs" />
+                        <apex:column value="{!o.Manufacturer__c}" headerValue="Manufacturer" />
+                        <apex:column headerValue="Part#">
+                            <apex:outputLink value="/{!o.dealer__Parts_Inventory__c}"><apex:outputText value="{!o.dealer__Parts_Inventory__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Quantity_Ordered__c}" headerValue="Quantity" />
+                        <apex:column headerValue="Purchase Order">
+                            <apex:outputLink value="/{!o.dealer__Purchase_Order__c}"><apex:outputText value="{!o.dealer__Purchase_Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.Owner.Name}" headerValue="Owner" />
+                    </apex:pageBlockTable>
+                </div>
+            </div>  
+            
+            <!-- Received Not Posted -->        
+            <div>
+                <div class="orderview">
+                    <apex:pageBlockTable var="o" value="{!Received}">
+                        <apex:column headerValue="RO Line">
+                            <apex:outputLink value="/apex/servicerepairorder2?id={!o.Repair_Order_ID__c}"><apex:outputText value="{!o.dealer__Parts_Line__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Order">
+                            <apex:outputLink value="/{!o.dealer__Order__c}"><apex:outputText value="{!o.dealer__Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Order_Date__c}" headerValue="Order Date" />
+                        <apex:column value="{!o.dealer__Order__r.dealer__Company__c}" headerValue="Company"/>
+
+                        <apex:column headerValue="Proposal">
+                            <apex:outputLink value="/{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__c}">
+                                <apex:outputText value="{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__r.Name}" />
+                            </apex:outputLink>
+                        </apex:column>
+                        
+                        <apex:column value="{!o.dealer__Parts_Line__r.dealer__Pay_Type__c}" headerValue="Payment Type" />
+
+                        <apex:column value="{!o.Line_Urgency__c}" headerValue="Shipping Needs" />
+                        <apex:column value="{!o.Manufacturer__c}" headerValue="Manufacturer" />
+                        <apex:column headerValue="Part#">
+                            <apex:outputLink value="/{!o.dealer__Parts_Inventory__c}"><apex:outputText value="{!o.dealer__Parts_Inventory__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Quantity_Ordered__c}" headerValue="Quantity" />
+                        <apex:column headerValue="Purchase Order">
+                            <apex:outputLink value="/{!o.dealer__Purchase_Order__c}"><apex:outputText value="{!o.dealer__Purchase_Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.Purchase_Order_Status__c}" headerValue="Purchase Order Status" />
+                        <apex:column value="{!o.Owner.Name}" headerValue="Owner" />
+                    </apex:pageBlockTable>
+                </div>
+            </div>      
+            <!-- My Orders Requisitions -->      <div>
+                <div class="orderview">
+                    <apex:pageBlockTable var="o" value="{!MyOrders}">
+                        <apex:column headerValue="RO Line">
+                            <apex:outputLink value="/apex/servicerepairorder2?id={!o.Repair_Order_ID__c}"><apex:outputText value="{!o.dealer__Parts_Line__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Order">
+                            <apex:outputLink value="/{!o.dealer__Order__c}"><apex:outputText value="{!o.dealer__Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Order_Date__c}" headerValue="Order Date" />
+                        <apex:column value="{!o.dealer__Order__r.dealer__Company__c}" headerValue="Company"/>
+
+                        <apex:column headerValue="Proposal">
+                            <apex:outputLink value="/{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__c}">
+                                <apex:outputText value="{!o.dealer__Parts_Line__r.dealer__Job_Line__r.dealer__Service_Repair_Order__r.Deal__r.Name}" />
+                            </apex:outputLink>
+                        </apex:column>
+
+                        <apex:column value="{!o.dealer__Parts_Line__r.dealer__Pay_Type__c}" headerValue="Payment Type" />
+                        
+                        <apex:column value="{!o.Line_Urgency__c}" headerValue="Shipping Needs" />
+                        <apex:column value="{!o.Manufacturer__c}" headerValue="Manufacturer" />
+                        <apex:column headerValue="Part#">
+                            <apex:outputLink value="/{!o.dealer__Parts_Inventory__c}"><apex:outputText value="{!o.dealer__Parts_Inventory__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.dealer__Quantity_Ordered__c}" headerValue="Quantity" />
+                        <apex:column headerValue="Purchase Order">
+                            <apex:outputLink value="/{!o.dealer__Purchase_Order__c}"><apex:outputText value="{!o.dealer__Purchase_Order__r.Name}" /></apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!o.Owner.Name}" headerValue="Owner" />
+                    </apex:pageBlockTable>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+    </div>
+    <apex:actionFunction action="{!refresh}" name="rerenderTable" rerender="tableWrap" oncomplete="mergeBoxSanit()" />
+    <style>
+        .k-content {
+            width: 99%;
+        }
+        .oderview{
+             margin: 0 auto 30px;
+        }
+
+        #tabstrip h2 {
+            font-weight: lighter;
+            font-size: 5em;
+            line-height: 1;
+            padding: 0 0 0 30px;
+            margin: 0;
+        }
+
+        #tabstrip h2 span {
+            background: none;
+            padding-left: 5px;
+            font-size: .3em;
+            vertical-align: top;
+        }
+
+        #tabstrip p {
+            margin: 0;
+            padding: 0;
+        }
+
+        #force .k-reset.k-scheduler-tools {
+            float: right;
+            margin-left: 7px;
+        }
+
+        #force .k-reset.k-scheduler-tools li a {
+            padding: 5px 6px 5px 6px;
+        }
+
+        body .bPageTitle {
+            padding: 15px 0 0;
+            float: left;
+            width: 300px;
+            margin-bottom: 10px;
+            /* position: absolute; */
+        }
+
+        body .bPageTitle .ptBody {
+            width:450px;
+        }
+
+        #force {
+            float: left;
+            margin-top: 20px;
+            margin-left: 20px;
+            width: 40%;
+
+        }
+
+        #force .dropdown-menu {
+            min-width: 260px;
+        }
+
+        #force .dropdown {
+            display: inline-block;
+        }
+
+        .homeTab .bPageTitle .ptBody .content,.filterMenu {
+            width: 100%;
+        }
+
+    </style>
+
+    <script>
+        $dt = jQuery.noConflict();
+
+        // GLobals
+        var userId = '{!$User.Id}';
+        var remoteSetString = {!userSettings};
+        var tabSelected = '';
+
+        $dt(document).ready(function() {
+
+            // Set the selected tab;
+            var tabStrip = $dt("#tabstrip").kendoTabStrip().data("kendoTabStrip");
+            tabStrip.select(remoteSetString.tab);
+
+
+            // Bind to Menu Items, generate the JSON and Send to the Remote
+            $dt('.checkbox_input,.k-item').on('change', function(){
+
+                checkCount();
+
+                // Generate the Information from the inputs
+                var storesArray = [];
+                $dt('.stores .checkbox_input:checked').each(function(i,el){
+                    // Add to Array
+                    storesArray.push( $dt(el).prop('id') );
+                });
+
+                var manufacturersArray = [];
+                $dt('.manufacturers .checkbox_input:checked').each(function(i,el){
+                    // Add to Array
+                    manufacturersArray.push( $dt(el).prop('name') );
+                });
+
+                var urgenciesArray = [];
+                $dt('.urgencies .checkbox_input:checked').each(function(i,el){
+                    // Add to Array
+                    urgenciesArray.push( $dt(el).prop('value') );
+                });
+
+                tabSelected = $dt('.k-state-active').prop('id');
+
+                // Build Object to pass into Remote Action
+                settingObject= {'userId': userId, 'tab' : tabSelected, 'stores': storesArray,'manufacturers': manufacturersArray,'urgencies': urgenciesArray };
+                /*
+                    Basic JSON Struct
+
+                    { 
+                        "userId" : "0199089878Aa8U", 
+                        "stores" : [
+                            { "Id" : "09asdasdf", "Name" : "Santa Clara" },
+                            { "Id" : "09uuy7ui8", "Name" : "Burlingame" }
+                        ],
+                        "manufacturers" : [
+                            { "name" : "Ford" },
+                            { "name" : "Honda" }
+                        ],
+                        "urgencies" : [
+                            { "name" : "Ground" },
+                            { "name" : "2 Day" }
+                        ]
+                    }
+                */
+                // Call Remote Action
+                CentralizedParts.saveUserSelection(  JSON.stringify( settingObject), function(event){
+                    if(event) {
+                        remoteSetString = settingObject;
+                        rerenderTable();
+                    }
+                } );
+            });
+
+
+            // Prevent Dropdown list from closing when a checkbox is clicked
+            $dt('.dropdown-menu').on('click', function(e){
+                if($dt(this).hasClass('dropdown-menu-form')){
+                    e.stopPropagation();
+                }
+            });
+
+            initFilterChecks();
+            checkCount();
+            renderTabstrips();
+
+            // Bind Merge Checkbox change
+            mergeBoxSanit();
+        });
+
+
+        function renderTabstrips() {
+            // Render the Kendo Tab Strip
+            $dt("#tabstrip").kendoTabStrip({
+                animation:  {
+                    open: {
+                        effects: "fadeIn"
+                    }
+                }
+            });
+        }
+
+        function checkCount() {
+            $dt('.dropdown').each( function(i,el){
+                // Selected Count
+                var selCount = $dt(el).find('.checkbox_input:checked').size();
+                // Total of Checkboxes
+                var totCount = $dt(el).find('.checkbox_input').size();
+
+                $dt(el).find('.fCount').text('('+selCount+' of ' + totCount + ')');
+            });
+
+        }
+
+        function initFilterChecks() {
+            
+            var checked = remoteSetString ; // retreive Initial Local data
+
+            // Make sure the user settings have the sub properties
+            if( checked.hasOwnProperty('stores')){
+                console.log('Were gonna process');
+                // Select the checkboes for locations
+                $dt('.stores .checkbox_input').each(function(i,el){
+                    var check = $dt(el);
+                    // is this in the checked array
+                    if( checked.stores.indexOf( check.prop('id') ) >= 0  ) {
+                        check.prop('checked',true);
+                    } else {
+                        check.prop('checked',false);
+                    }
+                });
+                
+                // Select the checkboes for manufacturers
+                $dt('.manufacturers .checkbox_input').each(function(i,el){
+                    var check = $dt(el);
+                    // is this in the checked array
+                    if( checked.manufacturers.indexOf( check.prop('name') ) >= 0  ) {
+                        check.prop('checked',true);
+                    } else {
+                        check.prop('checked',false);
+                    }
+                });
+                // Select the checkboes for urgencies
+                $dt('.urgencies .checkbox_input').each(function(i,el){
+                    var check = $dt(el);
+                    // is this in the checked array
+                    if( checked.urgencies.indexOf( check.prop('value') ) >= 0  ) {
+                        check.prop('checked',true);
+                    } else {
+                        check.prop('checked',false);
+                    }
+                });
+            }
+        }
+
+        function mergeBoxSanit() {
+            $dt('.merge_check').on('change', function(){
+
+                var checkBox = $dt(this), // Store clicked box
+                    btn = $dt('<button class="btn btn-xs merge_btn">Merge</button>'), // setup button
+                    checkBoxes = $dt('.merge_check:checked'), // grab selected checkboxes
+                    checkCount = checkBoxes.size(), // retreive a count of selected checkboxes
+                    orderIds = [];
+                $dt('.merge_btn').remove(); // Hide any btn that exist
+
+
+                // build order ID array for JSON payload
+                $dt.each(checkBoxes, function(i, el){
+                    orderIds.push( $dt(el).data('order-id') );
+                });
+
+                console.log(orderIds);
+
+                if(checkCount == 2 || checkCount == 3) {
+                    btn.insertAfter( checkBox );
+                } else if (checkCount > 3) {
+                    // Hide Button
+                }
+
+                btn.click(function(e){
+                    e.preventDefault(); // Keep page from refreshing
+                    console.log('Hehe that tickles!');
+
+                    // Call Remote Action
+                    /*
+                    CentralizedParts.mergeOrders(  JSON.stringify( orderIds ), function(event){
+                        if(event) {
+                            rerenderTable();
+                        }
+                    } );
+                    */
+
+                });
+
+            });
+        }
+    </script>   
+    </div>
+    </apex:form>
+    </apex:pageBlock>
+</apex:page>

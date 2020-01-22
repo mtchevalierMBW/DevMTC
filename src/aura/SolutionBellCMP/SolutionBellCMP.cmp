@@ -1,0 +1,116 @@
+<aura:component implements="force:appHostable" controller="SolutionBell">
+	
+    <aura:attribute name="startYear" type="Decimal" default="2018"/>
+    <aura:attribute name="targetNbr" type="Decimal" default="50000"/>
+    <aura:attribute name="yearcounts" type="Object[]"/>
+    <aura:attribute name="solutions" type="Object[]"/>
+    <aura:attribute name="yr" type="Decimal"/>
+    <aura:attribute name="totalsolutions" type="Decimal"/>
+
+	<!-- spinner start... style=Brand Medium (blue dots) -->
+	<aura:attribute name="spinner" type="boolean" default="false"/>
+	<aura:if isTrue="{!v.spinner}">
+	   <div aura:id="spinnerId" class="slds-spinner_container">
+		   <div class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative" role="alert">
+			   <span class="slds-assistive-text">Loading</span>
+			   <div class="slds-spinner__dot-a"></div>
+			   <div class="slds-spinner__dot-b"></div>
+		   </div>
+	   </div>
+	</aura:if>
+	<!-- spinner end -->    
+
+<lightning:card title="Solution Bell" iconName="custom:custom53" class="slds-p-around_small">
+	<!-- Start buttons off as disabled, enable in c.doInit -->
+	<aura:set attribute="actions">
+		<button onclick="{!c.findSolution}">Find Solutions</button>
+	</aura:set>
+
+	<div class="slds-grid slds-wrap slds-gutters">
+		<div class="slds-col slds-size_5-of-12 slds-p-around_xxx-small">
+			<div class="slds-grid slds-wrap slds-gutters">
+				<div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small">
+					<lightning:input type="text" value="{!v.startYear}"
+						label="Beginning year"/>
+				</div>
+				<div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small">
+					<lightning:input type="text" value="{!v.targetNbr}"
+						label="Target solution number"/>
+				</div>
+			</div>
+		</div>
+
+		<div class="slds-col slds-size_1-of-12 slds-p-around_xxx-small">
+		</div>
+
+		<div id="yearcounts" class="slds-col slds-size_6-of-12 slds-p-around_xxx-small">
+			<br/>
+			<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+				<thead>
+					<tr class="slds-line-height_reset">
+						<th scope="col">Year</th>
+						<th scope="col">Deals</th>
+						<th scope="col">Rentals</th>
+						<th scope="col">Total</th>
+					</tr>
+				</thead>
+				<tbody>
+					<aura:iteration items="{!v.yearcounts}" var="y">
+						<tr class="slds-hint-parent">
+							<th data-label="colHeading" scope="row">
+								<ui:outputText value="{#y.yearnbr}"/>
+							</th>
+							<td data-label="actions" scope="row">
+								{#y.deals}
+							</td>
+							<td data-label="actions" scope="row">
+								{#y.rentals}
+							</td>
+							<td data-label="actions" scope="row">
+								{#y.total}
+							</td>
+						</tr>
+					</aura:iteration>
+				</tbody>
+			</table>
+		</div>
+	
+	</div>
+
+		
+	<br/>
+
+	<div id="targetsolutions">
+	<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+	<thead>
+		<tr class="slds-line-height_reset">
+			<th scope="col">Solution#</th>
+			<th scope="col">Proposal/RA#</th>
+			<th scope="col">Date</th>
+			<th scope="col">CMC/Rental creator</th>
+		</tr>
+	</thead>
+	<tbody>
+		<aura:iteration items="{!v.solutions}" var="s"> 
+			<tr class="{#s.Winner?'slds-hint-parent winner':'slds-hint-parent'}">
+				<th data-label="colHeading" scope="row">
+					{#s.SolutionNbr}
+				</th>
+				<td scope="row">
+					{#s.SolutionName}
+				</td>
+				<td scope="row">
+					{#s.SolutionDate}
+				</td>
+				<td scope="row">
+					{#s.SalespersonName}
+				</td>
+			</tr>
+		</aura:iteration>
+	</tbody>
+	</table>
+	</div>
+    
+</lightning:card>
+    
+</aura:component>

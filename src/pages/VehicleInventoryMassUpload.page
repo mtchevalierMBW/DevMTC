@@ -1,0 +1,516 @@
+<apex:page controller="VehicleInvMassUpload" doctype="html-5.0" showHeader="true" standardStylesheets="true" >
+
+
+<style>
+.pageTitle {
+	font-size: 16pt;
+	margin-bottom: 5px;
+}
+
+input.btn.formbutton {
+	margin: 3px 2em 3px 0;
+	padding:8px;
+}
+.center { text-align:center; }
+.right { text-align:right; }
+fieldset > table > tbody > tr > td {display:block;}
+fieldset {margin-top:-10px;}
+
+.modaloverlay {
+	display:none;
+	position: fixed;
+	z-index: 1;
+	left:0;
+	top:0;
+	height: 100%;
+	width: 100%;
+	background-color: silver;
+	background-color: rgb(128,128,128,0.5);	/* with opacity */
+}
+.modaloverlay img {
+	display:block;
+	margin:auto;
+	margin-top:250px;
+}
+</style>
+
+
+<!-- jQuery -->
+<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"/>
+<!-- Kendo grid -->
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.common.min.css" />
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.default.min.css" />
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/jszip.min.js"/>
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/kendo.all.min.js" />
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+
+// used to remove link html from the vehicle column
+function striptags(e) {
+   	var sheet = e.workbook.sheets[0];
+		for (var i = 1; i < sheet.rows.length; i++) {
+   		var row = sheet.rows[i];
+   		for(var c = 0; c<row.cells.length; c++) {
+			var v = row.cells[c].value;
+			if (typeof(v)!='undefined' && v!=null) {
+			
+				//v = v.substring(v.indexOf('>')+1, v.lastIndexOf('<'));
+				v = v.replace(/<[^>]*>/g,"");
+			
+			}
+			row.cells[c].value = v;
+		}
+	}
+}
+
+
+//$jq(document).ready(function() {
+	//console.log('Setting up kendo tables');
+	//setupErrorTable();
+	//setupDataTable();
+//});
+
+function setupErrorTable() {
+	console.log($jq('table#baddatatable'));
+	$jq('table#baddatatable').kendoGrid({
+		sortable:true, scrollable:false,
+		toolbar: ["excel"],
+           excel: {
+               fileName: "VehicleMassUploadErrors_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+               filterable: true
+           },
+           excelExport: striptags,
+           columns:[
+			{field:"Location", attributes:{"class":"left"}},
+			{field:"Stocknbr", attributes:{"class":"left"}},
+			{field:"VIN", attributes:{"class":"left"}},
+			{field:"Status", attributes:{"class":"left"}},
+			{field:"Year", attributes:{"class":"left"}},
+			{field:"Make", attributes:{"class":"left"}},
+			{field:"Model", attributes:{"class":"left"}},
+			{field:"ChassisCost", attributes:{"class":"right"}},
+			{field:"ConversionCost", attributes:{"class":"right"}},
+			{field:"Errormessages", attributes:{"class":"left"}}
+		]
+	});
+}
+
+function setupDataTable() {
+	console.log($jq('table#gooddatatable'));
+	$jq('table#gooddatatable').kendoGrid({
+		sortable:true, scrollable:false,
+		toolbar: ["excel"],
+           excel: {
+               fileName: "VehicleMassUpload_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+               filterable: true
+           },
+           excelExport: striptags,
+		columns:[
+			{field:"Location", attributes:{"class":"left"}},
+			{field:"Stocknbr", attributes:{"class":"left"}},
+			{field:"VIN", attributes:{"class":"left"}},
+			{field:"Status", attributes:{"class":"left"}},
+			{field:"Year", attributes:{"class":"left"}},
+			{field:"Make", attributes:{"class":"left"}},
+			{field:"Model", attributes:{"class":"left"}},
+			{field:"ChassisCost", attributes:{"class":"right"}},
+			{field:"ConversionCost", attributes:{"class":"right"}},
+			{field:"Warningmessages", attributes:{"class":"left"}},
+			{field:"PONumber", attributes:{"class":"left"}}
+		]
+	});
+}
+
+function disableBtn(btn, newText) {
+		var btnselector="input[id$='" + btn + "']";
+		$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+		if (newText.length>0) $jq(btnselector).val(newText);		
+}
+	
+function overlayscreen() {
+ console.log('showing overlay');
+ document.getElementById("modelprocessing").style.display="block";
+}
+function removeoverlay() {
+ console.log('hiding overlay');
+ document.getElementById("modelprocessing").style.display="none";
+}
+</script>
+
+
+<div id="modelprocessing" class="modaloverlay">
+	<!-- img src="https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif"/ -->
+	<apex:image id="theImage" value="{!$Resource.Spinner}" width="100" height="100" alt="Description of image here"/>	
+</div>
+
+<apex:actionStatus id="processingstatus" onstart="overlayscreen();" onstop="removeoverlay();"/>
+
+<apex:form id="mainform">
+
+		<!-- apex:actionFunction name="SubmitCSV" action="{!submitCSV}"> </apex:actionFunction> -->
+		
+
+<apex:pageBlock title="Vehicle Inventory Mass Upload" mode="detail">
+	<apex:pageMessages />
+
+	<apex:pageBlockSection columns="1">
+		<apex:pageBlockSectionItem >
+		This form is used to upload a CSV spreadsheet of stock vehicles to create. It can optionally generate 
+		the purchase order(s) for these vehicles as well.
+		</apex:pageBlockSectionItem>
+	</apex:pageBlockSection>
+
+	<apex:pageBlockSection columns="2" rendered="{!NOT(haveData)}">
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel >Select csv file to upload</apex:outputLabel>
+			<apex:inputFile value="{!csvBlob}" filename="{!fileName}"/>
+		</apex:pageBlockSectionItem>
+		<apex:outputText />
+		<apex:inputField value="{!ChassisPO.Vehicle_Inventory_Template__c}"  rendered="{!NOT(haveData)}"/>
+	</apex:pageBlockSection>
+
+	<apex:pageBlockSection rendered="{!haveData}">
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel >File name uploaded: </apex:outputLabel>
+			<apex:outputText value="{!fileName}"/>
+		</apex:pageBlockSectionItem>
+		<apex:actionRegion >
+		<apex:actionFunction name="updateform" action="{!reEdit}" rerender="mainform"></apex:actionFunction>
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel for="pocreation">PO Creation option</apex:outputLabel>
+			<apex:outputPanel layout="none">
+				<apex:selectRadio value="{!CreatePoOption}" id="pocreation" required="true"
+					onchange="updateform();" disabled="{!IF(processComplete,'true','false')}">
+				<apex:selectOption itemValue="Chassis" itemLabel="Chassis"/>
+				<apex:selectOption itemValue="Conversion" itemLabel="Conversion"/>
+				<apex:selectOption itemValue="Combined" itemLabel="Combined Chassis/Conv"/>
+				<apex:selectOption itemValue="Separate" itemLabel="Separate POs for Chassis, Conversion"/>
+				<apex:selectOption itemValue="None" itemLabel="Do not create any vehicle PO"/>
+				</apex:selectRadio>
+			</apex:outputPanel>
+		</apex:pageBlockSectionItem>
+		</apex:actionRegion>
+
+		<apex:outputField value="{!ChassisPO.Vehicle_Inventory_Template__c}"  rendered="{!haveData}"/>
+	</apex:pageBlockSection>
+
+
+	<apex:pageBlockSection id="vendorfields" rendered="{!AND(haveData,NOT(processComplete))}">
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Combined')}">
+			<apex:outputLabel for="chassisVendor">Chassis/Conversion PO Vendor</apex:outputLabel>
+			<apex:inputField value="{!chassisPO.dealer__Vendor__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption!='None', CreatePoOption!='Conversion', CreatePoOption!='Combined')}">
+			<apex:outputLabel for="chassisVendor">Chassis PO Vendor</apex:outputLabel>
+			<apex:inputField value="{!chassisPO.dealer__Vendor__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption!='None', CreatePoOption!='Chassis', CreatePoOption!='Combined')}">
+			<apex:outputLabel for="chassisVendor">Conversion PO Vendor</apex:outputLabel>
+			<apex:inputField value="{!conversionPO.dealer__Vendor__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:outputText rendered="{!AND(CreatePoOption!='Separate', CreatePoOption!=null, CreatePoOption!='None')}"/>
+
+
+		<!-- GL Acct & contra dimension override - Combined -->
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="conversionGL">Conversion GL Acct</apex:outputLabel>
+			<apex:inputField id="conversionGL" value="{!ConversionFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension1 Override</apex:outputLabel>
+			<apex:inputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}" required="false"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Chassis -->
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:outputText rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}"/>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension 1 Override</apex:outputLabel>
+			<apex:inputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}" required="false"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Conversion -->
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="chassisGL">Conversion GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:outputText rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}"/>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension 1 Override</apex:outputLabel>
+			<apex:inputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}" required="false"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Separate -->
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="conversionGL">Conversion GL Acct</apex:outputLabel>
+			<apex:inputField id="conversionGL" value="{!ConversionFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="chassisContraGL">Chassis Unbilled GL Acct</apex:outputLabel>
+			<apex:inputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="conversionContraGL">Conversion Unbilled GL Acct</apex:outputLabel>
+			<apex:inputField id="conversionContraGL" value="{!ConversionContraFFRefs.GeneralLedgerAcct__c}" required="true"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="unbilledDim1">Chassis Dimension1 Override</apex:outputLabel>
+			<apex:inputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}" required="false"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="unbilledDim1">Conversion Dimension1 Override</apex:outputLabel>
+			<apex:inputField id="unbilledDim1" value="{!ConversionContraFFRefs.Dimension_1__c}" required="false"/>
+		</apex:pageBlockSectionItem>
+
+	</apex:pageBlockSection>
+
+	<apex:pageBlockSection rendered="{!processComplete}">
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Combined')}">
+			<apex:outputLabel for="chassisVendor">Chassis/Conversion PO Vendor</apex:outputLabel>
+			<apex:outputField value="{!chassisPO.dealer__Vendor__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption!='None', CreatePoOption!='Conversion', CreatePoOption!='Combined')}">
+			<apex:outputLabel for="chassisVendor">Chassis PO Vendor</apex:outputLabel>
+			<apex:outputField value="{!chassisPO.dealer__Vendor__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption!='None', CreatePoOption!='Chassis', CreatePoOption!='Combined')}">
+			<apex:outputLabel for="chassisVendor">Conversion PO Vendor</apex:outputLabel>
+			<apex:outputField value="{!conversionPO.dealer__Vendor__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:outputText rendered="{!AND(CreatePoOption!='Separate', CreatePoOption!=null, CreatePoOption!='None')}"/>
+
+
+		<!-- GL Acct & contra dimension override - Combined -->
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="conversionGL">Conversion GL Acct</apex:outputLabel>
+			<apex:outputField id="conversionGL" value="{!ConversionFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Combined'}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension1 Override</apex:outputLabel>
+			<apex:outputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Chassis -->
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:outputText rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}"/>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Chassis')}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension 1 Override</apex:outputLabel>
+			<apex:outputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Conversion -->
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="chassisGL">Conversion GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:outputText rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}"/>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="chassisContraGL">Unbilled GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!AND(CreatePoOption!=null, CreatePoOption='Conversion')}">
+			<apex:outputLabel for="unbilledDim1">Unbilled Dimension 1 Override</apex:outputLabel>
+			<apex:outputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}"/>
+		</apex:pageBlockSectionItem>
+
+		<!-- GL Acct & contra dimension override - Separate -->
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="chassisGL">Chassis GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisGL" value="{!ChassisFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="conversionGL">Conversion GL Acct</apex:outputLabel>
+			<apex:outputField id="conversionGL" value="{!ConversionFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="chassisContraGL">Chassis Unbilled GL Acct</apex:outputLabel>
+			<apex:outputField id="chassisContraGL" value="{!ChassisContraFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="conversionContraGL">Conversion Unbilled GL Acct</apex:outputLabel>
+			<apex:outputField id="conversionContraGL" value="{!ConversionContraFFRefs.GeneralLedgerAcct__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="unbilledDim1">Chassis Dimension1 Override</apex:outputLabel>
+			<apex:outputField id="unbilledDim1" value="{!ChassisContraFFRefs.Dimension_1__c}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!CreatePoOption='Separate'}">
+			<apex:outputLabel for="unbilledDim1">Conversion Dimension1 Override</apex:outputLabel>
+			<apex:outputField id="unbilledDim1" value="{!ConversionContraFFRefs.Dimension_1__c}"/>
+		</apex:pageBlockSectionItem>
+
+	</apex:pageBlockSection>
+
+
+	<apex:pageBlockButtons location="top">
+		<apex:commandButton action="{!startOver}" value="Reset Form" styleclass="formbutton" immediate="true"/>
+	</apex:pageBlockButtons>
+	<apex:pageBlockButtons location="bottom">
+		<apex:commandButton id="btn_submit" action="{!submitCSV}" value="Submit/Audit CSV" rendered="{!NOT(haveData)}" styleclass="formbutton"/>
+		<apex:commandButton id="btn_process" value="Process Upload" 
+			rendered="{!AND(haveGoodData,NOT(dataSubmitted),NOT(processComplete))}" 
+			action="{!processUpload}" rerender="datablock,mainform" status="processingstatus"
+			styleclass="formbutton" disabled="{!IF(OR(missingCosts,NOT(haveGoodData)),'true','false')}"/>
+		<apex:commandButton id="btn_accept" value="Accept POs" rendered="{!processComplete}" 
+			action="{!AcceptVehiclePOs}" rerender="mainform" status="processingstatus"
+			styleclass="formbutton" disabled="{!IF(AND(CreatedPurchaseOrders!=null,CreatedPurchaseOrders.size>0),'false','true')}"/>
+	</apex:pageBlockButtons>
+
+</apex:pageBlock>
+</apex:form>
+	
+<apex:pageBlock mode="maindetail">
+
+	<apex:pageBlockSection id="errorblock" title="Errors ({!errorRcds.size})" columns="1" rendered="{!haveData}">
+		<apex:outputPanel style="width:100%;" id="baddata">
+		<table id="baddatatable">
+				<tr>
+					<th>Location</th>
+					<th>Stock nbr</th>
+					<th>VIN</th>
+					<th>Status</th>
+					<th>Year</th>
+					<th>Make</th>
+					<th>Model</th>
+					<th>Chassis Cost</th>
+					<th>Conversion Cost</th>
+					<th>Error messages</th>
+				</tr>
+				
+				<apex:repeat value="{!errorRcds}" var="data">
+				<tr>
+					<td><apex:outputField value="{!data.Vehicle.dealer__Store_Location__c}"/></td>
+					<td>
+						<apex:outputPanel layout="none" rendered="{!OR(data.Vehicle=null,data.Vehicle.Id=null)}">
+						{!data.Vehicle.dealer__Stock_Number__c}
+						</apex:outputPanel> 
+						<apex:outputPanel layout="none" rendered="{!AND(data.Vehicle!=null,data.Vehicle.Id!=null)}">
+							<a href="/{!data.Vehicle.Id}" target="_blank">{!data.Vehicle.dealer__Stock_Number__c}</a> 
+						</apex:outputPanel> 
+					</td>
+					<td>{!data.Vehicle.dealer__VIN__c}</td>
+					<td>{!data.Vehicle.dealer__Status_Code__c}</td>
+					<td>{!data.Vehicle.dealer__Year__c}</td>
+					<td>{!data.Vehicle.dealer__Make__c}</td>
+					<td>{!data.Vehicle.dealer__Model__c}</td>
+					<td>{!data.ChassisCost}</td>
+					<td>{!data.ConversionCost}</td>
+					<td>{!data.ErrorMsgText}</td>
+				</tr>
+				</apex:repeat>
+				
+		</table>
+		<script type="text/javascript">
+		setupErrorTable();
+		</script>
+		</apex:outputPanel>
+
+	</apex:pageBlockSection>
+
+	
+	<apex:pageBlockSection id="datablock" title="{!IF(processComplete,'Processed','Ready to process')} ({!readyRcds.size})"  columns="1" rendered="{!haveData}">
+		<apex:outputPanel style="width:100%;" id="gooddata">
+		<table id="gooddatatable">
+				<tr>
+					<th>Location</th>
+					<th>Stock nbr</th>
+					<th>VIN</th>
+					<th>Status</th>
+					<th>Year</th>
+					<th>Make</th>
+					<th>Model</th>
+					<th>Chassis Cost</th>
+					<th>Conversion Cost</th>
+					<th>Warning messages</th>
+					<th>PO number</th>
+				</tr>
+				
+				<apex:repeat value="{!readyRcds}" var="data">
+				<tr>
+					<td><apex:outputField value="{!data.Vehicle.dealer__Store_Location__c}"/></td>
+					<td>
+						<apex:outputPanel layout="none" rendered="{!OR(data.Vehicle=null,data.Vehicle.Id=null)}">
+						{!data.Vehicle.dealer__Stock_Number__c}
+						</apex:outputPanel> 
+						<apex:outputPanel layout="none" rendered="{!AND(data.Vehicle!=null,data.Vehicle.Id!=null)}">
+							<a href="/{!data.Vehicle.Id}" target="_blank">{!data.Vehicle.dealer__Stock_Number__c}</a> 
+						</apex:outputPanel> 
+					</td>
+					<td>{!data.Vehicle.dealer__VIN__c}</td>
+					<td>{!data.Vehicle.dealer__Status_Code__c}</td>
+					<td>{!data.Vehicle.dealer__Year__c}</td>
+					<td>{!data.Vehicle.dealer__Make__c}</td>
+					<td>{!data.Vehicle.dealer__Model__c}</td>
+					<td>{!data.ChassisCost}</td>
+					<td>{!data.ConversionCost}</td>
+					<td>{!data.WarningMsgText + ' ' + data.ErrorMsgText}</td>
+					<td>
+						<apex:outputPanel layout="none" rendered="{!data.PONumber!=null}">
+						<a href="/{!data.POId}" target="_blank">
+							{!data.PONumber}
+						</a>
+						</apex:outputPanel>
+						<apex:outputPanel layout="none" rendered="{!data.PONumber2!=null}">; 
+						<a href="/{!data.POId2}" target="_blank">
+							{!data.PONumber2}
+						</a>
+						</apex:outputPanel>
+					</td>
+				</tr>
+				</apex:repeat>
+				
+		</table>
+		<script type="text/javascript">
+		setupDataTable();
+		</script>
+		</apex:outputPanel>
+	</apex:pageBlockSection>
+
+
+</apex:pageBlock>
+
+</apex:page>

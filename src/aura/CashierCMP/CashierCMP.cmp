@@ -1,0 +1,199 @@
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:appHostable,lightning:actionOverride"
+	controller="CashierProcess">
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:attribute name="showNewCashierForm" type="boolean" default="true"/>
+	<aura:attribute name="documentId" type="String"/>
+	<aura:attribute name="documentData" type="Object"/>
+	<aura:attribute name="clientAccount" type="Object"/>
+	<aura:attribute name="accountList" type="Object[]"/>
+	<aura:attribute name="cashierList" type="Object[]"/>
+	<aura:attribute name="totalCharged" type="Decimal"/>
+	<aura:attribute name="totalCollected" type="Decimal"/>
+	<aura:attribute name="cashierSummary" type="Object[]"/>
+	<aura:attribute name="csColumns" type="List"/>
+	<aura:attribute name="totalOwed" type="Decimal"/>
+	<aura:attribute name="totalDue" type="Decimal"/>
+	<aura:attribute name="location" type="Object"/>
+	<aura:attribute name="locationEnabled" type="boolean" default="true"/>
+
+	<lightning:overlayLibrary aura:id="overlayLib"/>
+
+	<aura:attribute name="docFields" type="Object"/> 
+	<aura:attribute name="docError" type="String"/> 
+	<force:recordData aura:id="docViewer" 
+		recordId="{!v.documentId}" 
+		layoutType="FULL"
+		targetFields="{!v.docFields}" 
+		targetError="{!v.docError}" 
+		recordUpdated="{!c.docHandleRecordUpdated}" 
+		mode="VIEW" 
+	/>
+
+	<!-- Screen to search and select document to pay -->
+	<aura:if isTrue="{!v.documentId==null}">
+
+		<lightning:card title="Find Customer/Invoice" iconName="standard:search" class="slds-p-around_small">
+			<!-- Start buttons off as disabled, enable in c.doInit -->
+			<aura:set attribute="actions">
+				<lightning:button aura:id="stdbutton" variant="brand" type="button" name="searchbtn" 
+					label="Search for Documents" onclick="{!c.searchDocuments}" disabled="false" />
+			</aura:set>
+		</lightning:card>
+
+	</aura:if>
+
+	<!-- Screen for entering cashier entries for a selected document -->
+	<aura:if isTrue="{!v.documentId!=null}">
+
+		<lightning:card title="" class="slds-p-around_small">
+			<aura:set attribute="actions">
+				<aura:if isTrue="{!v.recordId==null}">
+				<lightning:button aura:id="backbutton" variant="brand" type="button" name="gobackbtn" 
+					label="Back to Search" onclick="{!c.backToSearch}" />
+				</aura:if>
+			</aura:set>
+
+			<!-- hide buttons if not enabled for this location -->
+			<aura:if isTrue="{!not(v.locationEnabled)}">
+				<h1>Your location is still set up to use manual cash entries in FinancialForce.</h1>
+				<p>Please contact IT Help if you believe this to be in error.</p>
+			</aura:if>
+			<aura:if isTrue="{!v.locationEnabled}">
+			<div class="slds-grid slds-wrap slds-padding">
+				<div class="slds-col slds-size_3-of-12" style="font-size:1.1rem;">
+					Enter receipt for: 
+				</div>
+				<div class="slds-col slds-size_9-of-12">
+					<aura:iteration items="{!v.accountList}" var="a">
+						<!-- button data-accountid="{#a.Id}" data-documentid="{!v.documentId}" 
+							onclick="{!c.newCashierEntry}"
+							class="slds-button slds-button_neutral" 
+							style="margin-right:3em;">{#a.Name}</button -->
+						<button data-accountid="{#a.Payor.Id}" data-documentid="{!v.documentId}" 
+							data-amountdue="{#a.AmountDue}" data-payorname="{#a.Payor.Name}"
+							onclick="{!c.newCashiering}"
+							class="slds-button slds-button_neutral"
+							style="margin-right:3em;">{#a.Payor.Name}</button>
+					</aura:iteration>
+				</div>
+			</div>
+			</aura:if>
+
+			<br/>
+			<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table--striped"
+				style="max-width: 800px;">
+				<tr class="slds-line-height_reset">
+					<th class="" scope="col"><div>Account Name</div></th>
+					<th class="right" scope="col"><div>Charged to account</div></th>
+					<th class="right" scope="col"><div>Collected</div></th>
+					<th class="right" scope="col"><div>Total Owed</div></th>
+					<th class="right" scope="col"><div>Amount Due</div></th>
+				</tr>
+				<aura:iteration var="s" items="{!v.cashierSummary}">
+					<tr class="slds-hint-parent">
+						<td scope="row"><div>{!s.Payor.Name}</div></td>
+						<td class="right" scope="row"><div>
+							<lightning:formattedNumber value="{!s.Charged}" style="currency" maximumFractionDigits="2"/>
+						</div></td>
+						<td class="right" scope="row"><div>
+							<lightning:formattedNumber value="{!s.Collected}" style="currency" maximumFractionDigits="2"/>
+						</div></td>
+						<td class="right" scope="row"><div>
+							<lightning:formattedNumber value="{!s.AmountOwed}" style="currency" maximumFractionDigits="2"/>
+						</div></td>
+						<td class="right" scope="row"><div>
+							<lightning:formattedNumber value="{!s.AmountDue}" style="currency" maximumFractionDigits="2"/>
+						</div></td>
+					</tr>
+				</aura:iteration>
+				<tr>
+					<th><div>Total</div></th>
+					<th class="right"><div>
+						<lightning:formattedNumber value="{!v.totalCharged}" style="currency" maximumFractionDigits="2"/>
+					</div></th>
+					<th class="right"><div>
+						<lightning:formattedNumber value="{!v.totalCollected}" style="currency" maximumFractionDigits="2"/>
+					</div></th>
+					<th class="right"><div>
+						<lightning:formattedNumber value="{!v.totalOwed}" style="currency" maximumFractionDigits="2"/>
+					</div></th>
+					<th class="right"><div>
+						<lightning:formattedNumber value="{!v.totalDue}" style="currency" maximumFractionDigits="2"/>
+					</div></th>
+		</tr>
+			</table>
+		</lightning:card>
+
+	</aura:if>
+
+	<!-- list of all cashier record detail -->
+	<div id="cashiertable" class="slds-box">
+		<lightning:card title="Cashiering detail" iconName="standard:partner_fund_request" 
+			class="slds-p-around_small">
+			<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table--striped">
+			<thead>
+				<tr class="slds-line-height_reset">
+					<th scope="col">Cashier</th>
+					<th scope="col">Date</th>
+					<th scope="col">Payor</th>
+					<th scope="col" class="right">Amount</th>
+					<th scope="col">Payment method</th>
+					<th scope="col">Authorization</th>
+					<th scope="col">Deposit</th>
+					<th scope="col">Cash Entry Line</th>
+					<th scope="col">
+							Actions
+							<!-- button style="background:transparent;border:0;float:right;" -->
+								<!-- lightning:Icon iconName="utility:refresh" variant="bare" size="xx-small" onclick=" { ! c.refreshTable}"></lightning:Icon -->
+							<!-- /button -->
+						</th>
+					</tr>
+			</thead>
+			<tbody>
+				<aura:iteration items="{!v.cashierList}" var="item"> 
+					<tr class="slds-hint-parent">
+						<td data-label="colHeading" scope="row">
+							<ui:outputText value="{#item.Name}"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputDate value="{#item.dealer__Close_Date__c}" format="MM/dd/yyyy"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputText value="{#item.dealer__Customer__r.Name}"/>
+						</td>
+						<td data-label="colHeading" scope="row" class="right">
+							<lightning:formattedNumber value="{#item.dealer__Amount__c}" style="currency" maximumFractionDigits="2"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputText value="{#item.dealer__Payment_Method__c}"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputText value="{#item.dealer__Credit_Card_Authorization_Code__c}"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputCheckbox value="{#item.dealer__Deposit__c}"/>
+						</td>
+						<td data-label="colHeading" scope="row">
+							<ui:outputURL label="{#item.Cash_Entry_Line_Item__r.Name}"
+								value="{#'/'+item.Cash_Entry_Line_Item__c}"/>
+						</td>
+						<td data-label="actions" scope="row">
+							<div style="float:right;">
+								<button style="border:0;background:transparent;" data-targetid="{#item.Id}" data-targetname="{#item.Name}" onclick="{!c.editItem}">
+									<lightning:icon iconName="utility:edit" size="x-small" alternativeText="Edit"/>
+								</button>
+								<button style="border:0;background:transparent;" data-targetid="{#item.Id}" data-targetname="{#item.Name}" onclick="{!c.deleteItem}">
+									<lightning:icon iconName="utility:delete" size="x-small" alternativeText="Delete"/>
+								</button>
+							</div>
+						</td>
+					</tr>
+				</aura:iteration>
+			</tbody>
+			</table>
+		</lightning:card>
+	</div>
+
+
+</aura:component>

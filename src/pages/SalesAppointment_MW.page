@@ -1,0 +1,114 @@
+<!--
+	SalesAppointment_MW
+	Copied from DealerTeam's SalesAppointment page
+	W-000549	Unable to edit sales appointments in lightning
+	
+-->
+<apex:page standardController="dealer__Sales_Appointment__c" id="sap" tabStyle="dealer__Sales_Up__c"
+ extensions="SalesAppointment_EXT" showChat="true">
+    
+    <apex:includeScript value="{!URLFOR($Resource.dealer__jQuery_UI_1820, 'js/jquery-1.7.2.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.dealer__jQuery_UI_1820, 'js/jquery-ui-1.8.20.custom.min.js')}" />
+    <apex:includeScript value="{!$Resource.dealer__jQuery_TimePicker}" />
+    
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__jQuery_UI_1820,'css/Aristo/Aristo.css')}"/>
+    <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        j$(document).ready(function() {
+             j$("#timePromisedInput").timepicker({
+                 showPeriod: true,
+                 onHourShow: OnHourShowCallback,
+                 onMinuteShow: OnMinuteShowCallback,
+                 onClose: copyTimeOut
+             });
+             j$("#timePromisedInput").val('{!JSENCODE(dealer__Sales_Appointment__c.dealer__Time__c)}');
+        }); 
+        
+        function copyTimeOut() {
+			//j$(esc('sap:saf:time')).val(j$("#timePromisedInput").val());
+			j$('input[id$=time]').val(j$("#timePromisedInput").val());
+        }
+        function OnHourShowCallback(hour) {
+            if ((hour > 22) || (hour < 6)) {
+                return false; // not valid
+            }
+            return true; // valid
+        }
+        
+        function OnMinuteShowCallback(hour, minute) {
+            if ((hour == 22) && (minute >= 30)) {  return false; } // not valid
+            if ((hour == 6) && (minute < 30)) {  return false; }   // not valid
+
+            
+            return true;  // valid
+        } 
+        function esc(myid) {
+              return '#' + myid.replace(/(:|\.)/g,'\\\\$1');
+        }               
+    </script>
+    <apex:sectionHeader id="sah" title="Lead" subtitle="Sales Appointment"/>
+    <apex:form id="saf">
+        <apex:pageMessages id="errors" />
+        
+        <apex:pageBlock mode="maindetail" id="sab">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection >   
+        <apex:pageBlockSectionItem >
+        
+        <apex:outputLabel value="Assigned To"/>
+            <apex:outputPanel >
+            <apex:actionRegion >
+                <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Assigned_To__c}" required="true" style="float:left">
+                    <apex:actionSupport event="onchange" reRender="timeZonePanel"/>
+                </apex:inputField>
+                <apex:outputPanel id="timeZonePanel" style="padding-left:4px;"><span>{!UserTimeZone}</span></apex:outputPanel>
+                </apex:actionRegion>
+            </apex:outputPanel>
+        
+        </apex:pageBlockSectionItem>
+         <apex:pageBlockSectionItem >
+            <apex:outputLabel value="Appointment Date" for="appt_date"/>
+            <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Date__c}" id="appt_date" required="true"/>    
+         </apex:pageBlockSectionItem>
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Customer__c}" />
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Customer_Account__c}" />
+         <apex:pageBlockSectionItem >
+            
+            <apex:outputLabel value="Time" for="timePromisedInput" />
+            <apex:outputPanel >
+            <div class="requiredInput"><div class="requiredBlock"></div><input type="text" id="timePromisedInput" name="timePromisedInput" />
+            </div>
+            </apex:outputPanel>
+         </apex:pageBlockSectionItem>
+         <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Appointment type" for="appt_type" />
+                    <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Appointment_Type__c}" id="appt_type" required="true"/>           
+         </apex:pageBlockSectionItem>
+         
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Set_By__c}" />
+         <apex:outputText />
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Confirmed__c}" />
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Sales_Up__c}" required="true"/>
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Appointment_Result__c}" />
+
+         <apex:outputText />
+         <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__VIP__c}" />
+        
+        </apex:pageBlockSection>
+        <apex:pageBlockSection columns="1">
+            <apex:inputField value="{!dealer__Sales_Appointment__c.dealer__Notes__c}" style="width:450px;" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection collapsible="false">
+            <apex:repeat value="{!$ObjectType.dealer__Sales_Appointment__c.FieldSets.dealer__CustomFields}" var="field">
+              <apex:inputField value="{!dealer__Sales_Appointment__c[field]}" />
+           </apex:repeat>
+        </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:inputHidden value="{!dealer__Sales_Appointment__c.dealer__Time__c}" id="time" />
+    </apex:form>
+    
+</apex:page>

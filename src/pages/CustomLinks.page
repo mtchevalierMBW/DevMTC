@@ -1,0 +1,26 @@
+<apex:page lightningStylesheets="true" Controller="CustomLinks">
+
+<style>
+.linkgroup {
+	display:inline-block;
+	border: 1px solid silver;
+	border-radius: 5px;
+}
+</style>
+
+<apex:slds />
+
+	<apex:dynamicComponent componentValue="{!CustomLinkPanels}"/>
+
+<script type="text/javascript">
+function MW_NavigateTo(url, target) {
+	if (typeof target === 'undefined' || target==null || target=='null') target='_top';
+	if (target=='_top' && typeof sforce!=='undefined') {
+		sforce.one.navigateToURL(url);
+	} else {
+		window.open(url);
+	}
+}
+</script>
+
+</apex:page>

@@ -1,0 +1,43 @@
+<aura:component implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="changeToAccountClass">
+        
+        <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+        
+        <!-- An identifier that the Account passed all the required data points to be changed into a Person Account -->
+        <aura:attribute name="validAccount" type="Boolean"/>
+
+        <!-- An attribute to hold all the reasons why the Account cannot change record types -->
+        <aura:attribute name="reasonsAccount" type="String[]"/>
+
+        <div class="slds-m-around_xx-large">
+            
+            <aura:if isTrue="{!v.validAccount}">
+                
+                <!-- Button if value is true -->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <p>You are about to change this Business Account to a Person Account. </p>
+                    <br/>
+                    <p>Are you sure?</p>
+                </div>
+                
+                <lightning:button variant="brand" 
+                    class="slds-align_absolute-center"
+                    label="Change To Person Account"
+                    title="Change To Person Account"
+                    onclick="{! c.changeAccType }"/>
+
+                <!-- show when false -->
+                <aura:set attribute="else">
+                    <p>Action not allowed the following reason(s): </p>
+                    
+                    <br/>
+
+                    <aura:iteration items="{!v.reasonsAccount}" var="reason">
+                        <p>&#9632; {!reason}</p>
+                    </aura:iteration>
+
+                </aura:set>
+            </aura:if>
+
+        </div>
+        
+    </aura:component>

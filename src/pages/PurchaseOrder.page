@@ -1,0 +1,27 @@
+<apex:page >
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+    <script type="text/javascript">
+        $dt = jQuery.noConflict();
+    	var gvar = {};
+    	$dt(document).ready(function() {
+			gvars = getQueryParams(document.location.search);
+            if(gvars.id) {
+                window.location.href='/apex/dealer__PurchaseOrder?id='+gvars.id;
+            }
+        });
+    
+        function getQueryParams(qs) {
+            qs = qs.split("+").join(" ");
+            var params = {},
+                tokens,
+                re = /[?&]?([^=]+)=([^&]*)/g;
+        
+            while (tokens = re.exec(qs)) {
+                params[decodeURIComponent(tokens[1])]
+                    = decodeURIComponent(tokens[2]);
+            }
+        
+            return params;
+        }
+    </script>
+</apex:page>

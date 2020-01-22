@@ -1,0 +1,197 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:appHostable,lightning:actionOverride"
+	controller="RentalAgreementLex">
+
+<!--
+Modification log:
+2018-12-06	B. Leaman	W-000513 BLL4 - Back to total rental$, but keep # days; try to avoid odd issue: Cannot read 'color' of undefined
+2019-06-25	B. Leaman	W-000711 BLL5 - split responsibility between client and 3rd party/other payor
+2019-07-23	B. Leaman	W-000723 BLL6 - remove return mileage, as it was not being set properly.
+-->
+<!-- does not work: ltng:require scripts="{!$Resource.jsUtils + '/jquery.min.js'}" afterScriptsLoaded="{!c.afterScriptsLoaded}" / -->
+<!-- ltng:require scripts="/resource/jsUtils/jquery.min.js" afterScriptsLoaded="{!c.afterScriptsLoaded}"/ -->
+
+<!-- support for spinner while waiting -->
+    <!--  going to start & stop manually in controller code instead --> 
+    <!-- aura:handler event="aura:waiting" action="{!c.showSpinner}"/ -->
+    <!-- aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/ -->
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+    
+	<!-- aura:attribute name="recordData" type="Object"/ -->
+	<aura:attribute name="recordErrors" type="List" default="[]"/>
+	<aura:attribute name="alreadyposted" type="Boolean" default="false"/>
+	<aura:attribute name="status" type="String" default="Open"/>
+	<aura:attribute name="title" type="String" default=""/>
+	<aura:attribute name="fromaccount" type="Id"/>
+	<aura:attribute name="fromcontact" type="Id"/>
+	<aura:attribute name="posting" type="Boolean"/><!-- indicate when saving due to using "Post" button -->
+	<aura:attribute name="TotalCharges" type="Decimal" default="0.00"/>
+	<aura:attribute name="TotalAmountDue" type="Decimal" default="0.00"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<!-- to read payors for conditional rendering of customer portion field -->
+	<aura:attribute name="payorselected" type="boolean" default="false"/>
+	<aura:attribute name="recordData" type="Object"/>
+	<force:recordData aura:id="acctEditor"
+		recordId="{!v.recordId}"
+		targetFields="{!v.recordData}"
+		fields="Id,Name,dealer__Agreement_Status__c,Account__c,CustomerContact__c,Rentcentric_Contract__c,ThirdPartyPayor__c,Other_payor__c,dealer__Discount__c"
+		mode="VIEW"
+	/>
+
+ <!-- spinner start... style=Brand Medium (blue dots) -->
+ <aura:if isTrue="{!v.Spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+       <div class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative" role="alert">
+         <span class="slds-assistive-text">Loading</span>
+         <div class="slds-spinner__dot-a"></div>
+         <div class="slds-spinner__dot-b"></div>
+       </div>
+    </div>
+ </aura:if>
+ <!-- spinner end -->    
+  
+<!-- new rental agreement -->
+<lightning:recordEditForm recordId="{!v.recordId}" objectApiName="dealer__Rental_Agreements__c"  
+	aura:id="newrecordform" onsuccess="{!c.recordSaved}" onerror="{!c.recordSaveError}"
+	onload="{!c.pageload}">
+
+<lightning:card title="{!v.title}" iconName="custom:custom83" class="slds-p-around_small">
+	
+		<!-- Start buttons off as disabled, enable in c.doInit -->
+		<aura:set attribute="actions">
+			<lightning:button variant="brand" type="button" name="save" label="Save" disabled="true"  
+				aura:id="submitbutton" onclick="{!c.saveNewRecord}"/>
+			<!-- lightning:button type="button" name="recalc" label="Recalc" onclick="{!c.recalc}"/-->
+			<lightning:button variant="brand" type="button" name="post" label="Post" disabled="true"  
+				aura:id="postbutton" onclick="{!c.postRental}"/>
+		</aura:set>
+	
+	<lightning:messages/>
+	
+<aura:if isTrue="{!not(empty(v.recordErrors))}">
+<div class="recordError">
+<aura:iteration var="errmsg" items="{!v.recordErrors}">
+{!errmsg}<br/>
+</aura:iteration>
+</div>
+</aura:if>
+
+	
+	<div class="slds-grid slds-gutters slds-p-around_small">
+
+		<div class="slds-col slds-size_1-of-2"> 
+			<lightning:inputField fieldName="Rentcentric_Contract__c" label="Rentcentric Contract" aura:id="rentcentric_contract"   
+				required="true" class="mw_required" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="Account__c" label="Account" disabled="{!v.alreadyposted}" aura:id="account" 
+				required="true" readonly="{!v.alreadyposted}" class="mw_required" name="accountname"
+				onchange="{!c.accountChange}"/>
+			<lightning:inputField fieldName="dealer__Return_Date__c" disabled="{!v.alreadyposted}" aura:id="return_date" 
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="Rental_Vehicle__c" disabled="{!v.alreadyposted}" aura:id="rental_vehicle"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="Promotion__c" disabled="{!v.alreadyposted}" aura:id="promotion" />
+		</div>
+		<div class="slds-col slds-size_1-of-2"> 
+			<lightning:inputField fieldName="dealer__Agreement_Status__c" label="Status" aura:id="agreement_status" 
+				required="true" class="mw_required" disabled="true"
+				onchange="{!c.pageload}"/>
+			<lightning:inputField fieldName="dealer__Contact__c" label="Customer" aura:id="contact"
+				disabled="{!v.alreadyposted}" readonly="{!v.alreadyposted}" required="true" class="mw_required"
+				onchange="{!c.contactChange}"/>
+			<lightning:inputField fieldName="Location__c" disabled="{!v.alreadyposted}" aura:id="location"
+				required="true" readonly="{!v.alreadyposted}" class="mw_required"/>
+			<!-- lightning:inputField fieldName="dealer__Return_Mileage__c" disabled=" { ! v.alreadyposted}" aura:id="return_mileage"
+				onmousewheel=" { ! c.ignoreMousewheel}"/ -->
+			<lightning:inputField fieldName="ThirdPartyPayor__c" disabled="{!v.alreadyposted}" readonly="{!v.alreadyposted}" aura:id="thirdpartypayor"
+				onchange="{!c.recalc}"/>
+			<lightning:inputField fieldName="Other_payor__c" disabled="{!v.alreadyposted}" readonly="{!v.alreadyposted}" aura:id="otherpayor"
+				onchange="{!c.recalc}"/>
+		</div>
+		
+	</div>
+
+	<div class="slds-grid slds-gutters slds-p-around_small">
+		<div class="slds-col slds-size_1-of-2">
+			<!-- BLL4 lightning:inputField fieldName="Daily_Rental_Rate__c" aura:id="daily_rental_rate" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/ -->
+			<lightning:inputField fieldName="Rental_fee__c" aura:id="rental_fee" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="Pickup_Delivery_Fee__c" aura:id="pickup_delivery_fee" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="Excess_Miles_Charge__c" aura:id="excess_miles_charge" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="dealer__Refueling_Fee__c" aura:id="refueling_fee" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="dealer__Adjustment_Charges__c" aura:id="adjustment_charges" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="dealer__Discount__c" aura:id="discount" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+		</div>
+		<div class="slds-col slds-size_1-of-2"> 
+			<lightning:inputField fieldName="Number_of_Days__c" aura:id="number_of_days" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="TotalPerDiemTax__c" aura:id="totalperdiemtax" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="Sales_Tax__c" aura:id="sales_tax" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="CountySalesTax__c" aura:id="countysalestax" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="CitySalesTax__c" aura:id="citysalestax" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+			<lightning:inputField fieldName="ThirdTierRentalTax__c" aura:id="thirdtierrentaltax" 
+				onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+				onmousewheel="{!c.ignoreMousewheel}"
+				required="true" class="mw_required"/>
+		</div>
+	</div>
+
+	<div class="slds-grid slds-gutters slds-p-around_small">
+		<div class="slds-col slds-size_1-of-2">
+			<!-- lightning:inputField fieldName="Total_charges__c"/ -->
+			<lightning:input type="Number" value="{!v.TotalCharges}" aura:id="totalcharges" label="Total Charges"
+				readonly="true" formatter="currency" disabled="{!v.alreadyposted}"/>
+			<lightning:inputField fieldName="dealer__Deposit_Amount__c" aura:id="deposit_amount" 
+				onchange="{!c.recalc}" disabled="true" />
+			<!--BLL5-->
+			<aura:if isTrue="{!v.payorselected}">
+				<lightning:inputField fieldName="Customer_portion__c" aura:id="customer_portion"
+					onchange="{!c.recalc}" disabled="{!v.alreadyposted}" 
+					onmousewheel="{!c.ignoreMousewheel}"/>
+			</aura:if>
+			<!--BLL5 end-->
+		</div>
+		<div class="slds-col slds-size_1-of-2"> 
+			<!-- lightning:inputField fieldName="Total_Amount_Due__c"/ -->
+			<lightning:input type="Number" value="{!v.TotalAmountDue}" aura:id="totalamountdue" label="Total Amount Due" 
+				readonly="true" formatter="currency" disabled="{!v.alreadyposted}"/>
+			<lightning:outputField fieldName="dealer__Cashiering_Total__c" aura:id="cashiering_total"/>
+			<lightning:inputField fieldName="Payor_Pay_Amount__c" aura:id="payor_pay_amount" 
+				disabled="true"/>
+			<lightning:inputField fieldName="dealer__Customer_Pay_Amount__c" aura:id="customer_pay_amount"
+				disabled="true"/>
+		</div>
+	</div>
+
+</lightning:card>
+</lightning:recordEditForm>
+
+</aura:component>

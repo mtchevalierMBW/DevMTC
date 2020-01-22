@@ -1,0 +1,315 @@
+<apex:page renderAs="PDF" standardController="dealer__Deal__c"  sidebar="false" applyHtmlTag="false" extensions="Deal_MBW2" 
+           applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">
+<html>
+<head>
+<title>DelivConf-MP</title>
+<style>
+  .formdata {margin-left: .5em; font-size: 14px;}
+</style>
+</head>
+<body>
+<table>
+<tr><td>
+<div>
+<table align="center" width="100%">
+<tr>
+<td align="center"><span style="font-size:1.2em; font-wight:900;"><b>DELIVERY CONFIRMATION</b></span></td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:15px;">
+<tr>
+<td width="110px">Dealership Name:</td>
+<!-- <td align="left" width="300px" style="border-bottom:0.5px solid;">{!'Mobility Works '+location.Name}</td> -->
+<td align="left" width="300px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!IF(  NOT(ISBLANK(location.Dealer_License_Name__c)), Location.Dealer_License_Name__c ,'MobilityWorks '+location.Name  )}" />
+ </td>
+<td>Salesperson:</td>
+<td align="left" width="250px" style="border-bottom:0.5px solid;">
+   <span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Salesperson_1__r.Name}"/>
+  </span>
+</td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="115px">Customer Name(s):</td>
+<td align="left" style="border-bottom:0.5px solid;">
+  <span class="formdata">
+  <apex:outputText value="{!dealer__Deal__c.dealer__Buyer__r.Name +'     '+
+      IF(  NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer__r.Name))  ,'   ' +dealer__Deal__c.And_Or_Contract__c+'   ' + dealer__Deal__c.dealer__Co_Buyer__r.Name,' ')  }"/>
+  </span>
+</td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="90px">Street Address:</td>
+<td align="left" style="border-bottom:0.5px solid;">
+    <span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Address__c}"/>
+    </span>
+    <span class="formdata" style="padding-left:2em;">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_City__c}"/>
+    </span>
+    <span class="formdata" style="padding-left:2em;">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_State__c}"/>
+    </span>
+    <span class="formdata" style="padding-left:2em;">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Postal_Code__c}"/>
+    </span>
+</td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:15px;">
+<tr>
+
+  <apex:outputPanel rendered="{! NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c))}" layout="none">
+   <td width="125px">Main Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c), ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c))}" layout="none">
+   <td width="125px">Main Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c), NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)),ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c))}" layout="none">
+   <td width="125px">Main Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c), NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)),NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c)))}" layout="none">
+   <td width="125px">Mobile Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  
+
+  <apex:outputPanel rendered="{! ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)}" layout="none">
+    <td width="125px">Mobile Telephone:</td>
+    <td align="left" width="215px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)), ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c), ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c))}" layout="none">
+   <td width="125px">Work Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Work_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c)), NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c)),NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)))}" layout="none">
+   <td width="125px">Mobile Telephone:</td>
+   <td align="left" width="220px" style="border-bottom:0.5px solid;">
+       <span class="formdata">
+       <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}"/>
+       </span>
+    </td>
+  </apex:outputPanel>
+  <apex:outputPanel rendered="{! AND(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c), NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c)),NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)))}" layout="none">  
+      <td width="125px">Work Telephone:</td>
+      <td align="left" width="220px" style="border-bottom:0.5px solid;">
+         <span class="formdata">
+         <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Work_Phone__c}"/>
+         </span>
+      </td>
+  </apex:outputPanel>
+   <apex:outputPanel rendered="{! AND(NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c)), ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c),NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Work_Phone__c)))}" layout="none">  
+      <td width="125px">Work Telephone:</td>
+      <td align="left" width="220px" style="border-bottom:0.5px solid;">
+         <span class="formdata">
+         <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Work_Phone__c}"/>
+         </span>
+      </td>
+  </apex:outputPanel>
+</tr>
+</table>
+
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="120px">Vehicle Description:</td>
+<td align="left" style="border-bottom:0.5px solid;">
+  <table align="left" width="100%" style="font-size:0.9em;">
+  <tr>
+  <td width="10%" align="center">
+    <span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Year__c}"/>
+    </span>
+  </td>
+  <td width="20%" align="center">
+    <span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Make__c}"/>
+    </span>
+  </td>
+  <td width="25%" align="center">
+    <span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__Model__c}"/>
+    </span>
+  </td>
+  <td width="45%" align="center">
+    <span class="formdata">
+    <apex:outputText value="{!dealer__Deal__c.dealer__VIN__c}"/>
+    </span>
+  </td>
+  </tr>
+  </table>
+</td>
+</tr>
+<tr>
+  <td width="120px">
+  </td>
+<td>
+  <table align="left" width="100%" style="font-size:0.9em;">
+  <tr>
+  <td width="10%" align="center">Year</td>
+  <td width="20%" align="center">Make</td>
+  <td width="25%" align="center">Model</td>
+  <td width="45%" align="center">Vehicle Identification Number (VIN)</td>
+  </tr>
+  </table>
+</td>
+</tr>
+</table>
+
+</div>
+</td></tr>
+<tr><td>
+<div style="padding-top:3px"> <!-- 10px -->
+<table>
+<tr>
+<td style="text-align: justify; font-size:0.9em">Our Dealership has prepared this Delivery Confirmation to ensure your 
+                                 satisfaction with the vehicle and to make sure there are no misunderstandings between
+                                 us with respect to the transaction. We recognize that you have been asked to 
+                                 review and sign a number of documents today in order to complete the 
+                                 transaction. You should also have been provided with the opportunity to take 
+                                 the vehicle for a test drive. Please take a moment now to consider the 
+                                 transaction before taking delivery of the vehicle to make sure it is clear to 
+                                 you and that nothing has been promised to you that has not been put into 
+                                 writing. Representatives of this Dealership are not authorized to make any 
+                                 oral promises to you, If our Dealership has agreed to provide any goods 
+                                 and/or services with respect to the vehicle thal have not been received 
+                                 at the time of delivery of the vehicle, those items should be listed below. 
+</td>
+</tr>
+</table>
+</div>
+</td></tr>
+<tr><td >
+<div style="padding-top:10px">
+<table align="left">
+<tr>
+<td widht="10px"><img src="{!$Resource.Uncheck}" width="25px" height="30px" style="padding-right:10px"/></td>
+<td style="font-size:0.8em" colspan="2">
+I HAVE RECEIVED ALL OF THE PRODUCTS AND SERVICES PROMISED TO ME IN CONNECTION WITH THIS TRANSACTION AT THE TIME OF DELIVERY. 
+</td>
+</tr>
+<tr>
+<td widht="10px" height="50px" valign="bottom"><img src="{!$Resource.Uncheck}" width="25px" height="30px" style="padding-right:10px"/></td>
+<td style="font-size:0.8em" colspan="2" valign="bottom">
+AS OF THE TIME OF DELIVERY, I HAVE YET TO RECEIVE THE FOLLOWING PRODUCTS AND/OR SERVICES PROMISED TO ME IN CONNECTION WITH THIS TRANSACTION:   
+</td>
+</tr>
+<tr>
+<td widht="10px" height="35px">&nbsp;</td><td width="380px"></td><td width="280px" style="border-top:0.5px solid;"></td>
+</tr>
+<tr>
+<td colspan="3" style="border-bottom:0.5px solid;"></td>
+</tr>
+<tr>
+<td height="35px" colspan="3" style="border-bottom:0.5px solid;"></td>
+</tr>
+<tr>
+<td height="35px" colspan="3" style="border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+</div>
+</td></tr>
+<tr>
+<td>
+<div style="padding-top:10px">
+<table>
+<tr>
+<td style="text-align: justify; font-size:0.9em">By signing below, you are acknowledging that you had the
+                     opportunity to inspect the vehicle and found it free from any reasonably discoverable
+                     defects. You are also agreeing that you had the opportunity to review the entire
+                     transaction, the Dealership has satisfactorily addressed any questions or concerns 
+                     you had and nothing has been promised to you that has not been put into writing. 
+                     If anything is listed above, please call the Dealership in advance to schedule 
+                     a time to receive the products and/or services listed. This Delivery Confirmation 
+                     Form is hereby incorporated by reference into the Retail Purchase Agreement for 
+                     this transaction.  
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div style="padding-top:20px">
+<table width="100%" style="font-size:0.9em;">
+<tr>
+<td colspan="2" style="border-bottom:0.5px solid;"></td><td></td><td colspan="2" style="border-bottom:0.5px solid;"></td>
+</tr>
+<tr>
+<td width="37%" align="left" valign="top">Customer</td><td width="10%" align="right">Date</td><td width="6%"></td><td width="37%" align="left">Authorized Dealership Representative</td><td width="10%" align="right">Date</td>
+</tr>
+<tr>
+<td colspan="2" height="15px" style="border-bottom:0.5px solid;"></td><td colspan="3"></td>
+</tr>
+<tr>
+<td width="37%" align="left" valign="top">Customer</td><td width="10%" align="right">Date</td><td colspan="3"></td>
+</tr>
+<tr>
+<td colspan="5" height="15px" style="border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:5px;">
+<tr>
+<td align="left"><b><I>For Office Use Only:</I></b></td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:5px;">
+<tr>
+<td width="170px">Appointment Scheduled On:</td><td align="left" width="140px" style="border-bottom:0.5px solid;"></td><td>By:</td><td align="left" width="340px" style="border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="130px">Date of Appointment:</td><td align="left" width="80px" style="border-bottom:0.5px solid;"></td><td>Time:</td><td align="left" width="80px" style="border-bottom:0.5px solid;"></td><td>a.m./p.m. Contact:</td><td align="left" width="230px" style="border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="105px">Additional Notes:</td><td style="border-bottom:0.5px solid;"></td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>
+</apex:page>

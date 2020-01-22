@@ -1,0 +1,1021 @@
+<!--
+* 2015-10-06    J. Kuljis   JVK1 IT15140 - Set invoiced time to the local time
+* 2015-10-15    B. Leaman   BLL1 IT15592 - Need to show sublet details
+* 2015-11-17    RedTeal     RT1 - Added Tax Id
+* 2015-12-04    B. Leaman   BLL2 - Print dealer__Customer_Tax__c instead of dealer__Tax__c.
+* 2015-12-08    B. Leaman   BLL3 - change method of printing vehicle inventory info due to issue saving VF page.
+*                           getting error: Unknown property 'VisualforceArrayList.dealer__xxx_c' for several fields.
+*                           Also print CustomerInvoiceTotal__c instead of dealer__Customer_Invoice_Total__c.
+* 2016-01-05    RedTeal     RT1 - Added total deposit to page
+* 2016-01-14    B. Leaman   BLL4 IT18468 - New legal statement requirements and other required form changes;
+*                           adj. margin; "written estimate box" must be 12pt (not 12px); needs to fit on page w/out shrink oversized pages;
+*                           Also, update proposed completion date heading, Labor charges based on flat rate..., shop supplies *or* waste disposal.
+* 2016-07-15    B. Leaman   IT#27864 BLL5 - Only show stock# if inventory vehicle is referenced on RO -- don't show
+*                           stock number if only referenced on service vehicle's reference to the vehicle inventory.  
+* 2016-08-04    D Ray       DR1 - Force Cause to have line breaks
+* 2016-09-07    Gaurav      Case# 00002031 - To change Total charges to Line charges
+* 2016-10-03	B. Leaman	BLL6 IT#32268 - Print all misc charge types on signature page -- total wasn't adding up.
+* 2016-10-07	B. Leaman	BLL7 IT#32571 - Show business mobile & email if not a person account.
+* 2017-01-12    J. Pritt    JRP1 ir-0005015 - Calc and display Balance Due
+* 2017-03-07	B. Leaman	BLL8 IR-0007658 - clarify totals more.
+* 2017-04-05	B. Leaman	BLL9 IR-0009981 - don't show part total on warranty lines.
+* 2017-04-20	B. Leaman	BLL10 IR-0010319 - BLL8 accidentally removed sublet line. Restore it.
+* 2017-06-14	B. Leaman	BLL11 - conditionally display logo.
+* 2017-06-21    J. Pritt    JRP2 - Use Dealer License Name when available
+* 2017-12-18	B. Leaman	BLL12 - show equipment number from service vehicle.
+* 2018-01-11    J. Pritt    JRP3 - Add Label to Bar Number
+* 2018-04-10	B. Leaman	BLL13 - correct the op-code that prints to the one that can be maintained. 
+*							(replace dealer__Op_Code__c with dealer__Standard_Operation_Code__c)
+* 2019-04-08	B. Leaman	W-000473 BLL14 - Show warranty deductible.
+* 2019-10-17	B. Leaman	W-000767 BLL15 - preserve new lines on CCC; add mileage out;
+-->
+<apex:page StandardController="dealer__Service_Repair_Order__c" extensions="ServiceRO_Print" renderAs="PDF" showHeader="false" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false">
+
+<head>
+<style type="text/css">
+    body {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 12px;
+    }
+    td {
+        font-family: Tahoma, Geneva, sans-serif;
+        padding: 5px;
+    }
+    th {
+        font-family: Tahoma, Geneva, sans-serif;
+        text-align: left;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    form {
+        margin:0px;
+        padding:0px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 100%;
+        margin:0px;
+        display:inline;
+    }
+
+    textarea {
+        font-family: Tahoma, Geneva, sans-serif;
+        font-size: 100%;
+     }
+
+    img { border:0; }
+
+    /* @page{
+       margin:0.25in;  BLL4d was 0.05in 
+    } */
+    .borderB {
+        border-bottom:1px solid #09F;
+    }
+
+    .borderR{
+        border-right:1px solid #09F;    
+    }
+    .borderL {
+        border-left: 1px solid #09F;
+    }
+    .HEADER {
+        color: #FFF;
+        background-color: #09F;
+        text-align: left;
+        font-size:12px;
+    }
+
+    .HEADER {
+        color: #FFF;
+        background-color: #09F;
+        text-align: left;
+        font-size:10px;
+    }
+
+    .HEADERGREY {
+        color: #FFF;
+        background-color: #666;
+        text-align: left;
+        font-size:10px;
+    }
+
+    .HEADERL {
+        color: #FFF;
+        background-color: #09F;
+        text-align: left;
+        font-size:12px;
+    }
+    .HEADERR {
+        color: #FFF;
+        text-align: right;
+        font-size:12px;    
+    }
+    .HEADERBL {
+        color: #09F;
+        text-align: left;
+        font-size:12px;
+    }
+    .BigPrint {
+        font-size: 24px;
+    }
+
+    .TinyPrint {
+        font-size: 10px;
+    }
+    .TinyPrint p {margin-top:0px; margin-bottom:6px;} /*BLL4a*/
+
+    .cGrey { 
+        color:#666666;
+    }
+
+    .cGreyI { 
+        color:#666666;
+        font-style:italic;
+    }
+
+    .gBorderB {
+        color:#666666;
+        border-bottom:1px solid #666666;
+        font-size: 12px;
+    }
+	table.chargesummary tr {	// BLL4a
+		padding:0; margin:0;
+	}
+    .mPrint {
+        margin-left: 5px;
+        font-size: 12px;
+    }
+
+    .lPrint {
+        margin-left: 5px;
+        font-size: 14px;
+    }
+
+    .plEve {
+        font-size: 12px;
+        text-align: left;
+    }
+    .plHead {
+        background-color: #09F;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+    }
+    .plDetailHead {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+    }
+    .plDetailHeadLeft {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+        text-align:left;
+    }
+    .plDetailHeadRight {
+        background-color: #696969;
+        boder-bottom:1px solid #999;
+        padding: 4px;
+        color: #FFF;  
+        text-align:right;
+    }
+    .plHeadLeft {
+        background-color: #09F;
+        padding: 4px;
+        color: #FFF;
+        text-align:left;    
+    }
+    .plHeadRight {
+        background-color: #09F;
+        padding: 4px;
+        color: #FFF;
+        text-align:right;   
+    }
+    .blueBack {
+        background-color: #09F;
+    }
+    .plEve {
+        font-size: 12px;
+        text-align: left;
+    }
+    .plValue {
+        text-align: right;
+        color: #000;
+        padding: 4px;
+    }
+    .plLabel {
+        text-align: left;
+        color: #000;
+        padding: 4px;
+    }
+
+    .pLT {
+        font-size:14px;
+        text-align: left;
+        color: #000;
+        padding: 2px;
+    }
+
+    .pLV {
+        font-size: 14px;
+        text-align: right;
+        color: #000;
+        padding: 2px;
+    }
+
+
+    .dontsplit { page-break-inside: avoid !important; }
+    div#signaturepage {page: LAST_PAGE; page-break-before:always;}	/* BLL8a */
+    table#robody {border:.5px solid gray;} /* BLL8a */
+
+    @page {
+    	/* Portrait orientation */
+    	size:letter portrait;
+	    margin: 0.25in 0.25in 0.6in 0.25in; /*BLL4c was 0.25in */
+
+        @bottom-left {
+            /* width: 600px; */
+            font-size: 12px;
+            content: "{!dealer__Service_Repair_Order__c.Name} - No returns on special order items or electronics.  15% restocking fee may apply";
+        }
+        @bottom-right {
+        /* width: 200px; */
+        font-size: 12px;
+        content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+
+    @media print {
+        .printClear {
+            background-color: none;
+            
+        }
+        .dontsplit { page-break-inside: avoid !important; }
+	    table.signaturepage {page-break-before:always;}	/* BLL8a */
+    }
+/*    .pagecount:before {content: counter(page);}
+    .pagecount:after {content: counter(pages);}
+*/
+	
+</style>
+</head>
+
+<table cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="500px" valign="top">
+            <div id="orgDetails" class="plEve">
+
+                <apex:outputPanel layout="none" rendered="{!ISBLANK(userLoc)}">    
+                    <apex:outputText value="{!$Organization.Name}" style="font-size:18px;font-weight:bold;" /><br />
+                    <apex:outputText value="{!$Organization.Street}" /><br />
+                    <apex:outputText value="{!$Organization.City}" />,&nbsp;<apex:outputText value="{!$Organization.State}" />&nbsp;<apex:outputText value="{!$Organization.PostalCode}" /><br />   
+                    <apex:outputText /><br />
+                    <apex:outputText />
+                </apex:outputPanel>
+                
+                <apex:outputPanel layout="none" rendered="{!NOT(ISBLANK(userLoc))}"> 
+     <!-- JRP2 -->  <apex:outputText value="{!IF(ISBLANK(userloc.Dealer_License_Name__c),'MobilityWorks of ' + userLoc.Name,userloc.Dealer_License_Name__c)}" style="font-size:18px;font-weight:bold;" /><br />
+                    <apex:outputText value="{!userLoc.dealer__Street__c}" /><br />
+                    <apex:outputText value="{!userLoc.dealer__City__c}" />,&nbsp;<apex:outputText value="{!userLoc.dealer__State__c}" />&nbsp;<apex:outputText value="{!userLoc.dealer__Postal_Code__c}" /><br />
+                    <apex:outputText value="{!userLoc.dealer__Website__c}" /><br />
+                    <apex:outputText value="{!userLoc.dealer__Main_Phone__c}" /> <br/><br />   
+     <!-- JRP3 -->  <apex:outputPanel layout="none" rendered="{!NOT(ISBLANK(userLoc.BAR_Number__c))}">                  
+                       <apex:outputText value="{!IF(ISBLANK(userloc.BAR_Number__c),'','Reg#: ')}" style="font-weight:bold;" />
+                       <apex:outputField value="{!userLoc.BAR_Number__c}" /> <br/>
+                    </apex:outputPanel>
+                    <apex:outputField value="{!userLoc.EPA_Number__c}" /> <br/>
+                    <apex:outputField value="{!userLoc.Tax_ID__c}" /> <!--RT1-->
+                </apex:outputPanel>
+               
+            </div>
+        </td>
+        <td width="500px">
+            <div style="float:right;"><apex:image id="businessLogo" url="/{!InvoiceLogo}"  rendered="{!dealer__Service_Repair_Order__c.dealer__Company__r.NoLogoOnForms__c!=true}"/></div><!-- BLL11c -->
+            <div style="clear:both"></div>
+            <div style="float:right;">
+            <table style="" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT">Invoice#</td>
+                    <td class="pLV" style="font-size:18px;font-weight:bold;"><apex:outputText value="{!dealer__Service_Repair_Order__c.Name}" label="" /></td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT">Invoice Date</td>
+                    <td class="pLV">
+                    <!-- JVK2 -->
+                        <apex:outputText rendered="{!ISBLANK(invoiceTime)}">Open Invoice (Not Invoiced)</apex:outputText>
+                        <apex:outputText value="{0,date,MM/dd/yyyy}" rendered="{!NOT(ISBLANK(invoiceTime))}"><apex:param value="{!invoiceTime}" /></apex:outputText>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="175px" class="pLT">Invoice Amount</td>
+                    <td class="pLV">
+                        <apex:outputText value="{0,number, $###,##0.00}">
+						<!--BLL14-->
+                        <apex:param value="{!dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c+NULLVALUE(WarrantyDeductible,0)}" /><!-- BLL14a -->
+                        <!--BLL14d apex : param value="{ ! dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c}" /--><!-- BLL14a -->
+                        <!-- BLL2d apex : param value="{ ! dealer__Service_Repair_Order__c.dealer__Customer_Invoice_Total__c}" / -->
+                        </apex:outputText>
+                    </td>
+                </tr>  
+
+                <!--RT1-->
+                <tr>
+                    <td width="175px" class="pLT" >Deposit</td>
+                    <td class="pLV " >
+                        <apex:outputText value="{0,number, $###,##0.00}">
+                            <apex:param value="{!total_deposit}" />                        
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <!-- end RT1-->
+                <!-- JRP! Begin -->
+                <tr>
+                    <td width="175px" class="pLT blueBack" style="color: #FFF;">Balance Due</td>
+                    <td class="pLV blueBack" style="color: #FFF;">
+                        <apex:outputText value="{0,number, $###,##0.00}">
+						<!--BLL14-->
+						<apex:param value="{!dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c-total_deposit+NULLVALUE(WarrantyDeductible,0)}" /><!-- BLL14a -->
+                        <!--BLL14d apex:param value="{!dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c-total_deposit}" /--><!-- BLL2a -->
+                        <!-- BLL2d apex : param value="{ ! dealer__Service_Repair_Order__c.dealer__Customer_Invoice_Total__c}" / -->
+                        </apex:outputText>
+                    </td>
+                </tr> 
+                <!-- JRP1 End -->  
+                <tr>
+                    <td width="175px"></td>
+                    <td style="font-size:10px">Printed&nbsp; 
+                        <apex:outputText value="{!printDateTime}" />
+                    </td>
+                </tr>           
+            </table>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td width="500px" valign="top">
+            <div id="customerNameBlock">
+                <div id="CustomerName"><b><apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.Name}" /></b></div> 
+                <!-- Address swith dependant on "IsPersonAccount" -->
+                <apex:outputPanel layout="none" rendered="{!IF(dealer__Service_Repair_Order__c.dealer__Customer__r.IsPersonAccount==true,true,false)}">
+                    <div id="CustomerStreet">
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMailingStreet}" />
+                    </div>
+                    <div id="CustomerCityStateZip">
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMailingCity}" />
+                        <apex:outputText rendered="{!NOT(ISBLANK(dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMailingCity))}">,</apex:outputText>&nbsp;
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMailingState}" />&nbsp;
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMailingPostalCode}" />
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel layout="none" rendered="{!IF(dealer__Service_Repair_Order__c.dealer__Customer__r.IsPersonAccount!=true,true,false)}">
+                    <div id="CustomerStreet">
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.BillingStreet}" />
+                    </div>
+                    <div id="CustomerCityStateZip">
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.BillingCity}" />
+                        <apex:outputText rendered="{!NOT(ISBLANK(dealer__Service_Repair_Order__c.dealer__Customer__r.BillingCity))}">,</apex:outputText>&nbsp;
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.BillingState}" />&nbsp;
+                        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.BillingPostalCode}" />
+                    </div>
+                </apex:outputPanel> 
+            </div>          
+        </td>
+        <td width="500px" valign="top">
+            <table cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="cGrey">Phone</td>
+                    <td><apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Customer__r.Phone}" /></td>
+                </tr>
+                <tr>
+                    <td class="cGrey">Mobile</td>
+                    <td><apex:outputText value="{!IF(dealer__Service_Repair_Order__c.dealer__Customer__r.IsPersonAccount, dealer__Service_Repair_Order__c.dealer__Customer__r.PersonMobilePhone,dealer__Service_Repair_Order__c.dealer__Customer__r.BusinessMobilePhone__c)}" /></td><!-- BLL7c -->
+                </tr>
+                <tr>
+                    <td class="cGrey">Email</td>
+                    <td><apex:outputText value="{!IF(dealer__Service_Repair_Order__c.dealer__Customer__r.IsPersonAccount, dealer__Service_Repair_Order__c.dealer__Customer__r.PersonEmail,dealer__Service_Repair_Order__c.dealer__Customer__r.dealer__Billing_Email__c)}" /></td><!-- BLL7c -->
+                </tr>
+            </table>
+        </td>
+     </tr>
+     <!-- BLL4a other authorized person -->
+     <tr valign="top">
+        <td class="cGrey">
+            <table width="100%" padding="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="width: 135px; padding:0;">Other Authorized Person </td>
+                    <td style="border-bottom: 1px solid gray;">&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+        <td class="cGrey">
+            <table padding="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="width: 35px;">Phone</td>
+                    <td style="width: 15em; border-bottom: 1px solid gray;">&nbsp;</td>
+                </tr>
+            </table>
+        </td>
+     </tr>
+     <!-- BLL4a end -->
+</table>
+
+<!-- RO Details -->
+<table width="100%" border="0" cellpadding="2" cellspacing="0">
+    <tr bgcolor="#09F" class="HEADERGREY">
+        <td>VIN</td>
+        <td>Mileage In</td>
+		<!--BLL15-->
+		<td><apex:outputText rendered="{!NULLVALUE(dealer__Service_Repair_Order__c.dealer__Mileage_Out__c,0)!=0}">Mileage Out</apex:outputText></td>
+		<!--BLL15-->
+        <td>Technican</td>
+        <td>RO Date</td>
+        <td>Proposed completion date</td><!-- BLL4a -->
+        <td>Tag#</td>
+    </tr>
+    <tr>
+        <td><apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__VIN__c}" rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r!=null}"/>
+            <!-- BLL3d apex : outputText value="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__r.dealer__VIN__c}"  rendered="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle__c==null}"/ -->
+            <apex:outputText value="{!vi.dealer__VIN__c}"  rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c==null,vi!=null)}"/><!-- BLL3a -->
+        </td>
+        <td><apex:outputText value="{0, number, #,###,###}"><apex:param value="{!dealer__Service_Repair_Order__c.dealer__Mileage_In__c}" /></apex:outputText></td>
+		<!--BLL15-->
+		<td><apex:outputText value="{0, number, #,###,###}" rendered="{!NULLVALUE(dealer__Service_Repair_Order__c.dealer__Mileage_Out__c,0)!=0}"><apex:param value="{!dealer__Service_Repair_Order__c.dealer__Mileage_Out__c}" /></apex:outputText></td>
+		<!--BLL15-->
+        <td><apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Service_Advisor__r.Name}" /></td>
+        <td><apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!dealer__Service_Repair_Order__c.dealer__Create_Date_Time__c}" /></apex:outputText></td>
+        <!-- BLL4a -->
+        <td><apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!dealer__Service_Repair_Order__c.dealer__Promise_Date__c}" /></apex:outputText></td>
+        <!-- BLL4a end -->
+        <td><apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Tag__c}" /></td>
+    </tr>    
+</table>
+<!-- Vehicle Details -->
+<table width="100%" border="0" cellpadding="2" cellspacing="0">
+  <tr class="HEADERGREY">
+    <td>Year&nbsp;</td>
+    <td>Make&nbsp;</td>
+    <td>Model&nbsp;</td>
+    <td>Conversion MFG&nbsp;</td>
+    <td>License Number&nbsp;</td>
+    <td>Stock/Equipment Number&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="mPrint">
+        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Year__c}"  rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r!=null}"/>
+        <!-- BLL3d apex : outputText value="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__r.dealer__Year__c}"  rendered="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle__c==null}"/ -->
+        <apex:outputText value="{!vi.dealer__Year__c}"  rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c==null,vi!=null)}"/><!-- BLL3a -->
+    &nbsp;</td>
+    <td class="mPrint">
+        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Make__c}"  rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r!=null}"/>
+        <!-- BLL3d apex : outputText value="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__r.dealer__Make__c}"  rendered="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle__c==null}"/ -->
+        <apex:outputText value="{!vi.dealer__Make__c}"  rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c==null,vi!=null)}"/><!-- BLL3a -->
+    &nbsp;</td>
+    <td class="mPrint">
+        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Carline__c}"  rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r!=null}"/>
+        <!-- BLL3d apex : outputText value="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__r.dealer__Model__c}"  rendered="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle__c==null}"/ -->
+        <apex:outputText value="{!vi.dealer__Model__c}"  rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c==null,vi!=null)}"/><!-- BLL3a -->
+    &nbsp;</td>
+    <td class="mPrint"><apex:outputText value="{!dealer__Service_Repair_Order__c.Conversion_Manufacturer__c}" />&nbsp;</td>
+    
+    <td class="mPrint">
+        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Licence__c}"  rendered="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r!=null}"/>
+        <!-- BLL3d apex : outputText value="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__r.dealer__License__c}"  rendered="{ ! dealer__Service_Repair_Order__c.dealer__Vehicle__r==null}"/ -->
+        <apex:outputText value="{!vi.dealer__License__c}"  rendered="{!AND(dealer__Service_Repair_Order__c.dealer__Vehicle__c==null,vi!=null)}"/><!-- BLL3a -->
+    &nbsp;</td>
+    <td class="mPrint">
+        <apex:outputText value="{!vi.dealer__Stock_Number__c}" rendered="{!vi!=null}"/><!-- BLL5a -->
+        <apex:outputText rendered="{!AND(NOT(ISBLANK(vi.dealer__Stock_Number__c)), NOT(ISBLANK(dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Equipment_Number__c)))}">,&nbsp;</apex:outputText><!-- BLL12a -->        
+        <apex:outputText value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__r.dealer__Equipment_Number__c}"  rendered="{!NOT(ISBLANK(dealer__Service_Repair_Order__c.dealer__Vehicle__r))}"/><!-- BLL12c redo -->
+    </td>
+  </tr>
+</table>
+<!--  BODDY HERE -->
+ <apex:variable var="total_partSum" value="{!0}" />
+<table width="100%" border="0" cellpadding="4" cellspacing="0" id="robody"><!-- BLL8c id -->
+  <tr class="HEADERGREY">
+    <td width="90%">Description of Service&nbsp;</td>
+    <td width="10%"><span style="text-align:right;">Amount&nbsp;</span></td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <apex:variable var="lineSum" value="{!0}" />
+      <apex:repeat value="{!ServiceJobList}" var="l">
+      <apex:variable var="chargeDisplay" value="{!l.dealer__Labor_Type__c}"/>
+      <table width="100%" border="0" cellpadding="4" cellspacing="0" class="dontsplit">
+      <tr>
+        <td class="mPrint"><b>Job#&nbsp;
+            <apex:outputText value="{0, number, ###,##0}">
+                <apex:param value="{!l.dealer__Line_Number__c}" />
+            </apex:outputText>&nbsp;
+            <!-- BLL13d apex:outputText value="{!l.dealer__Op_Code__c}"/ -->
+            <!-- BLL13a --><apex:outputText value="{!l.dealer__Standard_Operation_Code__r.Name}"/>
+            &nbsp;</b>
+        </td>
+        <td class="mPrint" align="right">
+            <apex:outputText value="{!l.Payment_Method__r.Name}" />
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+            <table width="100%" cellspacing="0" cellpadding="4" border="0">
+              <tr>
+                    <td class=" mPrint" align="right" width="65px;"><span class="cGreyI">Concern:&nbsp;</span></td>
+                    <td align="left" class="mPrint"><apex:outputField value="{!l.dealer__CustomerConcern__c}" /></td>
+              </tr>      
+              <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__CauseExtended__c))}">
+                <tr>
+                    <td class=" mPrint" align="right" width="65px;"><span class="cGreyI">Cause:&nbsp;</span></td>
+                    <td class="mPrint" align="left">
+						<p style="max-width: 90%;word-wrap: break-word; overflow-wrap: break-word; width: 90%;">
+							<apex:outputField value="{!l.dealer__CauseExtended__c}"/></p>
+					</td><!-- DR1 - added inline style -->
+                </tr>
+               </apex:outputText>   
+               <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__Correction__c))}">
+                <tr>
+                    <td class=" mPrint" align="right" width="65px;"><span class="cGreyI">Correction:&nbsp;</span></td>
+                    <td class="mPrint" align="left"><apex:outputField value="{!l.dealer__Correction__c}"/></td>
+                </tr> 
+                </apex:outputText>                 
+            </table>
+        </td>
+      </tr>     
+        
+        <!-- Labor Total -->
+        <tr>
+            <td align="right" valign="bottom">Labor Charges</td>
+            <td class="mPrint" align="right" valign="top">
+                <apex:outputText rendered="{!IF(chargeDisplay=='C', true, false)}">
+                    <apex:variable var="lineSum" value="{!lineSum+l.dealer__Labor_Charges__c}" />
+                    <apex:outputText value="{0, number, $#,###,##0.00}">
+                        <apex:param value="{!l.dealer__Labor_Charges__c}"/>&nbsp;
+                    </apex:outputText>
+                </apex:outputText>
+                <apex:outputText rendered="{!IF(chargeDisplay=='C', false, true)}">
+                    $0.00
+                </apex:outputText>
+            </td>
+        </tr>
+        <!-- Nested repeat for Parts Lines -->
+        <tr>
+            <td>
+            <apex:variable var="partSum" value="{!0}" />
+            <!-- Table Layout fix if sub parts table is not present -->
+            <apex:outputText rendered="{!ISBLANK(l.dealer__Parts_Total__c)}">
+            <!--
+            <table width="100%">
+                <tr>
+                    <td width="560px;"></td>
+                </tr>
+            </table>                
+            -->
+            </apex:outputText>
+            <!-- Parts table only displayed if there are parts on the repair order -->
+            <apex:outputText rendered="{!NOT(ISBLANK(l.dealer__Parts_Total__c))}">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="mPrint cGreyI" width="15px;">&nbsp;</td>
+                    <td class="mPrint cGreyI" width="45px;">QTY</td>
+                    <td class="mPrint cGreyI" width="125px;">Part#</td>
+                    <td class="mPrint cGreyI" width="245px;">Description</td>
+                    <td class="mPrint cGreyI" width="45px;">Part type*</td><!-- BLL4a -->
+                    <td class="mPrint cGreyI" width="65px;">Unit Price</td>
+                    <td class="mPrint cGreyI" width="65px;">Price</td>
+                </tr>
+                
+
+                <apex:repeat value="{!ServicePartsList}" var="pl">
+                <apex:variable var="chargePartDisplay" value="{!pl.dealer__Pay_Type__c}"/>
+                    
+                    <apex:outputText rendered="{!IF(l.Id == pl.dealer__Job_Line__c, true, false)}" >
+                    <apex:variable var="partSum" value="{!IF(chargeDisplay=='C', partSum+pl.dealer__Extended_Price__c, 0)}" />
+                    <apex:variable var="total_partSum" value="{!IF(chargeDisplay=='C', partSum+pl.dealer__Extended_Price__c, 0)}" />
+                    <apex:variable var="lineSum" value="{!IF(chargeDisplay=='C', lineSum+pl.dealer__Extended_Price__c, 0)}" />
+                    <tr>
+                    <td>&nbsp;</td>
+                    <td class="mPrint"><apex:outputText value="{0, number, ###,##0}"><apex:param value="{!pl.dealer__Quantity_Sold__c}" /></apex:outputText></td>
+                    <td class="mPrint"><apex:outputText value="{!pl.dealer__Part_Number__c}" /></td>
+                    <td class="mPrint"><apex:outputText value="{!pl.dealer__Part_Description__c}" /></td>
+                    <td class="mPrint"><apex:outputText value="{!pl.Part_type__c}"/></td><!-- BLL4a -->
+                    <td class="mPrint">
+                        <apex:outputText rendered="{!IF(chargeDisplay=='C', true, false)}">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!pl.dealer__Price__c}" />
+                            </apex:outputText>
+                        </apex:outputText>  
+                        <apex:outputText rendered="{!IF(chargeDisplay=='C', false, true)}">
+                            $0.00
+                        </apex:outputText>
+                    </td>
+                    <td class="mPrint">
+                        <apex:outputText rendered="{!IF(chargeDisplay=='C', true, false)}">
+                            <apex:outputText value="{0, number, $#,###,##0.00}">
+                                <apex:param value="{!pl.dealer__Extended_Price__c}" />
+                            </apex:outputText>
+                        </apex:outputText>  
+                        <apex:outputText rendered="{!IF(chargeDisplay=='C', false, true)}">
+                            $0.00
+                        </apex:outputText>         
+                    </td>
+                    </tr>
+                    </apex:outputText>
+                    
+                </apex:repeat>
+
+            </table>
+            </apex:outputText>  
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">Parts</td>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',true,false)}"><!-- BLL9 add rendered -->
+                	<apex:param value="{!partSum}"/>
+                </apex:outputText>
+                <!-- BLL9a -->
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',false,true)}">
+                    <apex:param value="{!0}" />
+                </apex:outputText>
+                <!-- BLL9a end -->                
+            </td>
+        </tr>
+        <tr>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">
+                Shop Supplies, Hazardous Materials &amp; Freight
+                <!-- BLL4a TODO REMOVE HARD-CODING -->
+                <apex:outputPanel layout="none" rendered="{!userLoc.dealer__State__c!='CA'}">**</apex:outputPanel>
+                <!-- BLL4a end -->
+            </td>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',true,false)}">
+                    <apex:param value="{!l.dealer__Misc_Charges__c}" />
+                </apex:outputText>
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',false,true)}">
+                    <apex:param value="{!0}" />
+                </apex:outputText>                
+            </td>
+        </tr>  
+
+        <!-- BLL1a add sublet descriptions & total -->
+            <!-- Itemize Sublet -->
+            <apex:outputPanel layout="none" rendered="{!AND( NOT(ISBLANK(l.dealer__Purchase_Order_Line__r)), NOT(ISBLANK(l.dealer__Sublet_Total__c)) )}">
+            <tr>
+                <td colspan="2">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td class="mPrint cGreyI" width="">Description</td>
+                                <td class="mPrint cGreyI" width="">
+                                    <apex:outputText rendered="{!IF(chargeDisplay=='C',true,false)}">
+                                    Price
+                                    </apex:outputText>
+                                </td>
+                            </tr>
+                            <apex:repeat value="{!l.dealer__Purchase_Order_Line__r}" var="s">
+                            <tr>
+                                <td>
+                                    <apex:outputText value="{!s.dealer__Description__c}" />
+                                </td>
+                                <td>
+                                    <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',true,false)}">
+                                        <apex:param value="{!s.dealer__Customer_Total__c}" />
+                                    </apex:outputText>    
+                                </td>
+                            </tr>
+                            </apex:repeat>
+                        </table>
+                </td>
+            </tr>
+            </apex:outputPanel>
+        <!-- BLL1a end sublet detail -->
+
+        <tr>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">Sublet</td>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#FFF;">
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',true,false)}">
+                    <apex:param value="{!l.dealer__Sublet_Total__c}" />
+                </apex:outputText>
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',false,true)}">
+                    <apex:param value="{!0}" />
+                </apex:outputText>                
+            </td>
+        </tr>
+        <tr>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#EEE;">Line Charges</td>
+            <td class="borderB" align="right" valign="bottom" style="background-color:#EEE;">
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',true,false)}">
+                    <apex:param value="{!l.dealer__Line_Total__c}" />
+                </apex:outputText>
+                <apex:outputText value="{0, number, $#,###,##0.00}" rendered="{!IF(chargeDisplay=='C',false,true)}">
+                    <apex:param value="{!0}" />
+                </apex:outputText>
+            </td>
+        </tr>
+        </table>
+        <apex:variable var="lineSum" value="{!0}" />
+      </apex:repeat>
+
+    </td>
+  </tr>
+</table>
+
+<!--  BODDY HERE -->
+<br /><br />
+<div id="signaturepage"><!-- BLL8a -->
+<table width="100%" border="0" cellpadding="0" cellspacing="3" class="dontsplit signaturepage"><!-- BLL8c signaturepage -->
+  <tr>
+    <td valign="top" width="45%">
+    <table width="100%" border="0" cellpadding="3" cellspacing="0" >
+<tr>
+<td valign="top" class="HEADERBL TinyPrint cGrey">
+<b>TERMS: STRICTLY CASH UNLESS ARRANGEMENTS ARE MADE.</b>  "I hereby authorize the repair
+ work hereinafter to be done along with the necessary material and agree that you are not
+ responsible for loss or damage to vehicle or articles left in the vehicle in case of fire, theft, or any
+other cause beyond your control or for any delays caused by unavailability of parts or delays in
+parts shipments by the supplier or transporter.  I hereby grant you or your employees permission to
+operate the vehicle herein described on streets, highways, or elsewhere for the purpose of testing
+and/or inspection.  An express mechanic's lien is hereby acknowledged on above vehicle to secure
+the amount of repairs thereto."
+<br />
+<br />
+
+<!-- BLL4a -->
+Labor charges based on flat rate, hourly rate $
+<div style="display:inline-block; text-align:right; border-bottom:1px solid #666666; min-width:4em;"> 
+{!DefaultLaborRate} 
+</div>, or both apply.
+<br/><br/>
+The charge for making a repair price estimate is based on an hourly rate of $
+<div style="display:inline-block; text-align:right; border-bottom:1px solid #666666; min-width:4em;"> 
+{!DefaultLaborRate} 
+</div> 
+.
+<!-- BLL4a end -->
+
+<!--  BLL4d
+DISCLAIMER OF WARRANTIES.  Any warranties on the products sold hereby are those made by
+the manufacturer.  The seller hereby expressly disclaims all warranties either express or implied,
+including any implied warranty of merchantability or fitness for a particular purpose, and the seller
+neither assumes nor authorizes any other person to assume for it any liability in connection with the 
+sale of said products.  Any limitation contained herein does not apply where prohibited by law.
+-->
+</td>
+</tr>
+  <!-- BLL4d tr>
+    <td valign="bottom" bgcolor="#09F000" scope="row" colspan="4" class="HEADER" style="font-size:9px" >NO RETURN ON ELECTRICAL OR SAFETY ITEMS OR SPECIAL ORDERS</td>
+  </tr>
+  <tr>
+    <td scope="row" colspan="4" style="border-bottom:1px solid #666;"><span class="BigPrint">X</span>&nbsp;</td>
+   
+  </tr>
+  <tr>
+  <td scope="row" colspan="4">Owner or Authorized Representative</td>
+  </tr BLL4d end -->
+</table>
+</td>
+    <td width="50%" valign="top" style="border-left: 1px solid #09F;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="chargesummary">
+  <!--
+  <tr>
+  
+  <td width="80%"  class="gBorderB" scope="col">Estimate</td>
+    <td  width="20%"  align="right" class="gBorderB" scope="col">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!dealer__Service_Repair_Order__c.dealer__Estimate__c}" />
+      </apex:outputText>      &nbsp;</td>
+  </tr>    
+  -->
+  <tr  >
+  <td width="80%"  class="gBorderB" scope="col">Total Labor</td>
+    <td  width="20%"  align="right" class="gBorderB" scope="col">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!dealer__Service_Repair_Order__c.dealer__Customer_Labor_Charges__c}" />
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  <tr>
+    <td  class="gBorderB" scope="row">Total Parts</td>
+    <td align="right"  class="gBorderB">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!dealer__Service_Repair_Order__c.dealer__Customer_Parts_Charges__c}" /> 
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  <!-- BLL6a use a loop for all misc charge types -->
+  <!-- 
+  <tr >
+    <td  class="gBorderB" scope="row">Total Freight</td>
+    <td align="right"  class="gBorderB">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!total_freight}" />
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  <tr >
+    <td  class="gBorderB" scope="row">Total Hazardous Materials</td>
+    <td align="right"  class="gBorderB">
+    <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!total_hazmat}" />
+    </apex:outputText>
+    &nbsp;</td>
+  </tr>
+  <tr >
+    <td  class="gBorderB" scope="row">Total Shop Supplies</td>
+    <td align="right"  class="gBorderB">
+    <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!total_shop}" />
+    </apex:outputText>
+    &nbsp;</td>
+  </tr> 
+  -->   
+  <tr >
+    <td  class="gBorderB" scope="row">Total Sublet</td>
+    <td align="right"  class="gBorderB">
+    <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!total_sublet_cust}" />
+    </apex:outputText>
+    &nbsp;</td>
+  </tr>
+
+  <!-- BLL6a use a loop for all misc charge types -->
+  <apex:repeat value="{!CustMiscCharges}" var="m">
+  	<tr>
+    	<td  class="gBorderB" scope="row">Total {!m.Type}</td>
+    	<td align="right"  class="gBorderB">
+    	<apex:outputText value="{0, number, $#,###,##0.00}">
+    	    <apex:param value="{!m.Amount}" />
+    	</apex:outputText>
+    	&nbsp;</td>
+    </tr>
+  </apex:repeat>
+
+  <tr>
+    <td  class="gBorderB" scope="row">Sales Tax or Tax I.D.</td>
+    <td align="right" class="gBorderB">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!dealer__Service_Repair_Order__c.dealer__Customer_Tax__c}" /> <!-- BLL2a -->
+        <!-- apex : param value="{ ! dealer__Service_Repair_Order__c.dealer__Tax__c}" / BLL2d -->
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  <!--BLL14-->
+  <apex:outputText rendered="{!AND(WarrantyDeductible!=null,WarrantyDeductible>0)}" >
+  <tr>
+    <td  class="gBorderB" scope="row">Warranty Deductible</td>
+    <td align="right" class="gBorderB">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!WarrantyDeductible}" />
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  </apex:outputText>
+  <!--BLL14-->
+  <apex:outputText rendered="{!NOT(ISBLANK(dealer__Service_Repair_Order__c.dealer__Discount_Total__c))}" >
+  <tr>
+    <td  class="gBorderB" scope="row">Discounts</td>
+    <td align="right" class="gBorderB">
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+        <apex:param value="{!dealer__Service_Repair_Order__c.dealer__Discount_Total__c}" />
+      </apex:outputText>      &nbsp;</td>
+  </tr>
+  </apex:outputText>
+  <tr>
+    <td  class="gBorderB lPrint" scope="row"><b>Total Invoice</b></td>
+    <td align="right" class="gBorderB lPrint"><b>
+      <apex:outputText value="{0, number, $#,###,##0.00}">
+		<!--BLL14-->
+        <apex:param value="{!dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c+NULLVALUE(WarrantyDeductible,0)}" /><!-- BLL14a -->
+        <!--BLL14d apex:param value="{!dealer__Service_Repair_Order__c.CustomerInvoiceTotal__c}" /--><!-- BLL2a -->
+        <!-- BLL2d apex : param value="{ ! dealer__Service_Repair_Order__c.dealer__Customer_Invoice_Total__c}" / -->
+      </apex:outputText></b>      &nbsp;</td>
+  </tr>
+
+<!-- BLL4a Add additional work order language -->
+    <tr>
+        <td colspan="2">
+        <table width="100%" style="margin-top:3px; padding:0">
+            <tr>
+                <td width="125" class="cGrey">Method of payment </td>
+                <td width="*" class="cGrey">__ Cash &nbsp;&nbsp;&nbsp;__ Check &nbsp;&nbsp;&nbsp; __ Credit card </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="cGrey"> __ Other _______________________</td>
+            </tr>
+            <tr>
+                <td width="125" class="cGrey">Return old parts to me </td>
+                <td width="*" class="cGrey">___ Yes &nbsp;&nbsp;&nbsp;__ No</td>
+            </tr>
+        </table> 
+        </td>
+    </tr>
+  
+    </table>
+    </td>
+  </tr>
+
+    <tr valign="top">
+        <td colspan="2" class="HEADERBL TinyPrint cGrey">
+<p>I authorize the work set forth in this document to be done. This includes all necessary materials,
+parts, and labor. I understand that if on closer analysis a determination is made that additional
+labor, parts, or materials are necessary to complete the requested work, I will be contacted for
+authorization only if the amount I have to pay will be increased.</p>
+<p>I agree that Dealer is not responsible for any loss or damage to the vehicle or any articles left in
+the vehicle in case of fire, theft, accident, or any other cause. Also, Dealer is not responsible for
+delays caused by things out of Dealer’s control, such as unavailability of parts or delays in parts
+shipment by any supplier or transporter.</p>
+<p>I grant Dealer, and all of Dealer’s employees, agents, and affiliates permission to operate the
+vehicle anywhere necessary to inspect, test, repair, or deliver.</p>
+<p>I agree to pay all of Dealer’s charges as reflected in this document. I agree to this irrespective of
+whether insurance has agreed to cover some or all of the charges or whether I believe that
+insurance will cover some of all of the charges. I agree that if any payments come to me in error
+I will immediately forward the payment to Dealer. I grant Dealer limited Power of Attorney for
+the purpose of endorsing insurance checks in the event co-pay insurance checks and/or drafts are
+issued to Dealer for its work.</p>
+<p>A storage fee of $25 per day may be applied to vehicles which are not claimed within 3 working days
+of notification of completion.</p>
+<p>In the event legal action is necessary to enforce this contract, or any lien related to repairs, I
+agree to pay Dealer’s reasonable attorney fees and costs for that.</p>
+<p>I agree that if I should stop the work authorized by this document for any reason I will be
+responsible for the cost of all work completed to that point, including all labor, parts, and
+materials.</p>
+<p>I understand that Dealer makes no warranty, express or implied, on any portion of the vehicle
+and/or any repairs performed by Dealer. DEALER DISCLAIMS ALL WARRANTIES,
+EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY IMPLIED
+WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.</p>
+
+        </td>
+    </tr>
+
+<!-- BLL8d /table --><!-- BLL4a -->
+
+<!-- BLL8d table width="100%" border="0" cellpadding="0" cellspacing="3" class="dontsplit" --><!-- BLL4a change proportions -->
+  <tr>
+    <td valign="top" width="40%">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0;padding:0;">
+    
+<tr>
+<td class="TinyPrint cGrey" style="margin:0;padding:0;">
+<p>This document is not a warranty and nothing that Dealer says or does creates a warranty on any
+parts or service work, or otherwise. In addition, except in states that do not allow limitation of
+damages, the following limitation of damages applies: DEALER DISCLAIMS ANY
+INCIDENTAL AND/OR CONSEQUENTIAL DAMAGES SUCH THAT I AM NOT
+ENTITLED TO INCIDENTAL OR CONSEQUENTIAL DAMAGES FROM DEALER.</p>  
+<p>
+* Any parts needed or estimated will be noted as N=New, U=Used, R=Rebuilt or RC=Reconditioned on part line.
+</p>
+
+<apex:outputPanel layout="none" rendered="{!userLoc.dealer__State__c!='CA'}"><!-- BLL4 TODO Remove hard-coded state -->
+<p>
+** This charge represents costs and profits to the motor vehicle repair facility for miscellaneous shop supplies or waste disposal. 
+</p>
+</apex:outputPanel>
+</td>
+</tr>
+
+  <tr>
+    <td valign="bottom" bgcolor="#09F000" scope="row" colspan="4" class="HEADER" style="font-size:9px" >NO RETURN ON ELECTRICAL OR SAFETY ITEMS OR SPECIAL ORDERS</td>
+  </tr>
+  <tr>
+    <td scope="row" colspan="4" style="border-bottom:1px solid #666;"><span class="BigPrint">X</span>&nbsp;</td>
+   
+  </tr>
+  <tr>
+  <td scope="row" colspan="4">Owner or Authorized Representative</td>
+  </tr>
+
+<!-- BLL4a additional work order language end -->
+
+   <tr class="HEADERB">
+  <td colspan="2" align="center" class="mPrint">&nbsp;</td>
+  </tr>
+</table></td>
+
+    <!-- BLL4a -->
+    <td>
+    <div style="font-size:12pt; color:#333333; padding:.5em; border:.5px solid #333333;">
+PLEASE READ CAREFULLY, CHECK ONE OF THE STATEMENTS BELOW, AND SIGN:<br/>
+I UNDERSTAND THAT, UNDER STATE LAW, I AM ENTITLED TO A WRITTEN ESTIMATE IF MY FINAL BILL WILL EXCEED $100.<br/>
+____ I REQUEST A WRITTEN ESTIMATE.<br/>
+____ I DO NOT REQUEST A WRITTEN ESTIMATE AS LONG AS THE REPAIR COSTS DO NOT EXCEED $__________. THE SHOP MAY NOT EXCEED THIS AMOUNT WITHOUT MY WRITTEN OR ORAL APPROVAL.<br/>
+____ I DO NOT REQUEST A WRITTEN ESTIMATE.<br/>
+<br/>
+<table width="100%">
+    <tr>
+        <td>SIGNED</td>
+        <td style="width:32em; border-bottom: 1px solid black;">&nbsp;</td> 
+        <td>DATE</td>
+        <td style="width:10em; border-bottom: 1px solid black;">&nbsp;</td>
+    </tr>
+</table>
+</div>  
+    </td>
+    <!-- BLL4a end -->
+    
+  </tr>
+</table>
+</div><!-- BLL8a -->
+</apex:page>

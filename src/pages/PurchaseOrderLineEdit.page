@@ -1,0 +1,5 @@
+<!-- used to override std lightning edit modal, which does not refresh the PO screen afterwards-->
+<!-- W-000584 -->
+<apex:page standardController="dealer__Purchase_Order_Line__c">
+	<apex:detail relatedList="true" relatedListHover="true" inlineEdit="true"/>
+</apex:page>

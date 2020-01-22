@@ -1,0 +1,10 @@
+<aura:documentation>
+	<aura:description>Documentation</aura:description>
+	<!--
+		2019-09-09 W-000737 BLL1 default delegated items to show by default and allow searching by proposal number (document name)
+	-->
+	<aura:example name="ExampleName" ref="exampleComponentName" label="Label">
+		Searchable Items to Approve with additional columns for each object. 
+		Also shows delegated approval items.
+	</aura:example>
+</aura:documentation>

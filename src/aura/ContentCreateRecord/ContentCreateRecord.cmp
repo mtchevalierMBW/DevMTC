@@ -1,0 +1,53 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/26/2018
+    Work Item:     W-000421
+    File Name:     ContentCreateRecord.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentLearningCreateContentController">
+    
+    <!--###### MODAL BOX Start######--> 
+    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <!-- ###### MODAL BOX HEADER Start ######-->
+            <header class="slds-modal__header">
+                <lightning:buttonIcon iconName="utility:close"
+                                      onclick="{! c.closeModel }"
+                                      alternativeText="close"
+                                      variant="bare-inverse"
+                                      class="slds-modal__close"/>
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">About Sfdcmonkey.com</h2>
+            </header>
+            <!--###### MODAL BOX BODY Part Start######-->
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                <p><b>The goal of this blog is to provide tips and tricks/workarounds for salesforce developer and admins.
+                    Many of us face the same issues and have the same questions when using and implementing Salesforce.
+                    As a community of users and developers, it is important for us to share our experiences.
+                    I try to reach out to other users and help the Salesforce community in general.
+                    Much of this blog will focus on Lightning(code &amp; config.) but I will also
+                    cover some of the more basic topics in salesforce.
+                    </b>
+                </p>
+            </div>
+            <!--###### MODAL BOX FOOTER Part Start ######-->
+            <footer class="slds-modal__footer">
+                <lightning:button variant="neutral" 
+                                  label="Cancel"
+                                  title="Cancel"
+                                  onclick="{! c.closeModel }"/>
+                <lightning:button variant="brand" 
+                                  label="Like and Close"
+                                  title="Like and Close"
+                                  onclick="{! c.likenClose }"/>
+            </footer>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+    <!--###### MODAL BOX Part END Here ######-->
+
+</aura:component>

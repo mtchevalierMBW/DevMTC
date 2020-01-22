@@ -1,0 +1,89 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/13/2018
+    Work Item:     W-000421
+    File Name:     ContentTagComponent.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentTagComponentController">
+    
+    <!-- Global attribute for the selected Content -->
+    <aura:attribute name="content" type="Content__c" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler event="c:ContentEvent" action="{!c.handleContentEvent}"/>
+
+    <!-- Global attribute for the All Tags related to a given Content Record -->
+    <aura:attribute name="tags" type="Tag__c[]" />
+    <aura:method name="initTags" action="{!c.initContentTagSelected}" description="function to query the system for all the available Tags" />
+
+    <!-- Global attribute for the selected Tags related to a given Content Record -->
+    <aura:attribute name="contentTags" type="Content_Tag__c[]" />
+    <aura:method name="initContentTags" action="{!c.initContentTagUnselected}" description="function to query the system for all chosen tags thus far for a given Content record" />
+
+    <aura:attribute name="selectedTagMappings" type="Content_Tag__c[]" />
+    <aura:attribute name="columns" type="List" />
+    <aura:attribute name="maxRowSelection" type="Integer" default="100"/>
+
+    <aura:if isTrue="{!v.content != null}">
+        <article class="slds-card">
+            <div class="slds-p-horizontal_small">
+                <lightning:card title="Tag Selection">
+                    
+                    <aura:if isTrue="{!v.content == null}">
+                        <div class="slds-p-horizontal_small">
+                            No Content Selected
+                        </div>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.content != null}">
+                        <lightning:layout horizontalAlign="left">
+
+                            <!-- Available Tags -->
+                            <lightning:layoutItem size="5">
+                                
+                                <lightning:select label="Available" name="a_opt" aura:id="a_opt" onchange="{!c.change}">
+                                    <option value="">...Select a Tag...</option>
+                                    <aura:iteration items="{!v.tags}" var="tag">
+                                        <option value="{!tag.Id}">{!tag.Name}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            
+                            </lightning:layoutItem>
+                            
+                            <!-- Controls -->
+
+                            <lightning:layoutItem size="1">
+                            
+                                <center>
+                                    <div class="slds-button-group slds-list_vertical-space-medium" role="group">
+                                        <ul>
+                                            <li><lightning:button variant="brand" label="" iconName="utility:left" onclick="{! c.tagSelectionRemove }" /></li>
+                                            <br/>
+                                            <li><lightning:button variant="brand" label="" iconName="utility:right" onclick="{! c.tagSelectionAdd }" /></li>
+                                        </ul>
+                                    </div>
+                                </center>
+
+                            </lightning:layoutItem>
+
+                            <!-- Selected Tags -->
+                            <lightning:layoutItem size="6">
+                                
+                                <lightning:datatable 
+                                            data="{!v.contentTags}" 
+                                            columns="{!v.columns}" 
+                                            keyField="id"
+                                            onrowselection="{!c.tableSelection}"/>
+
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                    </aura:if>
+                </lightning:card>
+            </div> 
+        </article>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,427 @@
+<!-- 
+	2016-01-15	B. Leaman	BLL1 IT18618 - Add "Do not create solution opportunity" checkbox
+	2016-08-31	B. Leaman	BLL2 remove references to arcadiumrefs__c (arcadiummatches method)
+	2017-11-20	B. Leaman	BLL3 add checkbox to override duplicate management.
+	2019-07-27  A. Miller   AMM1 W-000552
+ -->
+ <apex:page standardController="Lead" extensions="LeadConversion_EXT" doctype="html-5.0"
+ lightningStyleSheets="true">
+ <!--  apex : page controller="LeadConversion_CTLR" doctype="html-5.0" -->
+ 
+ <style>
+ input.lookupButtonOnly {
+  width:0; border:none; background:transparent;
+ }
+ input.emptyDependentLookup {display:none;}
+ img.closeIcon {display:none;}
+ img.closeIconOn {display:none;} 
+ </style>
+	 <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+	 <script type="text/javascript">
+	 $j = $.noConflict(); 
+	 </script>
+	 <apex:form >
+ 
+		 <!-- want these filled in when screen refreshes after error -->
+		 <apex:InputHidden value="{!solOpp.dealer__Customer_Account__c}"/>
+		 <apex:InputHidden value="{!solOpp.BuyerContact__c}"/>
+ 
+		 <apex:pageBlock title="Convert Lead" mode="maindetail" id="leadSection"> 
+			
+			 <!-- Lead information -->
+			 <apex:pageBlockSection title="Lead" rendered="{!NOT(ISNULL(leadRcd))}"
+									collapsible="false" columns="2">
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Lead name"/>
+				<apex:outputPanel >
+					<apex:outputLink value="{!viewLeadUrl}"><apex:outputText value="{!leadRcd.Name}"/></apex:outputLink>
+					<apex:outputLink value="{!editLeadUrl}" style="margin-left:1em;">[edit]</apex:outputLink>
+				</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel >Record type</apex:outputLabel>
+				<apex:outputText value="{!leadRcdTypeName}" label="Record Type"/>
+				</apex:pageBlockSectionItem>
+				<apex:outputField value="{!leadRcd.Email}"/>
+				<apex:outputField value="{!leadRcd.Owner.Name}" label="Lead Owner"/>
+				<apex:outputField value="{!leadRcd.Phone}"/>
+				<apex:outputField value="{!leadRcd.Status}"/>
+				<apex:outputField value="{!leadRcd.Company}"/>
+				<apex:outputField value="{!leadRcd.CreatedBy.Name}" label="Created By"/>
+				<apex:outputText value="{!leadAddress}" label="Address"/>
+				<apex:outputField value="{!leadRcd.CreatedDate}"/>
+			 </apex:pageBlockSection>
+		 </apex:pageBlock>
+		 
+		 <apex:pageBlock title="Similar accounts" mode="maindetail">
+			 <apex:pageBlockTable value="{!similarAccounts}" var="a"  rendered="{!foundSimilarAccounts}">
+				 <apex:column >
+					 <apex:facet name="header">Name</apex:facet>
+					 <apex:outputLink value="/{!a.AccountId}">{!a.Name}</apex:outputLink>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Account Type</apex:facet>
+					 <apex:outputText value="{!a.RecordTypeName}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Phone</apex:facet>
+					 <apex:outputText value="{!a.Phone}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Mobile Phone</apex:facet>
+					 <apex:outputText value="{!a.MobilePhone}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Email</apex:facet>
+					 <apex:outputText value="{!a.Email}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Street</apex:facet>
+					 <apex:outputText value="{!a.Street}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">City</apex:facet>
+					 <apex:outputText value="{!a.City}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">State</apex:facet>
+					 <apex:outputText value="{!a.State}"/>
+				 </apex:column>
+				 <apex:column >
+					 <apex:facet name="header">Postal code</apex:facet>
+					 <apex:outputText value="{!a.PostalCode}"/>
+				 </apex:column>
+			 </apex:pageBlockTable>
+			 <apex:outputText rendered="{!NOT(foundSimilarAccounts)}">No similar accounts found</apex:outputText>
+		 </apex:pageBlock>
+		 
+		 <apex:pageBlock title="Process" mode="edit"> 
+		 <apex:actionRegion >
+				 <apex:pageBlockSection title=" " collapsible="false" columns="2" rendered="{!OR(toRetail,toCommercial)}"> 
+					 <apex:inputField value="{!account.Store_Location__c}" required="true"
+							onkeypress="javascript:return noEnterKey(this, event);">
+					 <apex:actionSupport event="onchange" action="{!setSelectedStore}" reRender="detailInfo,managerInfo,processInfo,solutionType,messageSection"/>
+					 </apex:inputField>
+				 </apex:pageBlockSection>
+			 
+				 <apex:pageBlockSection title=" " collapsible="false" id="processInfo" showHeader="false" columns="1">
+					 <apex:pageBlockSectionItem rendered="{!OR(NOT(toRetail),NOT(legacyStore))}">
+						 <apex:outputLabel value="Conversion Process"/>
+						 <apex:outputPanel >
+							<div class="requiredInput">
+							   <div class="requiredBlock"></div>
+							   <apex:selectList size="1" value="{!procRcdTypeId}" required="true">
+							   <apex:actionSupport event="onchange" action="{!setProcess}" reRender="detailInfo,solutionType,messageSection"/>
+							   <apex:selectOptions value="{!procRcdTypes}"/>
+							   </apex:selectList>
+							</div>
+						 </apex:outputPanel>
+					 </apex:pageBlockSectionItem>   
+					 <apex:pageBlockSectionItem rendered="{!AND(legacyStore,toRetail)}">
+						 <apex:outputLabel value="Conversion Process"/> <!--  rendered="{ ! OR(NOT(toRetail),NOT(legacyStore)) }" -->
+						 <apex:outputPanel >
+							 <apex:outputText >Legacy stores use Arcadium</apex:outputText>
+						 </apex:outputPanel>
+					 </apex:pageBlockSectionItem>
+				  </apex:pageBlockSection>
+		 </apex:actionRegion>
+ 
+		 <apex:actionRegion >
+				  <apex:pageBlockSection id="solutionType" showHeader="false">
+					 <apex:pageBlockSectionItem ><!--  rendered="{ ! AND(legacyStore!=true,retailCustomer==true)" } -->
+						 <apex:outputLabel >Solution Type</apex:outputLabel>                    
+						 <apex:inputField value="{!solOpp.Solution_Type__c}" required="true"> 
+						 <apex:actionSupport event="onchange" action="{!setProcess}" reRender="detailInfo,managerInfo"/>
+						 </apex:inputField>
+					 </apex:pageBlockSectionItem>
+				 </apex:pageBlockSection>
+		 </apex:actionRegion>
+ 
+		 <apex:actionRegion >
+			 <apex:pageBlockSection showHeader="false" columns="1" id="managerInfo">
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel value="{!ownerType}"/>
+					 <apex:outputText value="{!owner.Name}"/>
+				 </apex:pageBlockSectionItem>
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel >New account owner</apex:outputLabel>
+					 <apex:selectList size="1" value="{!newownerId}">
+						 <apex:actionSupport event="onchange" action="{!setProcess}" reRender="detailInfo"/>
+						 <apex:selectOptions value="{!locationUsers}"/>
+					 </apex:selectList>
+				 </apex:pageBlockSectionItem>
+			 </apex:pageBlockSection>
+		 </apex:actionRegion>
+				 
+		 <apex:pageMessages id="messageSection"/>
+		 
+		 </apex:pageBlock>
+ 
+		 <apex:actionFunction action="{!setProcess}" name="setProcess" reRender="detailInfo"/>
+			
+		 <apex:pageBlock title="Customer" mode="edit" id="detailInfo" rendered="{!AND(NOT(isConverted),validLead)}">
+ 
+	 <apex:actionFunction name="convertLead" action="{!convert}"/>
+ 
+			 <apex:pageBlockButtons id="buttonSection">
+				 <apex:commandButton id="btn_convert" onclick="this.disabled=true;disableBtns('btn_convert','Processing...');convertLead();" value="Convert" rendered="{!OR(NOT(toRetail),NOT(legacyStore))}"/>
+				 <apex:commandButton action="{!sendToArcadium}" value="Send to Arcadium" rendered="{!AND(legacyStore,toRetail)}"/>
+				 <apex:commandButton action="{!sendEmailOnly}" value="Send Email Only" rendered="{!AND(legacyStore,toRetail)}"/>
+				 <apex:commandButton action="{!markQualified}" value="Mark qualified" rendered="{!AND(false,!legacyStore,toRetail,leadRcd.Status!='Qualified')}"
+									 reRender="leadSection,buttonSection"/>
+			 </apex:pageBlockButtons>
+ 
+			 <!-- BLL2d Legacy information -->
+			 <!-- apex:pageBlockSection title="Legacy Process (Arcadium)" rendered="{!AND(legacyStore,toRetail)}"
+									collapsible="false" columns="1" -->
+				 <!-- apex:pageBlockTable value="{!arcadiumMatches}" var="a" -->
+					 <!-- apex:column value="{!a.Name}" / -->
+					 <!-- apex:column value="{!a.Email__c}" / -->
+					 <!-- apex:column value="{!a.Alternate_email__c}" / -->
+					 <!-- apex:column value="{!a.Home_phone__c}" / -->
+					 <!-- apex:column value="{!a.Cell_phone__c}" / -->
+					 <!-- apex:column value="{!a.Work_phone__c}" / -->
+					 <!-- apex:column value="{!a.MW_Id__c}" / -->
+					 <!-- apex:column value="{!a.Arcadium_key__c}" / -->
+				 <!-- /apex:pageBlockTable -->
+			 <!-- /apex:pageBlockSection -->
+ 
+ <!-- BLLxa -->
+ <!-- apex : actionFunction name="selectAccount" action=" { ! selectAccount}" rerender="accountSection"/ -->
+ 
+			 <!-- New or existing Account & Store assignment -->
+					<apex:actionRegion >
+			 <apex:pageBlockSection title="Account" rendered="{!AND(crtAccount)}" 
+									collapsible="false" columns="2" id="accountSection">
+ 
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel value="Account Name"/>
+					 <apex:outputPanel >
+						<div class="requiredInput" style="width:85%;display:inline-block;">
+						   <div class="requiredBlock"></div>
+							   <apex:selectList value="{!accountSelection}" style="width:100%;" size="1">
+							   <apex:selectOptions value="{!acctNameOptions}"/>
+							   <apex:actionSupport event="onchange" action="{!assignAccount}" reRender="accountSection"/> 
+							   </apex:selectList>
+						</div>
+ 
+							 <apex:inputField value="{!solOpp.dealer__Customer_Account__c}" label="" styleClass="lookupButtonOnly" > <!--  rendered = " { ! NOT(toPersonAccount)}" -->
+								 <apex:actionSupport event="onchange" action="{!assignAccount}" reRender="accountSection"/> 
+							 </apex:inputField>
+							 <!--  contact.AccountId -->
+							 <apex:outputText rendered="{!toPersonAccount}"/>
+					 </apex:outputPanel>
+				 </apex:pageBlockSectionItem><!-- BLL3c moved to include lookup icon -->
+ 
+				 <!-- BLL3a -->
+				 <apex:pageBlockSectionItem ><!-- rendered=" { ! $Permission.canBypassDuplicateValidations}" -->
+					 <apex:outputLabel >Bypass Duplicate Account Validation</apex:outputLabel>
+					 <apex:inputCheckbox value="{!overrideDuplicateMatching}"
+						 label="Bypass Duplicate Account Validation"/>
+				 </apex:pageBlockSectionItem>
+				 <!--  apex : pageBlockSectionItem rendered=" { ! NOT( $ Permission.canBypassDuplicateValidations)}"/ -->
+				 <!-- BLL3a end -->
+ 
+				 <apex:pageBlockSectionItem rendered="{!NOT(toPersonAccount)}">
+					 <apex:outputLabel value="Contact Name"/>
+					 <apex:outputPanel >
+						<div class="requiredInput" style="width:85%;display:inline-block;">
+						   <div class="requiredBlock"></div>
+							   <apex:selectList value="{!contactSelection}" style="width:100%;" size="1">
+							   <apex:selectOptions value="{!contNameOptions}"/>
+							   </apex:selectList>
+						</div>
+ 
+							 <apex:inputField value="{!solOpp.BuyerContact__c}" label="" styleClass="lookupButtonOnly" > <!--  rendered = " { ! NOT(toPersonAccount)}" -->
+								 <apex:actionSupport event="onchange" action="{!assignContact}" reRender="accountSection"/> 
+							 </apex:inputField>
+							 <!--  contact.AccountId -->
+							 <apex:outputText rendered="{!toPersonAccount}"/>
+					 </apex:outputPanel>
+				 </apex:pageBlockSectionItem><!-- BLL3c moved to include lookup icon -->
+ 
+ 
+			 </apex:pageBlockSection>
+				   </apex:actionRegion>
+ 
+			 <!-- New Contact (automatic) -->
+			 <!-- apex:pageBlockSection title="Contact" rendered="{!AND(false,crtContact,NOT(toRetail))}"
+									collapsible="false" columns="1" -->
+			 <!-- /apex:pageBlockSection -->
+ 
+			 <!-- New or Existing Household -->
+			 <apex:pageBlockSection title="Household" rendered="false"
+									collapsible="false" columns="1">
+			 </apex:pageBlockSection>
+ 
+			 <!-- New Opportunity -->
+			 <apex:pageBlockSection title="Opportunity" rendered="{!crtOpportunity}"
+									collapsible="false" columns="2" id="opportunitySection">
+				 <apex:inputField value="{!opportunity.Name}" style="width:100%;" required="{!OppFieldsRequired}"/>
+				 <apex:pageBlockSectionItem />
+				 <apex:inputField value="{!opportunity.StageName}" required="{!IF(AND(OppFieldsRequired=='true',NOT(doNotCreateOpportunity)),'true','false')}"/>
+				 <apex:inputField value="{!opportunity.CloseDate}" required="{!IF(AND(OppFieldsRequired=='true',NOT(doNotCreateOpportunity)),'true','false')}"/>
+				 <apex:pageBlockSectionItem >
+				 <apex:outputLabel >Do not create an opportunity</apex:outputLabel>
+				 <apex:outputPanel >
+				 <apex:actionRegion >
+				 <apex:inputCheckbox value="{!doNotCreateOpportunity}">
+					   <apex:actionSupport event="onchange" action="{!dummyFunction}" reRender="opportunitySection"/>
+				 </apex:inputCheckbox>
+				 </apex:actionRegion>
+				 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+			 </apex:pageBlockSection>
+ 
+			 <!-- New Solution Opportunity -->
+			 <apex:pageBlockSection title="Solution Opportunity" rendered="{!AND(crtSolutionOpportunity,NOT(AND(legacyStore,toRetail)))}"
+									collapsible="false" columns="1" id="solopportunitySection">
+				 <apex:inputField value="{!solOpp.Name}" label="Solution Opportunity Name" style="width:50%;" required="{!NOT(doNotCreateSolutionOpportunity)}"/><!-- BLL20c -->
+				 <apex:pageBlockSectionItem >
+				 <apex:outputLabel >Do not create a solution opportunity</apex:outputLabel>
+				 <apex:outputPanel >
+				 <apex:inputCheckbox value="{!doNotCreateSolutionOpportunity}"><!-- BLL1a -->
+					   <apex:actionSupport event="onchange" action="{!dummyFunction}" reRender="solopportunitySection"/>
+				 </apex:inputCheckbox>
+				 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+			 </apex:pageBlockSection>
+ 
+			 <!-- New First Visit appointment -->
+			 <apex:pageBlockSection title="Sales Appointment" rendered="{!crtSalesAppointment}"
+									collapsible="false" columns="2" id="salesAppointmentSection">
+				 <apex:inputField value="{!salesAppointment.dealer__Appointment_Type__c}" required="{!IF(AND(SlsApptFieldsRequired=='true',NOT(doNotCreateSalesAppointment)),'true','false')}"/>
+				 <apex:inputField value="{!salesAppointment.dealer__Confirmed__c}"/>
+				 <apex:inputField value="{!salesAppointment.dealer__Date__c}" required="{!IF(AND(SlsApptFieldsRequired=='true',NOT(doNotCreateSalesAppointment)),'true','false')}"/>
+				 <apex:input value="{!salesAppointmentTime}" type="time" html-step="300" label="Time" required="{!IF(AND(SlsApptFieldsRequired=='true',NOT(doNotCreateSalesAppointment)),'true','false')}"/>
+				 <apex:inputField value="{!salesAppointment.dealer__Notes__c}" html-data-autoresize="auto" style="width:100%;"
+								  required="{!IF(AND(SlsApptFieldsRequired=='true',NOT(doNotCreateSalesAppointment)),'true','false')}"/>
+				 <apex:pageBlockSectionItem >
+				   <apex:outputText />
+				   <apex:outputText value="{!timezonename}"/>
+				 </apex:pageBlockSectionItem>
+				 <apex:pageBlockSectionItem >
+				 <apex:outputLabel >Do not create an appointment</apex:outputLabel>
+				 <apex:outputPanel >
+				 <apex:actionRegion >
+				 <apex:inputCheckbox value="{!doNotCreateSalesAppointment}">
+					   <apex:actionSupport event="onchange" action="{!dummyFunction}" reRender="salesAppointmentSection"/>
+				 </apex:inputCheckbox>
+				 </apex:actionRegion>
+				 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+				 <!-- AMM1 -->
+				 <apex:inputField value="{!salesAppointment.Appointment_location__c }" required="{!IF(AND(SlsApptFieldsRequired=='true',NOT(doNotCreateSalesAppointment)),'true','false')}"/>
+				 <!-- /AMM1 -->
+			 </apex:pageBlockSection>
+ 
+			 <!-- New Task -->
+			 <apex:pageBlockSection title="Task" rendered="{!crtTask}"
+									collapsible="false" columns="1" id="taskSection">
+				 <apex:inputField value="{!task.Subject}" style="width:50%;" required="{!IF(AND(TaskFieldsRequired=='true',NOT(doNotCreateTask)),'true','false')}"/>
+				 <apex:inputField value="{!task.ActivityDate}" required="{!IF(AND(TaskFieldsRequired=='true',NOT(doNotCreateTask)),'true','false')}"/>
+				 <apex:inputField value="{!task.Description}" html-data-autoresize="auto" style="width:50%;" required="false"/>
+				 <apex:pageBlockSectionItem >
+				 <apex:outputLabel >Do not create a task</apex:outputLabel>
+				 <apex:outputPanel >
+				 <apex:actionRegion >
+				 <apex:inputCheckbox value="{!doNotCreateTask}">
+					   <apex:actionSupport event="onchange" action="{!dummyFunction}" reRender="taskSection"/>
+				 </apex:inputCheckbox>
+				 </apex:actionRegion>
+				 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+			 </apex:pageBlockSection>
+ 
+			 <!-- New Email -->
+			 <apex:pageBlockSection title="Notify by Email" rendered="{!sndEmail}"
+									collapsible="false" columns="1" id="emailSection">
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel >Recipient(s)</apex:outputLabel>
+				 <apex:outputPanel >
+					 <div class="{!IF(emailFieldsRequired=='true','requiredInput','')}">
+						 <div class="{!IF(emailFieldsRequired=='true','requiredBlock','')}"></div>
+						 <apex:inputText value="{!recipients}" label="Email Recipient" style="width:50%;"
+										 required="{!IF(AND(emailFieldsRequired=='true',NOT(doNotSendEmail)),'true','false')}"/>
+					 </div>
+				 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+				 
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel >Subject</apex:outputLabel>
+					 <apex:outputPanel >
+					 <div class="{!IF(emailFieldsRequired=='true','requiredInput','')}">
+						 <div class="{!IF(emailFieldsRequired=='true','requiredBlock','')}"></div>
+							 <apex:inputText value="{!subject}" label="Subject" style="width:50%;"
+								   required="{!IF(AND(emailFieldsRequired=='true',NOT(doNotSendEmail)),'true','false')}"/>
+						 </div>
+					 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+				 
+				 <apex:pageBlockSectionItem >
+					 <apex:outputLabel >Message</apex:outputLabel>
+					 <apex:outputPanel >
+					 <div class="{!IF(emailFieldsRequired=='true','requiredInput','')}">
+						 <div class="{!IF(emailFieldsRequired=='true','requiredBlock','')}"></div>
+							 <apex:inputTextarea value="{!message}" label="Message" html-data-autoresize="auto" style="width:75%;"
+								   required="{!IF(AND(emailFieldsRequired=='true',NOT(doNotSendEmail)),'true','false')}"/>
+					 </div>
+					 </apex:outputPanel>
+				 </apex:pageBlockSectionItem>
+				 
+				 <apex:pageBlockSectionItem >
+				 <apex:outputLabel >Do not send a notification</apex:outputLabel>
+				 <apex:actionRegion >
+				 <apex:inputCheckbox value="{!doNotSendEmail}" >
+					 <apex:actionSupport event="onchange" action="{!dummyFunction}" reRender="emailSection"/>
+				 </apex:inputCheckbox>
+				 </apex:actionRegion>
+				 </apex:pageBlockSectionItem>
+			 </apex:pageBlockSection>
+			
+			 <!-- apex:pageBlockTable value="{!getter}" var="t"> 
+				<apex:column value="{!t.Name}"/>
+				<apex:column value="{!t.Description}"/>
+			 </apex:pageBlockTable -->
+			
+ <script type="text/javascript">
+	 $j.each($j('textarea[data-autoresize=auto]'), function() {  
+		 var offset = this.offsetHeight - this.clientHeight;
+		 var resizeTextarea = function(el) {
+			 $j(el).css('height', 'auto').css('height', el.scrollHeight + offset);
+		 };
+		 $j(this).on('keyup input', function() { resizeTextarea(this) }).removeAttr('data-autoresize').css({'overflow':'hidden'});  
+		 resizeTextarea(this); // initial resize!
+	 });
+ </script>
+ 
+		 </apex:pageBlock>
+ 
+ <script type="text/javascript">
+ setProcess();
+ function noEnterKey(elem, ev) {
+	 //if (console) console.log('ev.which=' + ev.which);
+	 //if (console) console.log('window.event.keyCode=' + window.event.keyCode);
+	 if ((window.event && window.event.keyCode == 13) || ev.which == 13) {
+		 if (ev && ev.preventDefault) {ev.preventDefault();}
+		 if (window.event && window.event.preventDefault) {window.event.preventDefault();}
+		 elem.blur();
+		 return false;
+	 }
+	 return true;
+ }
+ //function selectedAnAccount() {
+ //	selectAccount();
+ //}
+ 
+ // To disable top & bottom versions...
+ function disableBtns(btn, newText) {
+	 var btnselector = 'input[id$='+btn+']';
+	 $j(btnselector).prop('disabled',true).addClass('btnDisabled');
+	 if (newText.length>0) $j(btnselector).val(newText);		
+ }
+ 
+ </script>
+	 </apex:form>
+ 
+ </apex:page>

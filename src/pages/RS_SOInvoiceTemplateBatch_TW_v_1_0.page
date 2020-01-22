@@ -1,0 +1,207 @@
+<apex:page id="pg" standardController="rstk__soinv__c" extensions="rstk.ControllerExtnFSOInv" sideBar="true" action="{!doBeforePageLoad}" renderAs="pdf">
+<head></head>
+<style>
+.logoDiv {
+    height:95px;
+    width:190px;
+}
+.logoDiv img {
+    display: block;
+    height: 100%;
+}
+.cmpLogo {
+    max-height:90px;
+    max-width:185px;
+}
+</style>
+<body style="margin-top: 10px; margin-bottom: 30px; font:normal normal 95%/1.0 arial, times new roman, verdana; ">
+<div id="main" style="font:normal normal 95%/1.0 arial, times new roman, verdana;margin:auto;width:700px;background:#ffffff; ">
+<apex:repeat value="{!pages}" var="page">
+    <div class="headerSect" style="font:normal normal 95%/1.0 arial, times new roman, verdana;width:700px; ">
+      <table cellspacing="0" cellpadding="0" border="0" style="font:normal normal 95%/1.0 arial, times new roman, verdana; cell-padding: 0;cell-spacing: 0;">
+      <tr><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px;">
+        <!-- <div class="logoDiv" style="font:normal normal 95%/1.0 arial, times new roman, verdana; height:95px;width:190px;">
+            <apex:image styleClass="cmpLogo" value="{!relatedTo.rstk__companylogo__c}" rendered="{!!ISBLANK(relatedTo.rstk__companylogo__c)}" style="display: block; height: 100%;max-height:90px;max-width:185px;"/>
+        </div> -->
+        <c:TWEmailLogo />
+        <br/>
+              <apex:panelGrid columns="1" width="100%">
+                   <!-- AMILLER 12/20/2017 made division address dynamic -->
+                   <apex:outputText value="1090 W. Wilbeth Rd, Akron OH 44314  Phone: (330) 861-1118"/> 
+                   <!-- <c:SOInvoiceExtensionComponent /> -->
+              </apex:panelGrid>
+        
+      </td><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px;">
+        <div class="header" style="font:normal normal 95%/1.0 arial, times new roman, verdana; width:480px; border: 1px solid; padding: 4px;">
+            <div class="formTitle" style="font:normal normal 95%/1.0 arial, times new roman, verdana; float:left; font-weight: bold; font-size: 140%; padding-left:4px;">Sales Invoice</div>
+            <div class="pageNumSect" style="font:normal normal 95%/1.0 arial, times new roman, verdana; float:right; ">{!pages.size}</div>
+            <apex:panelGrid styleClass="headerInfo" columnClasses="hdrInfoLbl,hdrInfoData" columns="2" width="100%" style="font:normal normal 95%/1.0 arial, times new roman, verdana;margin-top:24px; padding: 2px;">
+                <apex:outputText style="font-weight: bold; " value="Invoice Number"/>
+                <apex:outputText value="{!relatedTo.rstk__invoiceno__c}"/>
+                <apex:outputText style="font-weight: bold; " value="Invoice Date"/>
+                <apex:outputText value="{0,date,short}">
+                  <apex:param value="{!relatedTo.rstk__invdate__c}"/>
+                </apex:outputText>
+                <apex:outputText style="font-weight: bold; " value="Sales Order Number"/>
+                <apex:outputText value="{!relatedTo.rstk__order__c}"/>
+                <apex:outputText style="font-weight: bold; " value="Customer PO Number"/>
+                <apex:outputText value="{!relatedTo.rstk__custpo__c}"/>
+                <apex:outputText value="Sales Representative"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.Name}"/>
+                <apex:outputText value="Sales Representative Phone"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.MobilePhone}"/>
+                <apex:outputText value="Sales Representative Fax"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.Fax}"/>
+            </apex:panelGrid>
+        </div>
+      </td></tr></table>
+    </div>
+    <table class="addressSect" cellspacing="1" style="font:normal normal 95%/1.0 arial, times new roman, verdana; background-color: #000000; width:700px; margin-top:6px; margin-right:2px;">
+        <tr>
+            <th style="font:normal normal 95%/1.0 arial, times new roman, verdana; text-align:center; font-weight: bold; background-color:#000000; color:#ffffff; padding: 2px;" >Sold To</th><th style="font:normal normal 95%/1.0 arial, times new roman, verdana; text-align:center; font-weight: bold; background-color:#000000; color:#ffffff; padding: 2px;" >Ship To</th>
+        </tr>
+        <tr width="100%">
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; background-color:#ffffff;" valign="top" width="50%">
+            <apex:panelGrid columns="1" width="100%" style="font:normal normal 95%/1.0 arial, times new roman, verdana; ">
+                <apex:outputText value="{!relatedTo.rstk__custno__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address1__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address2__c}" rendered="{!!ISBLANK(relatedTo.rstk__address2__c)}"/>
+                <apex:outputText value="{!relatedTo.rstk__address3__c}" rendered="{!!ISBLANK(relatedTo.rstk__address3__c)}"/>
+                <apex:outputText value="{0}, {1}  {2}">
+                    <apex:param value="{!relatedTo.rstk__city__c}"/>
+                    <apex:param value="{!relatedTo.rstk__state__c}"/>
+                    <apex:param value="{!relatedTo.rstk__zip__c}"/>
+                </apex:outputText>
+                <apex:outputText value="{!relatedTo.rstk__country__c}" rendered="{!!ISBLANK(relatedTo.rstk__country__c)}"/>
+            </apex:panelGrid>
+            </td>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; background-color:#ffffff;" valign="top" width="50%">
+            <apex:panelGrid columns="1" width="100%" style="font:normal normal 95%/1.0 arial, times new roman, verdana; ">
+                <apex:outputText value="{!relatedTo.rstk__shiptoname__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress1__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress2__c}" rendered="{!!ISBLANK(relatedTo.rstk__staddress2__c)}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress3__c}" rendered="{!!ISBLANK(relatedTo.rstk__staddress3__c)}"/>
+                <apex:outputText value="{0}, {1}  {2}">
+                    <apex:param value="{!relatedTo.rstk__stcity__c}"/>
+                    <apex:param value="{!relatedTo.rstk__ststate__c}"/>
+                    <apex:param value="{!relatedTo.rstk__stzip__c}"/>
+                </apex:outputText>
+                <apex:outputText value="{!relatedTo.rstk__stcountry__c}" rendered="{!!ISBLANK(relatedTo.rstk__stcountry__c)}"/>
+                <apex:outputText styleClass="shippingComments" value="{!relatedTo.rstk__stcomments__c}" rendered="{!!ISBLANK(relatedTo.rstk__stcomments__c)}" style=" font-weight:bold;"/>
+           </apex:panelGrid>
+        </td>
+        </tr>
+    </table>
+    <table class="termsSect" style="font:normal normal 95%/1.0 arial, times new roman, verdana; width:700px; margin-top:6px; border: 1px solid;">
+        <tr>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 17%; font-weight: bold;"><b>Contact Info</b></td><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 33%;">{!relatedTo.rstk__contact__c}</td>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 15%; font-weight: bold;"><b>{!relatedTo.rstk__conmethod__c}</b></td><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 35%;">
+            <apex:outputText rendered="{!OR(relatedTo.rstk__conmethod__c='Email',relatedTo.rstk__conmethod__c='Text to Email')}" value="{!relatedTo.rstk__email__c}"/>
+            <apex:outputText rendered="{!OR(relatedTo.rstk__conmethod__c='Phone',relatedTo.rstk__conmethod__c='Text to Phone')}" value="{!relatedTo.rstk__phone__c}"/>
+            <apex:outputText rendered="{!relatedTo.rstk__conmethod__c='Fax'}" value="{!relatedTo.rstk__fax__c}"/>
+            </td>
+        </tr><tr>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top;width: 17%; font-weight: bold;" ><b>Credit Terms</b></td><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 33%;" >{!relatedTo.rstk__terms__c}</td>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 15%; font-weight: bold;" ><b>Due Date</b></td>
+            <td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; vertical-align:top; width: 35%;" >
+            <apex:outputText value="{0,date,short}">
+                <apex:param value="{!relatedTo.rstk__duedate__c}" />
+            </apex:outputText>
+            </td>
+        </tr>
+    </table>
+    <apex:dataTable headerClass="linesHeader" styleClass="lines" value="{!page.lines}" var="l"
+        columnsWidth="4%,50%,5%,11%,8%,9%,10%,3%" style="width:700px; table-layout:fixed; background-color: #ffffff; margin-top:6px; margin-right:2px; border-top: 1px solid; border-bottom: 1px solid; border-right: 1px solid; background-color:#000000; color:#ffffff; padding: 3px; text-align:center; font-weight:bold;">
+        <apex:column headerValue="Line" value="{!l.rstk__invline__c}" style="text-align:right; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;" />
+        <apex:column headerValue="Product" style="overflow:hidden;text-overflow:clip;white-space:nowrap;{!IF(l.rstk__linetype__c='Empty','color:white;','')} background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;">
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='Empty'}">X</apex:outputPanel>
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='Detail'}">{!l.rstk__prod__c}</apex:outputPanel>
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='Prepayment'}">{!l.rstk__comment__c}</apex:outputPanel>
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='PrepaymentApplied'}">{!l.rstk__comment__c}</apex:outputPanel>
+            <apex:outputPanel styleClass="lineDescription" rendered="{!l.rstk__linetype__c='Description'}" style=" font-weight:bold;">
+                <apex:outputText escape="false" value="&nbsp;&nbsp;"/>{!l.rstk__comment__c}
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="lineComment" rendered="{!l.rstk__linetype__c='Comment'}" style="font-style:italic;">
+                <apex:outputText escape="false" value="&nbsp;&nbsp;"/>{!l.rstk__comment__c}
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='Serial'}">
+                <apex:outputText escape="false" value="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"/>{!l.rstk__comment__c}
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!l.rstk__linetype__c='Component'}">
+                <apex:outputText escape="false" value="&nbsp;&nbsp;"/>{!l.rstk__component__c}
+            </apex:outputPanel>
+        </apex:column>
+        <apex:column headerValue="UOM" value="{!l.rstk__uom__c}" style="text-align:center; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;"/>
+        <apex:column headerValue="Shipper" value="{!l.rstk__shipper__c}" style="text-align:left; overflow:hidden; text-overflow:clip; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;"/>
+        <apex:column headerValue="Quantity" style="text-align:right; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;" >
+            <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!OR(l.rstk__linetype__c='Detail',l.rstk__linetype__c='Prepayment')}">
+                <apex:param value="{!l.rstk__qty__c}"/>
+            </apex:outputText>
+            <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!l.rstk__linetype__c='Component'}">
+                <apex:param value="{!l.rstk__qtyship__c}"/>
+            </apex:outputText>
+        </apex:column>
+        <apex:column headerValue="Unit Price" style="text-align:right; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;">
+            <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!l.rstk__linetype__c='Detail'}">
+                <apex:param value="{!l.rstk__price__c}"/>
+            </apex:outputText>
+            <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!l.rstk__linetype__c='Component'}">
+                <apex:param value="{!l.rstk__unitprice__c}"/>
+            </apex:outputText>
+        </apex:column>
+        <!--  JRP1d
+        <apex:column headerValue="Discount" style="text-align:right; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;" >
+            <apex:outputText value="{0,Number,###,###,###,##0.00}%" rendered="{!!ISBLANK(l.rstk__discpct__c)}">
+                <apex:param value="{!l.rstk__discpct__c}"/>
+            </apex:outputText>
+        </apex:column>
+        -->
+        <apex:column headerValue="Extension" style="text-align:right; background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;" >
+            <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!NOT(l.rstk__linetype__c='PrepaymentApplied')}">
+                <apex:param value="{!(l.rstk__price__c - l.rstk__discamt__c) * l.rstk__qty__c}"/>
+            </apex:outputText>
+            <apex:outputText value="({0,Number,###,###,###,##0.00})" rendered="{!l.rstk__linetype__c='PrepaymentApplied'}">
+                <apex:param value="{!(l.rstk__price__c - l.rstk__discamt__c) * l.rstk__qty__c}"/>
+            </apex:outputText>
+         </apex:column>
+        <apex:column headerValue="Tax" styleClass="taxCol" style="background-color:#ffffff;color:#000000; vertical-align:top; padding: 2px; border-left: 1px solid black;font-weight:normal;">
+         <apex:outputText value="{!IF(OR(relatedTo.rstk__taxexempt__c, l.rstk__taxexempt__c),'','Y')}" rendered="{!!ISBLANK(l.rstk__invline__c)}"/>
+        </apex:column>
+    </apex:dataTable>
+</apex:repeat>
+<table class="footerSect" cellpadding="0" cellspacing="0" style="font:normal normal 95%/1.0 arial, times new roman, verdana;width:700px; margin-top:6px; margin-right:2px; border-top: 1px solid; border-bottom: 1px solid; border-right: 1px solid; ">
+  <tr><td style="font:normal normal 95%/1.0 arial, times new roman, verdana; padding: 2px; margin-top: 6px; border-left: 1px solid black;" width="460px" valign="top"><div style="overflow:hidden;max-height:85px;"><apex:outputText escape="false"  value="{!relatedTo.rstk__extcomment__c}"/>
+      </div>
+      </td>
+      <td style="font:normal normal 95%/1.0 arial, times new roman, verdana;padding: 2px; margin-top: 6px; border-left: 1px solid black;" width="230px">
+      <apex:panelGrid styleClass="totalSect" columnClasses="totalLabel,totalAmt" columns="2" width="225px" style="font:normal normal 95%/1.0 arial, times new roman, verdana; ">
+        <apex:outputText value="SubTotal" style="font:normal normal 95%/1.0 arial, times new roman, verdana;border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}" style="font:normal normal 95%/1.0 arial, times new roman, verdana;border: none; text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__total__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Discount" rendered="{!AND(!ISNULL(relatedTo.rstk__discamt__c), relatedTo.rstk__discamt__c>0)}" style="font:normal normal 95%/1.0 arial, times new roman, verdana;border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="({0,Number,###,###,###,###,##0.00})" rendered="{!AND(!ISNULL(relatedTo.rstk__discamt__c), relatedTo.rstk__discamt__c>0)}" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__discamt__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Shipping" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}" style="border: none; text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__freightamt__c+relatedTo.rstk__handlingamt__c+relatedTo.rstk__packageamt__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Tax" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__taxamt__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Prepayment" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="({0,Number,###,###,###,###,##0.00})" style="border: none; text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__totalppya__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Invoice Total" style="font:normal normal 95%/1.0 arial, times new roman, verdana; border: none; font-weight: bold; width: 90px;"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}" style="border: none;text-align:right; width: 140px;">
+            <apex:param value="{!relatedTo.rstk__grandtotal__c - relatedTo.rstk__totalppya__c}"/>
+        </apex:outputText>
+      </apex:panelGrid>
+  </td></tr>
+</table>
+</div>
+</body>
+</apex:page>

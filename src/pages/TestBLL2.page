@@ -1,0 +1,7 @@
+<apex:page >
+    <c:TWEmailLogo />
+    <hr/>
+    <div class="logoDiv">
+      <apex:image styleClass="cmpLogo" value="{!$Resource.Driverge_vertical}"/>
+  </div>
+</apex:page>

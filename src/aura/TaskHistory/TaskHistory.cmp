@@ -1,0 +1,33 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  12/12/2018
+    Work Item:     W-000516
+    File Name:     TaskHistory.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+    Alexander Miller    AMM1         W-000547     1/14/2019  Added logic for wrapping text on the whole data table
+-->
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId,flexipage:availableForRecordHome" access="global" controller="TaskHistoryController">
+    
+    <!-- attributes -->
+    <aura:attribute name="data" type="Object[]"/>
+    <aura:attribute name="columns" type="List"/>
+
+    <!-- handlers-->
+    <aura:handler name="init" value="{!this}" action="{! c.doInit }"/>
+    <!-- AMM1 -->
+    <div class="slds-truncate">
+    <!-- AMM1 --> 
+        <lightning:datatable
+            keyField="id"
+            data="{! v.data }"
+            columns="{! v.columns }"
+            hideCheckboxColumn="true"/>
+    <!-- AMM1 -->
+    </div>
+    <!-- AMM1 -->
+
+</aura:component>

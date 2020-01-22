@@ -1,0 +1,15 @@
+<apex:page showHeader="false" sidebar="false" standardController="Lead" extensions="LeadGeoProxy">
+    <apex:pageBlock title="Store Locator">
+        <apex:pageBlockTable value="{!LocationsByDistance}" var="location">
+            <apex:column value="{!location.location.Name}" />
+            <apex:column value="{!location.location.dealer__Street__c}" />
+            <apex:column value="{!location.location.dealer__City__c}" />
+            <apex:column value="{!location.location.dealer__State__c}" />
+            <apex:column value="{!location.location.dealer__Postal_Code__c}" />
+            <apex:column value="{!location.location.dealer__Main_Phone__c}" />
+            <apex:column value="{!location.distance}">
+                  <apex:facet name="header">Miles</apex:facet>
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+</apex:page>

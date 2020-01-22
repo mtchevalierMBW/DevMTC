@@ -1,0 +1,248 @@
+<!--
+2016-5-12   RedTeal     RT1 - changes to use the Inventory Media object to get the url of images hosted on amazon instead of MBW website
+2016-10-04  A. Bangle   ACB1 - Added in variables for email, phone, mobile and to remove all contact information from brochure printout
+2016-10-05  A. Bangle   ACB2 - Changed layout to follow a more standard Salesforce format
+2018-09-21  B. Leaman   BLL1 IR-0040812 - Refresh Brochure Info wasn't working right - brochure re-rendered without respect to the modified contact info or checkbox to omit contact info.
+-->
+<apex:page showHeader="true" sidebar="false" standardController="dealer__Vehicle_Inventory__c" extensions="VehicleInventory_Brochure" docType="html-5.0">
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+
+    <apex:sectionHeader description="Vehicle Inventory Brochure Print" subtitle="Create a Printable PDF" title="Vehicle" id="vehicleSectionHeader"/>
+
+    <apex:pageMessages id="messages" />
+    <apex:form id="force">
+        <apex:pageBlock >
+    <!--<div id="force">-->
+        <apex:pageBlockButtons >
+            <!--<button type="button" id="printProposal">Print</button>-->
+            <apex:commandButton id="printProposal" value="Print" onclick="callPrintFrame(); return false;" />
+            <apex:commandButton action="{!returnToRecord}" value="Return To Vehicle" />
+            <apex:commandButton id="refreshData" value="Refresh Brochure Info" onclick="refreshPDF(); return false;" reRender="VehicleInventoryBrochureOutput,vehicleimages"/><!-- BLL1 add vehicleimages to rerender -->
+        </apex:pageBlockButtons>
+        <!--<div class="row">
+            <div class="col-md-2">  
+                <div class="form-group">-->
+            <apex:pageBlockSection columns="2">
+                <apex:pageBlockSection columns="1">
+                    <apex:input label="Printed Price" id="price" value="{!price}" styleClass="form-control" />
+                    <apex:inputText label="Printed Name" id="name" value="{!user.Name}" styleClass="form-control" />
+                    <apex:inputText label="Printed Email" id="email" value="{!user.Email}" styleClass="form-control" />
+                    <apex:inputField label="Printed Phone" id="phone" value="{!user.Phone}" styleClass="form-control" />
+                    <apex:inputField label="Printed Mobile" id="mobile" value="{!user.MobilePhone}" styleClass="form-control" />
+                    <apex:inputCheckbox label="Check to Remove All Contact Info" id="removecontact" styleClass="checkbox-inline"/>
+                
+                    <!--</div>
+                    
+                </div>-->
+                <!--<div class="col-md-8">
+                    <ul>-->
+                    <!-- RT1
+                        <li data-seq="1" class="imgThumb selected1"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}+1.jpg" /></li>
+                        <li data-seq="2" class="imgThumb selected2"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-2.jpg" /></li>
+                        <li data-seq="3" class="imgThumb selected3"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-3.jpg" /></li>
+                        <li data-seq="4" class="imgThumb"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-4.jpg" /></li>
+                        <li data-seq="5" class="imgThumb"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-5.jpg" /></li>
+                        <li data-seq="6" class="imgThumb"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-6.jpg" /></li>
+                        <li data-seq="7" class="imgThumb"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-7.jpg" /></li>
+                        <li data-seq="8" class="imgThumb"><img class="img-thumbnail" src="http://www.mobilityworks.com/inventory_photos/{!JSENCODE(vehicle.dealer__Stock_Number__c)}-8.jpg" /></li>
+                        -->
+    
+                        <!--RT1-->
+
+                    <apex:variable var="count" value="{!1}"/>
+                    <apex:PageBlockSectionItem id="vehicleimages">
+                        <apex:outputLabel value="Select 4 Images for Brochure"></apex:outputLabel>
+                        <apex:repeat value="{!imageList}" var="image">
+                            <!--<li data-seq="{!image.Id}" class="imgThumb {!IF(count <= 3, 'selected' + TEXT(count), '')}"><img class="img-thumbnail" src="{!image.dealer__Image_URL__c}" /></li>-->
+                            <span data-seq="{!image.Id}" class="imgThumb {!IF(count <= 4, 'selected' + TEXT(count), '')}"><apex:image value="{!image.dealer__Image_URL__c}"/></span>
+                            <apex:variable var="count" value="{!count + 1}"/>
+                        </apex:repeat>
+                    </apex:PageBlockSectionItem>
+                </apex:pageBlockSection>
+            
+                    <!--End RT1-->
+                <!--</ul>
+            </div>
+        </div>
+    </div>-->
+
+        <apex:pageBlockSection columns="1" id="VehicleInventoryBrochureOutput">
+            <div class="iframeholder">
+                <div id="formDisplay"></div>
+            </div>
+        </apex:pageBlockSection>
+    </apex:pageBlockSection>
+
+    </apex:pageBlock>
+        </apex:form>
+        
+
+    <script type="text/javascript">
+        $dt = jQuery.noConflict();
+        var stockNum = '{!JSENCODE(vehicle.dealer__Stock_Number__c)}';
+        var vehId = '{!JSENCODE(vehicle.Id)}';
+        var printedPrice = '{!price}';
+    //ACB1
+        var printedName = '{!JSENCODE(user.Name)}';
+        var printedEmail = '{!JSENCODE(user.Email)}';
+        var printedPhone = '{!JSENCODE(user.Phone)}';
+        var printedMobile = '{!JSENCODE(user.MobilePhone)}';
+        var removeContact = 'no';
+    //ACB1 END
+        var selectCount = 0; // An iterator for sycling through the selected images
+        var selecteImg = ['','','']; // an array to store the selected images
+
+        //ABC1 - Added in a manual refresh button; 
+        //BLL1 - moved outside "ready" function so it's available to the refresh button
+        function refreshPDF(){
+                if (window.event && window.event.preventDefault) window.event.preventDefault();
+                printedPrice = $dt('[id$="price"]').val();
+                printedName = $dt('[id$="name"]').val();
+                printedEmail = $dt('[id$="email"]').val();
+                printedPhone = $dt('[id$="phone"]').val();
+                printedMobile = $dt('[id$="mobile"]').val();
+                removeContact = $dt('[id$="removecontact"]').is(':checked');
+                loadFrame();
+                return false;
+        }
+
+        $dt(document).ready(function(){
+
+            $dt('<iframe width="650" height="900" id="iframeprint" src="">').appendTo( $dt('#formDisplay') );
+
+            //RT1
+            selecteImg[0] = $dt('.selected1').data('seq');
+            selecteImg[1] = $dt('.selected2').data('seq');
+            selecteImg[2] = $dt('.selected3').data('seq');
+            selecteImg[3] = $dt('.selected4').data('seq');
+            //end RT1
+
+            loadFrame();
+
+            /** EVENTS **/
+            
+            $dt('[id$="price"],[id$="name"],[id$="email"],[id$="phone"],[id$="mobile"],[id$="removecontact"]').change(function(){
+            /*  printedPrice = $dt('[id$="price"]').val();
+                printedName = $dt('[id$="name"]').val();
+                printedEmail = $dt('[id$="email"]').val();
+                printedPhone = $dt('[id$="phone"]').val();
+                printedMobile = $dt('[id$="mobile"]').val();
+                removeContact = $dt('[id$="removecontact"]').is(':checked');
+                loadFrame(); */
+                refreshPDF();
+            });
+
+            // print iFrame
+            // ACB1 removed no longer needed trigger function onclick
+            //$dt('#printProposal').click(function(){
+            //  callPrintFrame();
+            //});
+
+            $dt('.imgThumb').click(function(){
+
+                var $img = $dt(this);
+                var _nextClass = 'selected'+ (selectCount+1);
+
+                if( $img.hasClass('selected1') || $img.hasClass('selected2') || $img.hasClass('selected3') || $img.hasClass('selected4')  ) {
+                    return false;
+                } else {
+                    $dt('.'+_nextClass).removeClass(_nextClass);
+                    $img.addClass(_nextClass);
+                    selecteImg[selectCount] = $img.data('seq');
+                    loadFrame();
+
+                    // Count up or reset iterator
+                    selectCount = (selectCount<3)? selectCount+1 : 0; 
+                }
+            });
+        });
+
+        function loadFrame(){
+            var _moddedPrice = printedPrice.split('.');
+            var _frameSrc = '/apex/VehicleInventory_BrochurePDF?id='+vehId+'&printedprice='+_moddedPrice[0]+'&printedname='+printedName+'&printedemail='+printedEmail+'&printedphone='+printedPhone+'&printedmobile='+printedMobile+'&removecontact='+removeContact;
+            _frameSrc += ('&imageseq1='+selecteImg[0] || '');
+            _frameSrc += ('&imageseq2='+selecteImg[1] || '');
+            _frameSrc += ('&imageseq3='+selecteImg[2] || '');
+            _frameSrc += ('&imageseq4='+selecteImg[3] || '');
+
+            $dt('#iframeprint').prop('src', _frameSrc);
+        }
+
+        function callPrintFrame() {
+            var PDF = document.getElementById('iframeprint');
+            PDF.focus();
+            PDF.contentWindow.print();
+        }
+    </script>
+    <!-- ACB 1 Removed #force references in CSS as it was removed from the <div> ID.  Also tweaked some styles-->
+    <style>
+        ul, li{
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .form-group {
+            /*width: 25%;*/
+        }
+        
+        .iframeholder {
+            background: #525659;
+            text-align: center;
+        }
+        
+        #iframeprint {
+            border:0;
+        }
+
+        .imgThumb {
+            width: 100px;
+            height: auto;
+            position: relative;
+            float: left;
+            margin-left:5px;
+        }
+
+        .imgThumb img {
+            width: 100%;
+            height: auto;
+            border: 2px solid #FFF;
+        }
+        .imgThumb.selected1 img,
+        .imgThumb.selected2 img,
+        .imgThumb.selected3 img,
+        .imgThumb.selected4 img {
+            border: 2px solid #0077c8;
+            position: relative;
+        }
+        .imgThumb.selected1:after {
+            content: '1';
+        }
+        .imgThumb.selected2:after {
+            content: '2';
+        }
+        .imgThumb.selected3:after {
+            content: '3';
+        }
+        .imgThumb.selected4:after {
+            content: '4';
+        }
+        .imgThumb.selected1:after ,
+        .imgThumb.selected2:after ,
+        .imgThumb.selected3:after ,
+        .imgThumb.selected4:after {
+            position: absolute;
+            display: block;
+            right: 0px;
+            bottom: 5px;
+            padding: 5px;
+            font-size: 12px;
+            color: #FFF;
+            background-color: rgba(0,119,200,.8);
+        }
+
+    </style>
+</apex:page>

@@ -1,0 +1,51 @@
+<apex:page controller="Lead_QueueMonitor_CTLR"
+           showHeader="false" sidebar="false"
+           applyHtmlTag="false" applyBodyTag="false">
+<html>
+<head>
+<style>
+body {background:transparent;}
+h1 {font-size: 36px; display:block;}
+h3 {font-size: 14px; display:block;}
+</style>
+</head>
+<body>
+<script type="text/javascript">
+var lastDateTime = '{!NewestDateTime}';
+</script>
+<div style="width:100%; max-width:200px;">
+    <apex:form id="LeadCount">
+    <center>
+        <apex:actionFunction name="updateQueueCount" action="{!updateCount}" reRender="LeadCount" />
+        <h3>
+           <apex:outputLink target="_top" value="{!ListViewURL}" rendered="{!HasURL}">
+              <apex:outputText value="{!QueueName} queue"/>
+           </apex:outputLink>
+           <apex:outputText value="{!QueueName} queue" rendered="{! NOT(HasURL)}"/>
+        </h3>
+        <h1>
+        <apex:outputText style="color:{!CountColor}" value="{!LeadsInQueueCount}"/>
+        </h1>
+    </center>
+    </apex:form>
+</div>
+<script type="text/javascript">
+  //window.setInterval(updateQueueCount, '{!RefreshSeconds * 1000}');
+  var maxrefresh = Math.ceil(1800 / {!RefreshSeconds}); // 1800 seconds is 30 minutes
+  var refreshcount = 0;
+  var refreshfunction = null;
+  function refresher() {
+    ++refreshcount;
+    if (console) console.log('Lead Queue Monitor refresh count=' + refreshcount);
+    if (refreshcount<maxrefresh) updateQueueCount();
+    else if (refreshfunction!=null) {
+        if (console) console.log('Stop refreshing lead queue monitor');
+        window.clearInterval(refreshfunction);
+        refreshfunction = null;
+    }
+  }
+  refreshfunction = window.setInterval(refresher, '{!RefreshSeconds * 1000}');
+</script>
+</body>
+</html>
+</apex:page>

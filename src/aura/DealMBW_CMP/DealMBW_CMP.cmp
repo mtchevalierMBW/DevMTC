@@ -1,0 +1,20 @@
+<aura:component 
+	implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId">
+<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+<aura:attribute type="String" name="params" default=""/>
+<aura:attribute type="String" name="frameheight" default="710px"/>
+<ltng:require scripts="{!$Resource.jQuery+'/jquery.min.js'}" afterScriptsLoaded="{!c.initJS}"/>
+
+<!-- div class="oneAlohaPage" data-aura-class="oneAlohaPage" -->
+	<!-- force-aloha-page force-alohapage_alohapage-host="force-alohapage_alohapage-host" -->
+	<!-- <div id="divcontainer" force-alohapage_alohapage="force-alohapage_alohapage" class="content iframe-parent" -->
+		<div id="divcontainer" 
+			style="{!'height:' + v.frameheight + ';resize:vertical;overflow:hidden;min-height:620px;width:100%;padding-right:1em;'}"
+			onresize="{!c.saveDivSize}">
+			<iframe force-alohapage_alohapage="force-alohapage_alohapage-host" src="{!'/apex/DealMBW2?id=' + v.recordId + v.params}" aura:id="id_iframe"
+				frameborder="1" style="overflow-x:hidden;height:100%;width:100%;min-height:590px;border:1px solid white;">
+			</iframe>
+		</div>
+	<!-- /force-aloha-page -->
+<!-- /div -->
+</aura:component>

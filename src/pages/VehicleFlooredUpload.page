@@ -1,0 +1,294 @@
+<apex:page controller="VehicleFlooring_CTRL">
+
+<style>
+.pageTitle {
+	font-size: 16pt;
+	margin-bottom: 5px;
+}
+
+input.btn.formbutton {
+	margin: 3px 2em 3px 0;
+	padding:8px;
+}
+.center { text-align:center; }
+.right { text-align:right; }
+</style>
+
+<apex:form id="mainform">
+
+		<apex:actionFunction name="SubmitCSV" action="{!submitCSV}"/>
+		<apex:actionFunction name="ProcessUpload" action="{!processUpload}"/>
+
+<apex:inputHidden value="{!uploadType}" id="uploadType"/>
+		
+<apex:pageBlock title="Upload Vehicles Floored (Huntington)" mode="detail">
+	<apex:pageMessages />
+
+	<apex:pageBlockSection columns="1">
+		<apex:pageBlockSectionItem >
+		This form is used to upload a CSV spreadsheet from Huntington Bank for vehicles newly floored.
+		The commodity code and amounts in the CSV file will be used to identify the floorplan and
+		amount floored in the vehicle inventory records.
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem rendered="{!NOT(haveData)}">
+		<apex:outputLabel >Select csv file to upload</apex:outputLabel>
+		<apex:inputFile value="{!uploadData}" filename="{!uploadFilename}"/>
+		</apex:pageBlockSectionItem>
+		<apex:pageBlockSectionItem rendered="{!haveData}">
+		<apex:outputLabel >File name uploaded: </apex:outputLabel>
+		<apex:outputText value="{!uploadFilename}"/>
+		</apex:pageBlockSectionItem>
+
+	</apex:pageBlockSection>
+
+	<apex:pageBlockButtons location="top">
+		<apex:commandButton action="{!startOver}" value="Reset Form" styleclass="formbutton"/>
+	</apex:pageBlockButtons>
+	<apex:pageBlockButtons location="bottom">
+		<apex:commandButton id="btn_submit" onclick="disableBtn('btn_submit','Uploading...');SubmitCSV();" value="Submit/Audit CSV" rendered="{!NOT(haveData)}" styleclass="formbutton"/>
+		<apex:commandButton id="btn_process" onclick="disableBtn('btn_process','Processing...');ProcessUpload();" value="Process Upload" rendered="{!AND(haveGoodData,NOT(dataSubmitted))}" styleclass="formbutton"/>
+	</apex:pageBlockButtons>
+
+</apex:pageBlock>
+</apex:form>
+	
+<apex:pageBlock mode="maindetail">
+	<apex:pageBlockSection id="errorblock" title="Errors ({!FlooringErrors.size})" columns="1" rendered="{!haveData}">
+		<apex:pageBlockTable id="baddata" value="{!FlooringErrors}" var="err">
+			<apex:column value="{!err.RowNbr}" width="30">
+				<apex:facet name="header">Data<br/>Row</apex:facet>
+			</apex:column>
+			<apex:column width="180">
+				<apex:facet name="header">Vehicle</apex:facet>
+				<apex:outputLink value="/{!err.VehId}" target="_blank" rendered="{!err.VehId!=null}">
+					{!err.Name}
+				</apex:outputLink>
+				<apex:outputText value="{!err.Name}" rendered="{!err.VehId==null}"/>
+			</apex:column>
+			<apex:column value="{!err.StockNbr}" width="50">
+				<apex:facet name="header">Stock nbr</apex:facet>
+			</apex:column>
+			<apex:column value="{!err.VIN}" width="100">
+				<apex:facet name="header">VIN</apex:facet>
+			</apex:column>
+			<apex:column styleclass="center" width="50">
+				<apex:facet name="header">Floorplanned</apex:facet>
+				<apex:outputText escape="false" value="{!IF(err.Floorplanned==true,'&#x2714;',' ')}"/>
+			</apex:column>
+			<apex:column value="{!err.Floorplan}" width="100">
+				<apex:facet name="header">Floorplan</apex:facet>
+			</apex:column>
+			<apex:column width="60">
+				<apex:facet name="header">Floored Date</apex:facet>
+				<apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+					<apex:param value="{!err.FlooredDate}"/>
+				</apex:outputText>
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" width="70">
+				<apex:facet name="header">Original Floored Amt</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!err.OriginalAmt}"/>
+				</apex:outputText> 
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" width="70">
+				<apex:facet name="header">Current Floored Amt</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!err.CurrentAmt}"/>
+				</apex:outputText> 
+			</apex:column>
+			<apex:column styleClass="center" width="30">
+				<apex:facet name="header">Paid</apex:facet>
+				<apex:outputText escape="false" value="{!IF(err.Paid==true,'&#x2714;',' ')}"/>
+			</apex:column>
+			<apex:column value="{!err.NewFloorplan}" width="100">
+				<apex:facet name="header">New Floorplan</apex:facet>
+			</apex:column>
+			<apex:column value="{!err.NewConvFloorplan}" width="100">
+				<apex:facet name="header">New Conversion Floorplan</apex:facet>
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" footerClass="right" width="35">
+				<apex:facet name="header">Payment Amount</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!err.FlooredAmt}"/>
+				</apex:outputText> 
+				<apex:facet name="footer">
+					<apex:outputText value="{0, number, currency}">
+						<apex:param value="{!TotalErrAmount}"/>
+					</apex:outputText>
+				</apex:facet>
+			</apex:column>
+			<apex:column value="{!err.ErrorMsgs}" width="150">
+				<apex:facet name="header">Error messages</apex:facet>
+			</apex:column>
+		</apex:pageBlockTable>
+	</apex:pageBlockSection>
+	
+	<apex:pageBlockSection id="datablock" title="Ready to process ({!FlooringData.size})"  columns="1" rendered="{!haveData}">
+		<apex:pageBlockTable id="gooddata" value="{!FlooringData}" var="data">
+			<apex:column value="{!data.RowNbr}" width="30">
+				<apex:facet name="header">Data<br/>Row</apex:facet>
+			</apex:column>
+			<apex:column width="180">
+				<apex:facet name="header">Vehicle</apex:facet>
+				<apex:outputLink value="/{!data.VehId}" target="_blank" rendered="{!data.VehId!=null}">
+					{!data.Name}
+				</apex:outputLink>
+				<apex:outputText value="{!data.Name}" rendered="{!data.VehId==null}"/>
+			</apex:column>
+			<apex:column value="{!data.StockNbr}" width="50">
+				<apex:facet name="header">Stock nbr</apex:facet>
+			</apex:column>
+			<apex:column value="{!data.VIN}" width="100">
+				<apex:facet name="header">VIN</apex:facet>
+			</apex:column>
+			<apex:column styleClass="center" width="50">
+				<apex:facet name="header">Floorplanned</apex:facet>
+				<apex:outputText escape="false" value="{!IF(data.Floorplanned==true,'&#x2714;',' ')}"/>
+			</apex:column>
+			<apex:column value="{!data.Floorplan}" width="100">
+				<apex:facet name="header">Floorplan</apex:facet>
+			</apex:column>
+			<apex:column width="60">
+				<apex:facet name="header">Floored Date</apex:facet>
+				<apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+					<apex:param value="{!data.FlooredDate}" />
+				</apex:outputText>
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" width="70">
+				<apex:facet name="header">Original Floored Amt</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!data.OriginalAmt}"/>
+				</apex:outputText> 
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" width="70">
+				<apex:facet name="header">Current Floored Amt</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!data.CurrentAmt}"/>
+				</apex:outputText> 
+			</apex:column>
+			<apex:column styleClass="center" width="30">
+				<apex:facet name="header">Paid</apex:facet>
+				<apex:outputText escape="false" value="{!IF(data.Paid==true,'&#x2714;',' ')}"/>
+				<apex:facet name="footer">Total Amt</apex:facet>
+			</apex:column>
+			<apex:column value="{!data.NewFloorplan}" width="100">
+				<apex:facet name="header">New Floorplan</apex:facet>
+			</apex:column>
+			<apex:column value="{!data.NewConvFloorplan}" width="100">
+				<apex:facet name="header">New Conversion Floorplan</apex:facet>
+			</apex:column>
+			<apex:column styleClass="right" headerClass="right" footerClass="right" width="35">
+				<apex:facet name="header">Payment Amount</apex:facet>
+				<apex:outputText value="{0, number, currency}">
+					<apex:param value="{!data.FlooredAmt}"/>
+				</apex:outputText> 
+				<apex:facet name="footer">
+					<apex:outputText value="{0, number, currency}">
+						<apex:param value="{!TotalAmount}"/>
+					</apex:outputText>
+				</apex:facet>
+			</apex:column>
+			<apex:column value="{!data.WarningMsgs}" width="150">
+				<apex:facet name="header">Warning messages</apex:facet>
+			</apex:column>
+		</apex:pageBlockTable>
+	</apex:pageBlockSection>
+</apex:pageBlock>
+
+	
+<!-- jQuery -->
+<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"/>
+<!-- Kendo grid -->
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.common.min.css" />
+<apex:stylesheet value="//kendo.cdn.telerik.com/2018.1.221/styles/kendo.default.min.css" />
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/jszip.min.js"/>
+<apex:includeScript value="//kendo.cdn.telerik.com/2018.1.221/js/kendo.all.min.js" />
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+</script>
+<script type="text/javascript">
+    $jq = jQuery.noConflict();
+
+	$jq("input[id$='uploadType']").val('floored');
+
+	function disableBtn(btn, newText) {
+		var btnselector="input[id$='" + btn + "']";
+		$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+		if (newText.length>0) $jq(btnselector).val(newText);		
+	}
+	
+	// used to remove link html from the vehicle column
+	function removelink(e) {
+    	var sheet = e.workbook.sheets[0];
+    	//var template = kendo.template(this.columns[1].template);
+ 		for (var i = 1; i < sheet.rows.length; i++) {
+    		var row = sheet.rows[i];
+    		//var dataItem = {
+			//	Vehicle: row.cells[1].value
+			//};
+			//row.cells[1].value = template(dataItem);
+			var v = row.cells[1].value;
+			if (typeof v!='undefined' && v!=null) {
+				v = v.substring(v.indexOf('>')+1, v.lastIndexOf('<'));
+			}
+			row.cells[1].value = v;
+		}
+	}
+	
+	$jq(document).ready(function() {
+		$jq('table[id$="baddata"]').kendoGrid({
+			sortable:true, scrollable:false,
+			toolbar: ["excel"],
+            excel: {
+                fileName: "FlooredVehicleErrors_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+                filterable: true
+            },
+            excelExport: removelink,
+            columns:[
+				{field:"DataRow", attributes:{"class":"right"}},
+				{field:"Vehicle", attributes:{"class":"left"}},
+				{field:"Stocknbr", attributes:{"class":"left"}},
+				{field:"VIN", attributes:{"class":"left"}},
+				{field:"Floorplanned", attributes:{"class":"center"}},
+				{field:"Floorplan", attributes:{"class":"left"}},
+				{field:"FlooredDate", attributes:{"class":"center"}},
+				{field:"OriginalFlooredAmt", attributes:{"class":"right"}},
+				{field:"CurrentFlooredAmt", attributes:{"class":"right"}},
+				{field:"Paid", attributes:{"class":"center"}},
+				{field:"NewFloorplan", attributes:{"class":"left"}},
+				{field:"NewConvFloorplan", attributes:{"class":"left"}},
+				{field:"PaymentAmount", attributes:{"class":"right"}},
+				{field:"Errormessages", attributes:{"class":"left"}}
+			]
+		});
+		$jq('table[id$="gooddata"]').kendoGrid({
+			sortable:true, scrollable:false,
+			toolbar: ["excel"],
+            excel: {
+                fileName: "FlooredVehicles_{!YEAR(TODAY())}-{!MONTH(TODAY())}-{!DAY(TODAY())}.xlsx",
+                filterable: true
+            },
+            excelExport: removelink,
+			columns:[
+				{field:"DataRow", attributes:{"class":"right"}},
+				{field:"Vehicle", attributes:{"class":"left"}},
+				{field:"Stocknbr", attributes:{"class":"left"}},
+				{field:"VIN", attributes:{"class":"left"}},
+				{field:"Floorplanned", attributes:{"class":"center"}},
+				{field:"Floorplan", attributes:{"class":"left"}},
+				{field:"FlooredDate", attributes:{"class":"center"}},
+				{field:"OriginalFlooredAmt", attributes:{"class":"right"}},
+				{field:"CurrentFlooredAmt", attributes:{"class":"right"}},
+				{field:"Paid", attributes:{"class":"center"}},
+				{field:"NewFloorplan", attributes:{"class":"left"}},
+				{field:"NewConvFloorplan", attributes:{"class":"left"}},
+				{field:"PaymentAmount", attributes:{"class":"right"}},
+				{field:"Warningmessages", attributes:{"class":"left"}}
+			]
+		});
+	});
+</script>
+
+
+</apex:page>

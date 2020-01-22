@@ -1,0 +1,18 @@
+/**
+ *  WMK, LLC (c) - 2018
+ *
+ *  Created By:    Alexander Miller
+ *  Created Date:  1/14/2019
+ *  Work Item:     W-000547
+ *  File Name:     TaskHistory.css
+ *
+ *  Modified By         Alias       Work Item       Date     Reason
+ *  __________________________________________________________________________________________________
+ * 
+ */
+.THIS .slds-truncate {
+    text-overflow: inherit;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word; 
+}

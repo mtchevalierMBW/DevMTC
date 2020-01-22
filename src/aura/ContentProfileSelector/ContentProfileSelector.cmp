@@ -1,0 +1,115 @@
+<!--
+    WMK, LLC (c) - 2019
+
+    Created By:    Alexander Miller
+    Created Date:  03/26/2019 
+    Work Item:     W-000578
+    File Name:     ContentProfileSelector.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentProfileSelectorController">
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <!-- child reference to parent component value for the Content record -->
+    <aura:attribute name="content" type="Content__c" />
+
+    <aura:handler event="c:ContentEvent" action="{!c.handleContentEvent}"/>
+
+    <aura:method name="initAllProfiles" action="{!c.initializeProfiles}" />
+
+    <aura:method name="initCurrent" action="{!c.handleCurrentMappings}" />
+
+    <aura:attribute name="profiles" type="String[]" />
+
+    <aura:attribute name="currentProfiles" type="String[]" />
+    <aura:attribute name="columns" type="List" />
+    <aura:attribute name="maxRowSelection" type="Integer" default="100"/>
+    <aura:attribute name="selectedProfileMappings" type="String[]" />
+
+    <aura:attribute name="personTypeText" type="String" />
+    <aura:attribute name="personList" type="User[]" />
+    <aura:attribute name="personSelectedName" type="String" />
+    <aura:attribute name="personColumns" type="List" />
+    <aura:attribute name="maxRowPersonSelection" type="Integer" default="1"/>
+    <aura:attribute name="selectedProfilePersonSearch" type="String" default=""/>
+
+    <aura:if isTrue="{!v.content != null}">
+        <article class="slds-card">
+            <div class="slds-p-horizontal_small">
+                <lightning:card title="Profile Selection"> 
+                    
+                    <aura:if isTrue="{!v.content == null}">
+                        <div class="slds-p-horizontal_small">
+                            No Content Selected
+                        </div>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.content != null}">
+                        <lightning:layout horizontalAlign="left">
+
+                            <!-- Available Profiles -->
+                            <lightning:layoutItem size="5">
+                                
+                                <lightning:select label="" name="a_opt" aura:id="a_opt" onchange="{!c.selectionChange}">
+                                    <option value="">...Select a Profile...</option>
+                                    <aura:iteration items="{!v.profiles}" var="profile">
+                                        <option value="{!profile}" selected="{!profile == v.selectedProfilePersonSearch}">{!profile}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+
+                                <lightning:input aura:id="personInputId" label=""
+                                    name="personInput"
+                                    value="{!v.personTypeText}"
+                                    maxlength="100"
+                                    onkeyup="{!c.personProfileSearchChange}" 
+                                    placeholder="Search By Name..."/>
+                                    <br/>
+                                    <div style="height: 200px">
+                                        <lightning:datatable 
+                                            data="{!v.personList}" 
+                                            maxRowSelection="{! v.maxRowPersonSelection }"
+                                            columns="{!v.personColumns}" 
+                                            keyField="Id"
+                                            onrowselection="{!c.personSearchSelected}"/>
+                                    </div>
+
+                            
+                            </lightning:layoutItem>
+                            
+                            <!-- Controls -->
+
+                            <lightning:layoutItem size="1">
+                            
+                                <center>
+                                    <div class="slds-button-group slds-list_vertical-space-medium" role="group">
+                                        <ul>
+                                            <li><lightning:button variant="brand" label="" iconName="utility:left" onclick="{! c.profileSelectionRemove }" /></li>
+                                            <br/>
+                                            <li><lightning:button variant="brand" label="" iconName="utility:right" onclick="{! c.profileSelectionAdd }" /></li>
+                                        </ul>
+                                    </div>
+                                </center>
+
+                            </lightning:layoutItem>
+
+                            <!-- Selected Tags -->
+                            <lightning:layoutItem size="6">
+                                
+                                <lightning:datatable 
+                                            data="{!v.currentProfiles}" 
+                                            columns="{!v.columns}" 
+                                            keyField="Id"
+                                            onrowselection="{!c.tableSelection}"/>
+
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                    </aura:if>
+                </lightning:card>
+            </div> 
+        </article>
+    </aura:if>
+
+</aura:component>

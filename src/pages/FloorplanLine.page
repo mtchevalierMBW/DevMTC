@@ -1,0 +1,74 @@
+<!-- 
+ -->
+<apex:page controller="FloorplanLine_CTLR">
+
+<style>
+.currency {text-align:right;}
+.label {text-align:right; font-weight:bold; color:#666; padding-right:1em;}
+h2 {font-size:10pt; margin-top: 6px; margin-left:1em;}
+</style>
+
+    <apex:form >
+
+        <apex:pageBlock title="Floorplan Lines of Credit" mode="maindetail">
+            <div style="display:block; float:right;">
+                [<a href="/{!$ObjectType['FloorplanLine__c'].keyPrefix}">all floorplan lines</a>]
+            </div>
+            <apex:repeat value="{!Summary}" var="f">
+                <h2><a href="/{!Summary[f].FloorplanId}"><apex:outputText value="{!Summary[f].Floorplan}"/></a></h2>
+                <table style="width:275px; margin-left:1em;">
+                    <tr>
+                        <td width="175" class="label">Line</td>
+                        <td width="100" class="currency">
+                            <apex:outputText value="{0, number, #,##0.00}">
+                            <apex:param value="{!Summary[f].LineAmount}"/>
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Current usage</td>
+                        <td class="currency">
+                            <apex:outputText value="{0, number, #,##0.00}">
+                            <apex:param value="{!Summary[f].AmountUsed}"/>
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Delivered Not Paid</td>
+                        <td class="currency">
+                            <apex:outputText value="{0, number, #,##0.00}">
+                            <apex:param value="{!Summary[f].AmountDlvNotPaid}"/>
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Remaining</td>
+                        <td class="currency">
+                            <apex:outputText value="{0, number, #,##0.00}">
+                            <apex:param value="{!Summary[f].Remaining}"/>
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                </table>
+            </apex:repeat>
+<!--       
+                <h2>Curtailments</h2>
+                <table style="width:275px; margin-left:1em;">
+                    <apex:repeat value="{!Curtailments}" var="c">
+                    <tr>
+                        <td width="175" class="label">{!c}</td>
+                        <td width="100" class="currency">
+                            <apex:outputText value="{0, number, #,##0.00}">
+                            <apex:param value="{!Curtailments[c]}"/>
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    </apex:repeat>
+                </table>
+-->            
+        
+        </apex:pageBlock>
+
+    </apex:form>
+    
+</apex:page>

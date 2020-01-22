@@ -1,0 +1,88 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" controller="PartsEOMExporterController" >
+        
+    <!--apex:sectionHeader title="Parts EOM" subtitle="End of Month Parts Analysis" description="Balance parts inventory against the general ledger and work in process" /-->
+    <h1>Parts EOM</h1>
+    <h2>End of Month Parts Analysis</h2>
+    <div>Balance parts inventory against the general ledger and work in process</div>
+    <apex:form id="pForm">              
+        <apex:variable var="InvVal" value="{!0}"/>
+        <apex:variable var="negVal" value="{!0}"/>
+        <apex:variable var="wip" value="{!0}"/>
+        <apex:variable var="tot" value="{!0}"/>
+        <apex:variable var="TGL" value="{!0}"/>
+        <apex:variable var="va" value="{!0}"/>
+        <table Border="1" cellspacing="0">
+             <tr>
+               <th>Store Name</th>
+               <th>Inventory Value</th> 
+               <th>Negative Value</th>
+               <th>Work-In-Process</th>
+               <th>Total</th>
+               <th>General Ledger</th>
+               <th>Variance</th>
+               <th>Percent Inventory</th>
+             </tr>
+             <apex:repeat value="{!eom}" var="e" >
+                 <tr>
+                   <td>{!e.store}
+                   <apex:variable var="InvVal" value="{!InvVal+e.inventory_value}"/>   
+                   <apex:variable var="negVal" value="{!negVal+e.inventory_negative}"/>                
+                   <apex:variable var="wip" value="{!wip+e.wip}"/>
+                   <apex:variable var="tot" value="{!tot+e.total}"/>
+                   <apex:variable var="TGL" value="{!TGL+e.general_ledger}"/>
+                   <apex:variable var="va" value="{!va+e.variance}"/>
+                   </td>
+                   <td>{!e.inventory_value}</td>
+                   <td>{!e.inventory_negative}</td>
+                   <td>{!e.wip}</td>
+                   <td>{!e.total}</td>
+                   <td>{!e.general_ledger}</td>
+                   <td>{!e.variance}</td>
+                   <td>{!e.percent_inventory*100} %</td>
+                  </tr>  
+              </apex:repeat>
+              <tr>
+                   <td></td>
+                   <td>
+                   Total Value: $
+                       <apex:outputText value="{0, number, 000,000.00}" >
+                           <apex:param value="{!InvVal}"/>
+                       </apex:outputText>
+                       
+                   </td>
+                   <td>
+                   Total Value: $
+                       <apex:outputText value="{0, number, 000,000.00}">
+                           <apex:param value="{!ABS(negVal)}"/>
+                       </apex:outputText>
+                   </td>
+                   <td>
+                   Total WIP: $
+                       <apex:outputText value="{0, number, 000,000.00}" >
+                           <apex:param value="{!wip}"/>
+                       </apex:outputText>
+                   </td>
+                   <td>
+                   Total : $
+                       <apex:outputText value="{0, number, 000,000.00}" >
+                           <apex:param value="{!tot}"/>
+                       </apex:outputText>
+                   </td>
+                   <td>
+                   Total General Ledger: $
+                       <apex:outputText value="{0, number, 000,000.00}" >
+                           <apex:param value="{!TGL}"/>
+                       </apex:outputText>
+                   </td>
+                   <td>
+                   Total Variance: $
+                       <apex:outputText value="{0, number, 000,000.00}" >
+                           <apex:param value="{!va}"/>
+                       </apex:outputText>
+                   </td>
+                   <td></td>
+                  </tr>
+          </table>
+    </apex:form>
+    
+</apex:page>

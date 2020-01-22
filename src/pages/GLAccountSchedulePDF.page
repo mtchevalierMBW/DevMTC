@@ -1,0 +1,75 @@
+<apex:page controller="GLAccountSchedule_CTLR" renderAs="PDF">
+
+<body style="font-size: 12px;">
+
+    <apex:outputPanel id="report">
+
+        <apex:outputPanel rendered="{!validInputs}">
+            <div style="border-bottom: 2px solid silver; font-size:14px; font-weight: bold;">
+				<h3>{!organizationName} {!IF(isSandbox," - sandbox","")}</h3><br/>
+                Accounts: {!GLAcctCodeStr}<br/>
+                Locations: {!Dim1CodeStr}<br/>
+                Through&#xA0;
+                <apex:outputText value="{0,date,MM/dd/yyyy}">
+                   <apex:param value="{!lookuph.c2g__JournalDate__c}"/>
+                </apex:outputText><br/>
+            </div>
+            <table class="schedule" style="border-collapse:collapse;">
+                <tr>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px; text-align:center;">Date</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Source</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Control#</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">GL Acct-Dim1</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Transaction Id-Line</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Line reference</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px; text-align:right;">Value</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px; text-align:right;">Balance</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Customer Acct</th>
+                    <th style="background-color: #cccccc; border: 0.5px solid #c3c3c3; padding: .5em 3px;">Days old</th>
+                </tr>
+                <apex:repeat value="{!Report}" var="r">
+                    <apex:outputPanel layout="none" rendered="{!r.subTotal==null}">
+                    <tr style="background-color:{!IF(MOD(r.groupcount,2)==0,'#ccffcc','#ffffff')}">
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}">
+                             <apex:param value="{!r.trnDate}"/>
+                            </apex:outputText>
+                      </td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px; text-align:center;">{!r.trnSource}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.trnControlNbr}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.glaReportingCode}-{!r.dim1ReportingCode}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.trnName}-{!r.trnLineNo}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.trnLineReference}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.trnValue}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">
+                          <apex:outputText rendered="{!r.controlTotal!=null}" value="{!r.controlTotal}"/>
+                      </td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">{!r.accountName}</td>
+                      <td style="border: 0.5px solid #c3c3c3; padding: .5em 3px;">
+                          <apex:outputText rendered="{!r.daysOld!=null}" value="{!r.daysOld} DAYS"/>
+                      </td>
+                    </tr> 
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="none" rendered="{!r.subTotal!=null}">
+                    <tr class="subtotal">
+                      <th colspan="6" style="background-color: #dcdcdc; border: 0.5px solid #cdcdcd; padding: .5em 3px; text-weight: bold; text-align: right;">{!r.subTotal} Subtotal</th>
+                      <th style="background-color: #dcdcdc; border: 0.5px solid #cdcdcd; padding: .5em 3px; text-weight: bold; text-align: right;"></th>
+                      <th style="background-color: #dcdcdc; border: 0.5px solid #cdcdcd; padding: .5em 3px; text-weight: bold; text-align: right;">
+                          <apex:outputText rendered="{!r.controlTotal!=null}" value="{!r.controlTotal}"/>
+                      </th>
+                      <th colspan="2" style="background-color: #dcdcdc; border: 0.5px solid #cdcdcd; padding: .5em 3px; text-weight: bold; text-align: right;"></th>
+                    </tr> 
+                    </apex:outputPanel>
+                </apex:repeat>
+                <tr class="grandtotal">
+                    <th colspan="6" style="background-color: #cccccc; text-align:right;">Grand Total</th>
+                    <th style="background-color: #cccccc; text-align:right;"></th>
+                    <th style="background-color: #cccccc; text-align:right;">{!GrandTotal}</th>
+                    <th colspan="2" style="background-color: #cccccc; text-align:right;"></th>
+                </tr>
+            </table>
+        </apex:outputPanel>
+
+    </apex:outputPanel>
+</body>
+</apex:page>

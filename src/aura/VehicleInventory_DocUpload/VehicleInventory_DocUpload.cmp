@@ -1,0 +1,133 @@
+<!--
+Modification log:
+2019-01-16	B. Leaman	W-000517 Written.
+2019-11-26	B. Leaman	BLL1 W-000786 add title location.
+-->
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId" 
+	controller="VehicleInventory_DocUpload">
+
+	<aura:attribute name="vehInvFields" type="Object"/>
+	<aura:attribute name="rcdError" type="String"/>
+	<aura:attribute name="documents" type="Object[]"/>
+	<aura:attribute name="documentType" type="String"/>
+	<aura:attribute name="canDeleteVehicleFiles" type="boolean" default="false"/>
+	<!--BLL1-->
+	<aura:attribute name="settings" type="Object"/>
+	<aura:attribute name="titleLocations" type="String[]"/>
+	<!--BLL1 end-->
+
+	<!-- file upload values -->
+	<aura:attribute name="fileaccept" type="List" default="['.pdf']"/>
+	<aura:attribute name="filedisabled" type="Boolean" default="true"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<!--BLLx-->
+	<aura:handler name="change" value="{!v.recordId}" action="{!c.loadInvRcd}"/>
+	<!--BLLx end-->
+
+
+<!--Lien_Release__c,Power_of_Attorney__c,MSO_Title__c,Proof_of_Payment_Trade__c-->
+	<force:recordData aura:id="vehInvRcdEditor" 
+		recordId="{!v.recordId}"
+		fields="Id,Name,dealer__Stock_Number__c,Title_Notes__c,Lien_Release__c,Power_of_Attorney__c,MSO_Title__c,Proof_of_Payment_Trade__c,Title_Location__c"
+		targetFields="{!v.vehInvFields}" 
+		targetError="{!v.rcdError}"
+		recordUpdated="{!c.handleRecordUpdated}"
+		mode="EDIT"
+	/>
+
+	<lightning:card title="{!v.vehInvFields.dealer__Stock_Number__c + ' Documents'}" iconName="standard:file" class="slds-p-around_small">
+
+		<div class="slds-card__header slds-grid">
+		</div>
+		  
+		<div class="slds-card__body slds-card__body_inner">
+			<div class="slds-grid slds-wrap" style="padding-bottom:8px;">
+				<lightning:select value="{!v.documentType}" name="typeofdoc" label="Type of document to upload"
+					class="slds-col slds-size_12-of-12"
+					onchange="{!c.docTypeChanged}">
+					<option value=""><i>Please select ...</i></option>
+					<option value="lien-release">Lien Release</option>
+					<option value="power-of-attorney">Power of Attorney</option>
+					<option value="mso-title">MSO/Title</option>
+					<option value="proof-payment-trade">Payment/Trade</option>
+					<option value="invoice">Invoice</option>
+					<option value="rental-registration">Rental Registration</option>
+					<option value="rental-insurance">Rental Insurance</option>
+				</lightning:select>
+				<lightning:fileUpload class="slds-col slds-size_12-of-12"
+					label="" 
+					recordId="{!v.recordId}" 
+					multiple="false" 
+					accept="{!v.fileaccept}" 
+					disabled="{!v.filedisabled}"
+					onuploadfinished="{!c.handleUploadFinished}" />
+
+				<lightning:textarea value="{!v.vehInvFields.Title_Notes__c}" label="Title notes"
+					class="slds-col slds-size_12-of-12"/>
+				<!--BLL1-->
+				<lightning:select aura:id="titlelocation" value="{!v.vehInvFields.Title_Location__c}" label="Title Location"
+					class="slds-col slds-size_12-of-12">
+					<aura:iteration items="{!v.titleLocations}" var="opt">
+						<option value="{#opt}">{#opt}</option>
+					</aura:iteration>
+				</lightning:select>
+				<!--BLL1 end-->
+			</div>
+
+			<div class="slds-grid slds-wrap">
+				<div class="slds-col slds-size_6-of-12">
+							<lightning:input id="lienrelease" type="toggle" checked="{!v.vehInvFields.Lien_Release__c}" 
+						label="Lien release" disabled="true" 
+						messageToggleActive="Yes" messageToggleInactive="No"/>
+				</div>
+				<div class="slds-col slds-size_6-of-12">
+						<lightning:input id="powerofatty" type="toggle" checked="{!v.vehInvFields.Power_of_Attorney__c}"
+						label="Power of Atty" disabled="true" 
+						messageToggleActive="Yes" messageToggleInactive="No"/>
+				</div>
+				<div class="slds-col slds-size_6-of-12">
+						<lightning:input id="msotitle" type="toggle" checked="{!v.vehInvFields.MSO_Title__c}"
+						label="MSO/Title" disabled="true" 
+						messageToggleActive="Yes" messageToggleInactive="No"/>
+				</div>
+				<div class="slds-col slds-size_6-of-12">
+						<lightning:input id="proofofpmt" type="toggle" checked="{!v.vehInvFields.Proof_of_Payment_Trade__c}"
+						label="Proof of Pmt/Trade" disabled="true"
+						messageToggleActive="Yes" messageToggleInactive="No"/>
+				</div>
+			</div>
+
+			<div>
+				<ul>Title document files:
+					<aura:iteration items="{!v.documents}" var="doc">
+						<li style="padding-bottom:5px;">
+							<button style="background:transparent;border:none;" 
+									data-docid="{#doc.DocId}" data-doctype="{#doc.Type}" 
+									onclick="{!c.viewDocument}">
+									<ui:outputText value="{#doc.FileName}"/>
+							</button>
+							<aura:if isTrue="{#or(v.canDeleteVehicleFiles,doc.MyUpload)}">
+							<button class="deleteFile" data-docid="{#doc.DocId}" data-docname="{!doc.FileName}" data-doctype="{!doc.Type}" 
+								onclick="{!c.deleteDocument}"
+								style="background:transparent;border:none;">
+								<lightning:icon iconName="utility:delete" size="x-small" alternativeText="Delete"/>
+							</button>
+							</aura:if>
+						</li>
+					</aura:iteration>
+				</ul>
+			</div>
+
+  		</div>
+
+		<footer class="slds-card__footer">
+		</footer>
+
+		<!--p>{ ! v . documentNames}</p-->
+
+		<lightning:button label="Save" variant="brand" onclick="{!c.saveData}" />
+	</lightning:card>
+
+</aura:component>

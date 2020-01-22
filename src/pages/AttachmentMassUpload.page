@@ -1,0 +1,568 @@
+<!-- 
+    WMK, LLC (c) – 2018
+
+    Created By:    Bryan Leaman
+    Created Date:  09/08/2017
+    Work Item:     
+    File Name:     AttachmentMassUpload.page
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________
+
+    Alexander Miller    AMM1    W-000413    10/17/2018   Allow for JS to interface with Lightning File Utility class
+-->
+<apex:page >
+
+<style>
+.dropArea {
+    display:block;
+    height: 120px;
+    width: 80%;
+    background-color: #eaeaea;
+    padding: 1%;
+}
+.dropArea.hover {
+    background-color: silver;
+    cursor: grab;
+}
+.dropArea.hover.nodrop {
+    background-color: darkred;
+    cursor: no-drop ;
+}
+.dashedbox {
+    border: 2px dashed gray;
+    width: 100%;
+    height: 99%;
+    text-align: center;
+    color:gray;
+}
+.dashedbox > p {margin-top: 50px;}
+table.uploadresults {
+    border-collapse: collapse;
+    border: 1px solid #808080;
+    margin-top: 5px;
+}
+table.uploadresults th {
+    background-color: #EAEAEA;
+}
+table.uploadresults thead tr {
+    border-bottom: 1px solid #808080;
+    padding: 3px;
+}
+table.uploadresults tbody tr td {
+    padding: 3px;
+}
+</style>
+
+<apex:pageBlock title="Attachment Mass Upload" mode="maindetail">
+    <apex:pageBlockSection columns="1" title="Purchase Orders" collapsible="false">
+    <apex:outputPanel >
+        <apex:outputText >
+        <b>Instructions:</b>
+        Drop purchase order PDF files with the PO number as the name. (For example, 1234.pdf or 001234.pdf for a PDF of PO#0012345.) <br/>
+        If matching PO&apos;s are found, the files will automatically be attached to them. 
+        Any files that don't match a PO number in the system will be discarded. 
+        </apex:outputText>
+    </apex:outputPanel>
+    <apex:outputPanel layout="none" id="dropAreaPanel">
+        <div id="dropArea1" class="dropArea">
+            <div class="dashedbox">
+                <p>Drop files here</p>
+            </div>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel layout="none" id="fileListProgress">
+        <br/>
+        <h3>Upload status</h3>
+        <table width="75%" class="uploadresults">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Status</th>
+                    <th>Id</th>
+                    <th>PO</th>
+                    <th>Accounting name</th>
+                </tr>
+            </thead>
+            <tbody id="fileProgress">
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    
+    </apex:pageBlockSection>
+</apex:pageBlock>
+
+<script type="text/javascript">__sfdcSessionId='{!$Api.Session_Id}';</script>
+<!-- AMM1 -->
+<!-- <script src="../../soap/ajax/30.0/connection.js" type="text/javascript"></script> -->
+<script src="../../soap/ajax/42.0/connection.js" type="text/javascript"></script>
+<!-- AMM1 -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+//$jq('#dropArea').on('mouseout', function(){$jq('#dropArea').removeClass('hover');} );
+//$jq('document').on('mouseout',  function(){$jq('#dropArea').removeClass('hover');} );
+
+//$jq('#dropArea').on('dragover', handledrag);
+//$jq('#dropArea').on('drop', handledrop);
+
+
+function FileDragAndDrop(elem) {
+    this.filesToUpload = [];
+    this.filesStatus = [];
+    this.filesIdx = -1;
+
+    this.element = elem;
+    console.log('new FileDragAndDrop');
+    console.log(this.element);
+    this.Processing=false;
+    this.statusListener = [];
+    this.uploadcount = 0;
+    //this.registerHandlers();
+    
+    // listener arrays
+    this.fileCompleteListener = [];
+    this.fileStatusListener = [];
+    this.beforeUploadsListener = [];
+    this.afterCompletionListener = [];
+};
+
+FileDragAndDrop.prototype = {
+    registerHandlers : function() {
+        var self = this;
+        console.log('registerHandlers');
+        console.log(this.element);
+        console.log(self);
+        $jq(this.element).on('dragover', function(event){self.handledrag(event);});
+        $jq(this.element).on('drop', function(event){self.handledrop(event);});
+        $jq(this.element).on('mouseout', function(event){self.handlemouseout(event);});
+        console.log('Registered handlers for element : ' + this.element);
+        return this;
+    },
+    handledrag : function(event) {
+        console.log('handledrag');
+        event.stopPropagation();
+        event.preventDefault();
+        $jq(this.element).addClass('hover');
+        if (this.Processing) $jq(this.element).addClass('nodrop');
+    },
+    handledrop : function(event) {
+        console.log('handledrop');
+        event.stopPropagation();
+        event.preventDefault();
+        console.log('drop event');
+        console.log(event);
+        if (this.Processing) {
+            alert('Currently processing uploads. Please wait.');
+            return;
+        }
+        if (!event.dataTransfer && event.originalEvent.dataTransfer) 
+            event.dataTransfer = event.originalEvent.dataTransfer;
+        if (event && event.dataTransfer && event.dataTransfer.files) 
+            this.processFiles(event.dataTransfer.files);
+        else
+            console.log(event.dataTransfer);
+    },
+    handlemouseout : function(event) {
+        console.log('handlemouseout');
+        $jq(this.element).removeClass('hover nodrop');
+    },
+    preventDrops : function() {
+        var self = this;
+        $jq(this.element).on('dragover', function(event){console.log('Processing...no new files.')});
+        $jq(this.element).on('drop', function(event){alert('Already processing. Please wait.');});
+        $jq(this.element).on('mouseout', function(event){self.handlemouseout(event);});
+    },
+    processFiles : function(filelist) {
+        this.Processing = true;
+        console.log('processFiles');
+        if (!filelist || !filelist.length || filelist.length==0) {
+            console.log('Nothing to process');
+            return;
+        }
+        // reset list of files & status
+        this.filesToUpload = [];
+        this.filesStatus = [];
+        this.filesIdx = -1;
+        // end reset
+        var count = 0;
+        var totalsize = 0;
+        for(var i=0; i<filelist.length; i++) {
+            totalsize += filelist[i].size;
+            console.log(filelist[i].name);
+            //filesToUpload.push(filelist[i]);
+            this.filesToUpload[count] = filelist[i];
+            this.filesStatus[count] = {idx:count,text:'Pending',pct:0,id:null,ParentId:null,ParentName:''};
+            count++;
+        }
+        //this.showFilesStatus();
+        this.handleBeforeUploads();
+        this.uploadNextFile();
+    },
+
+    uploadNextFile : function() {
+        console.log('uploadNextFile idx=' + this.filesIdx);
+        if (this.filesToUpload.length>(this.filesIdx+1)) {
+            this.filesIdx++;
+            console.log('Uploading idx ' + this.filesIdx);
+            //var nextFile = filesToUpload.shift();
+            var nextFile = this.filesToUpload[this.filesIdx];
+            this.uploadOneFile(nextFile);
+        } else {
+            console.log('No more files to upload');
+            this.Processing = false;
+            //if (this.filesIdx>0) this.handleAllFilesDone();
+        }
+    },
+    uploadOneFile : function(f) {
+        var self = this;
+        var reader = new FileReader();
+        var idx = this.filesIdx;
+        this.uploadcount++;
+        console.log('uploadOneFile idx='+idx);
+        reader.onabort = function(){self.readerAbortHandler();};
+        reader.onerror = function(evt){self.readerErrorHandler(evt);};
+        reader.onprogress = function(){self.readerProgressHandler();};
+        reader.onloadstart = function(){self.readerOnloadStartHandler();};
+        reader.onload = function(evt){self.readerOnloadHandler(evt);};
+        this.refreshStatusForFile(idx);
+        //reader.readAsArrayBuffer(filesToUpload[idx]);
+        //console.log(filesToUpload[idx]);
+        reader.readAsDataURL(this.filesToUpload[idx]);
+    },
+
+    // file reader methods
+    readerAbortHandler : function() {
+        alert('File upload cancelled');
+    },
+    readerErrorHandler : function(evt) {
+        switch(evt.target.error.code) {
+        case evt.target.error.NOT_FOUND_ERR:
+            alert('File not found');
+            break;
+        case evt.target.error.NOT_READABLE_ERR:
+            alert('File is not readable');
+            break;
+        case evt.target.error.ABORT_ERR:
+            break;
+        default:
+            alert('An error occured reading the file');
+            break;
+        }
+    },
+    readerProgressHandler : function() {
+    },
+    readerOnloadStartHandler : function() {
+        this.filesStatus[this.filesIdx].text = '0';
+        this.refreshStatusForFile(this.filesIdx);
+    },
+    readerOnloadHandler : function(evt) {
+        var idx = this.filesIdx;
+        console.log('readerOnloadHandler idx=' + idx);
+        this.filesStatus[idx].text='100%'; this.filesStatus[idx].pct=100;
+        this.refreshStatusForFile(idx);
+        // save file to salesforce!
+        var filename = this.filesToUpload[idx].name;
+        console.log(filename);
+        var fileContent = String(evt.target.result);
+        console.log(fileContent.substring(0,64));
+        var fileContent = fileContent.substr(fileContent.indexOf(',') + 1);
+        console.log(fileContent.substring(0,64));
+    
+        this.handleFileContent(this.filesToUpload[idx], this.filesStatus[idx], fileContent);
+        --this.uploadcount;
+        this.uploadNextFile();
+        
+        if (this.uploadcount==0 && this.filesIdx>0) this.handleAllFilesDone();
+    },
+// end file reader methods
+
+    handleFileContent : function(file, sts, fileContent) {
+        var self = this;
+        console.log('handleFileContent ' + file.name);
+        for(var i=0; i<this.fileCompleteListener.length; i++) {
+            this.fileCompleteListener[i](file, sts, fileContent);
+        }
+    },
+
+    refreshStatusForFile : function(idx) {
+        console.log('refreshStatusForFile idx=' + idx);
+        for(var i=0; i<this.fileStatusListener.length; i++) {
+            this.fileStatusListener[i](this.filesToUpload[idx], this.filesStatus[idx]);
+        }
+    },
+
+    handleBeforeUploads : function() {
+        console.log('handleBeforeUploads');
+        var self=this;
+        for(var i=0; i<this.beforeUploadsListener.length; i++) {
+            this.beforeUploadsListener[i](this.filesToUpload, this.filesStatus);
+        }
+
+    },
+    
+    handleAllFilesDone : function() {
+        console.log('handleAllFilesDone');
+        for(var i=0; i<this.afterCompletionListener.length; i++) {
+            this.afterCompletionListener[i](this.filesToUpload, this.filesStatus);
+        }
+    },
+    
+    // register listeners
+    registerBeforeUploadsListener : function(f) {
+        this.beforeUploadsListener[this.beforeUploadsListener.length] = f;
+        return this; 
+    }, 
+    registerStatusListener : function(f) {
+        this.fileStatusListener[this.fileStatusListener.length] = f; 
+        return this; 
+    }, 
+    registerFileCompleteListener : function(f) {
+        this.fileCompleteListener[this.fileCompleteListener.length] = f; 
+        return this; 
+    }, 
+    registerAfterCompletionListener : function(f) {
+        this.afterCompletionListener[this.afterCompletionListener.length] = f;
+        return this; 
+    }
+    
+};
+
+
+// custom for this page
+
+function formatStatusLine(fileobj, statusobj) {
+    var rtnstring = '';
+    rtnstring = '<td>'+fileobj.name+'</td>'
+        + '<td>'+statusobj.text+'</td>'
+        + '<td>'
+        + (statusobj.id!=null ? ('<a href="/' + statusobj.id + '" target="_blank">Attachment</a>') : '')
+        + '</td>'
+        + '<td>'
+        + (statusobj.ParentId!=null ? ('<a href="/'+statusobj.ParentId+'" target="_blank">') : '')
+        + statusobj.ParentName
+        + (statusobj.ParentId!=null ? '</a>' : '')
+        + '</td>'
+        + '<td>' + statusobj.ParentDisplayName + '</td>';
+    return rtnstring;
+}
+
+
+function beforeUpload(filesToUpload, filesStatus) {
+        var pad0 = '000000';
+        var ponames = [];
+        for(var i=0; i<filesToUpload.length; i++) {
+            var filename = filesToUpload[i].name;
+            var purchaseOrder = filename.substr(0, filename.lastIndexOf('.'));
+            // massage out characters, dashes, copy indicators e.g. (2)
+            purchaseOrder = purchaseOrder.replace(/\-/ig,'_');  
+            purchaseOrder = purchaseOrder.replace(/[a-z\-#]/ig,'');
+            purchaseOrder = purchaseOrder.replace(/\([0-9-]*\)/ig,'');
+            purchaseOrder = purchaseOrder.trim();
+            // If there's an underscore, just use everything up to that
+            if (purchaseOrder.indexOf('_')>0) 
+                purchaseOrder = purchaseOrder.substring(0,purchaseOrder.indexOf('_'));
+            // Build salesforce PO name
+            purchaseOrder = 'PO#' + pad0.substring(purchaseOrder.length) + purchaseOrder;
+            ponames[ponames.length] = purchaseOrder;
+            filesStatus[i].ParentName = purchaseOrder;
+        }
+        // grab PO ids
+        var soql = "select Id, Name, dealer__PO_Accounting_Name__c "
+            + "from dealer__Purchase_Order__c "
+            + "where Name in ('" + ponames.join("','") + "')" ;
+        var soqlResult = sforce.connection.query(soql); 
+        var records = soqlResult.getArray('records');
+        console.log('Rcds: ' + records.length + ' : ' + soql);
+        for(var i=0; i<records.length; i++) {
+            var poname = records[i].Name;
+            //var poname = records[i].dealer__PO_Accounting_Name__c;
+            var poid = records[i].Id;
+            var podisplayname = records[i].dealer__PO_Accounting_Name__c;
+            console.log(poid + ':' + poname);
+            for(var j=0; j<filesStatus.length; j++) {
+                if (filesStatus[j].ParentName==poname) {
+                    filesStatus[j].ParentId = poid;
+                    filesStatus[j].ParentDisplayName=podisplayname;
+                    //refreshStatusForFile(j);
+                }
+            }
+        }   
+
+        var listelements = '';
+        for(var i=0; i<filesToUpload.length; i++) {
+            listelements += '<tr id="status_'+i+'">'
+                + formatStatusLine(filesToUpload[i],filesStatus[i])
+                + '</tr>';
+        }
+        document.getElementById('fileProgress').innerHTML = listelements;
+
+        var listelements = '';
+        for(var i=0; i<filesToUpload.length; i++) {
+            var sts = formatStatusLine(filesToUpload[i],filesStatus[i]);
+            console.log(sts);
+            listelements += '<tr id="status_'+i+'">'
+                + sts
+                + '</tr>';
+        }
+        document.getElementById('fileProgress').innerHTML = listelements;
+    
+}
+
+function statusChanged(fileupload, filestatus) {
+        if (filestatus.id) filestatus.text = 'Completed';
+        else if (filestatus.ParentId==null) filestatus.text = 'PO not found';
+        var tr = document.getElementById('status_'+filestatus.idx);
+        if (tr) {
+            var sts = formatStatusLine(fileupload, filestatus); 
+            tr.innerHTML = sts;
+        }
+}
+
+function fileCompleted(file, filestatus, filecontent) {
+        console.log('fileCompleted idx=' + filestatus.idx);
+        console.log(file.name);
+        console.log(filestatus);
+        var filename = file.name;
+        var purchaseOrder = filename.substr(0, filename.lastIndexOf('.'));
+        // massage out characters, dashes, copy indicators e.g. (2)
+        purchaseOrder = purchaseOrder.replace(/[a-z\-]/ig,'');
+        purchaseOrder = purchaseOrder.replace(/\([0-9-]*\)/ig,'');
+        purchaseOrder = purchaseOrder.trim();
+        console.log(purchaseOrder);
+        var ParentId = null;
+        ParentId = filestatus.ParentId;
+        // AMM1
+        // var Attachment  = new sforce.SObject("Attachment");
+        // Attachment.Name = filename;
+        // Attachment.ContentType = file.type;
+        // Attachment.ParentId = ParentId;
+        // console.log(Attachment);
+    
+        // //var binary = "";
+        // //var bytes = new Uint8Array(fileContent);
+        // //var byteslength = bytes.byteLength;
+        // //for(var j=0; j<byteslength; j++) binary += String.fromCharCode(bytes[j]);
+        // //Attachment.Body = (new sforce.Base64Binary(binary)).toString();
+        // Attachment.Body = filecontent;  // assumed base64 
+        // if (ParentId) {
+        //     var result = sforce.connection.create([Attachment], {
+        //         onSuccess:function(result, source) {
+        //             if (result[0].getBoolean("success")) {
+        //                 console.log("New attachment id: " + result[0].id);
+        //                 filestatus.id = result[0].id;
+        //             } else {
+        //                 console.log("Failed to create attachment: " + result[0]);
+        //                 if (result[0] && result[0].message) {
+        //                     filestatus.text = 'Failed to create attachment: ' + result[0].message;
+        //                 } else {
+        //                     filestatus.text = 'Failed to create attachment: ' + result[0];
+        //                 }
+        //             }
+        //             statusChanged(file, filestatus);
+        //         },
+        //         onFailure:function(error, source) {
+        //             console.log("Error: " + error);
+        //             filestatus.text = 'Error: ' + error;
+        //             statusChanged(file, filestatus);
+        //         }
+        //     });
+        // } else {
+        //     filestatus.text = 'PO not found';
+        //     statusChanged(file, filestatus);
+        // }
+
+        var ContentVersion  = new sforce.SObject("ContentVersion");
+        
+        ContentVersion.ContentLocation = 'S';
+        ContentVersion.VersionData = filecontent;
+        ContentVersion.Title = filename;
+        ContentVersion.PathOnClient = filename;
+        
+        console.log(ContentVersion);
+
+        if (ParentId) {
+            var result = sforce.connection.create([ContentVersion], {
+                onSuccess:function(result, source) {
+                    if (result[0].getBoolean("success")) {
+                        console.log("New Content Version id: " + result[0].id);
+                        filestatus.id = result[0].id;
+
+                        var tempid = result[0].id;
+
+                        console.log('tempid: ' + tempid);
+                        
+                        // Get the ContentDocumentId back
+                        
+                        var result2 = sforce.connection.retrieve("Id,ContentDocumentId", "ContentVersion", [tempid]);
+                        console.log("result2: " + result2);
+
+                        var contentDocumentId = result2[0].ContentDocumentId;
+
+                        console.log("contentDocumentId: " + contentDocumentId);
+
+                        // Create ContentDocumentLink
+                        var ContentDocumentLink  = new sforce.SObject("ContentDocumentLink");
+
+                        ContentDocumentLink.ContentDocumentId = contentDocumentId;
+                        ContentDocumentLink.LinkedEntityId = ParentId;
+                        ContentDocumentLink.ShareType = 'V';
+                        ContentDocumentLink.Visibility = 'AllUsers';
+
+                        var result3 = sforce.connection.create([ContentDocumentLink], {
+                             onSuccess:function(result, source) {
+                                if (result[0].getBoolean("success")) {
+                                    console.log('result3 success');
+                                }
+                                else
+                                {
+                                    console.log("Failed to create ContentDocumentLink: " + result[0]);
+                                    if (result[0] && result[0].message) {
+                                        filestatus.text = 'Failed to create ContentDocumentLink: ' + result[0].message;
+                                    } else {
+                                        filestatus.text = 'Failed to create ContentDocumentLink: ' + result[0];
+                                    }
+                                }
+                                statusChanged(file, filestatus);
+                            },
+                             onFailure:function(error, source) {
+                                console.log("Error: " + error);
+                                filestatus.text = 'Error: ' + error;
+                                statusChanged(file, filestatus);
+                            }
+                        });
+
+                        // Content Document Link
+                    
+                    } else {
+                        console.log("Failed to create Content Version: " + result[0]);
+                        if (result[0] && result[0].message) {
+                            filestatus.text = 'Failed to create Content Version: ' + result[0].message;
+                        } else {
+                            filestatus.text = 'Failed to create Content Version: ' + result[0];
+                        }
+                    }
+                    statusChanged(file, filestatus);
+                },
+                onFailure:function(error, source) {
+                    console.log("Error: " + error);
+                    filestatus.text = 'Error: ' + error;
+                    statusChanged(file, filestatus);
+                }
+            });
+        } else {
+            filestatus.text = 'PO not found';
+            statusChanged(file, filestatus);
+        }
+        // AMM1
+}
+
+var poupload = (new FileDragAndDrop(document.getElementById('dropArea1'))).registerHandlers();
+poupload.registerBeforeUploadsListener(beforeUpload);
+poupload.registerStatusListener(statusChanged);
+poupload.registerFileCompleteListener(fileCompleted);
+
+</script>
+
+</apex:page>

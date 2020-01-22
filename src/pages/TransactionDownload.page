@@ -1,0 +1,88 @@
+<apex:page controller="TransactionDownload_CTLR">
+
+<apex:form >
+	<apex:pageBlock title="Transaction download" id="downloadForm">
+		<apex:pageBlockButtons >
+			<apex:commandButton action="{!submitDownload}" value="Download" 
+				rendered="{!Completed}" rerender="downloadForm"/>
+		</apex:pageBlockButtons>
+
+		<apex:pageMessages />
+
+		<apex:pageBlockSection columns="1" id="criteriaBlock">
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel >Since transaction</apex:outputLabel>
+				<apex:outputText value="{!sinceTransaction}"/>
+			</apex:pageBlockSectionItem>
+
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel >Through period name (yyyy/mmm)</apex:outputLabel>
+				<apex:outputPanel >
+					<apex:inputText value="{!throughPeriodName}" maxlength="8">
+						<apex:actionSupport event="onchange" action="{!chgPeriod}" reRender="criteriaBlock"/>
+					</apex:inputText>
+				</apex:outputPanel>
+			</apex:pageBlockSectionItem>
+			
+			<apex:pageBlockSectionItem id="wholePeriodCB">
+				<apex:outputLabel >All transactions for period</apex:outputLabel>
+				<apex:inputCheckbox value="{!wholePeriod}"/>
+			</apex:pageBlockSectionItem>
+
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection columns="1" id="customSelection">
+
+			<apex:pageBlockSectionItem rendered="{!isAdmin}">
+				<apex:outputLabel >Custom download</apex:outputLabel>
+				<apex:inputCheckbox value="{!overrideSelection}">
+					<apex:actionSupport event="onchange" action="{!dummyProc}" reRender="customSelection"/>
+				</apex:inputCheckbox>
+			</apex:pageBlockSectionItem>
+		
+			<apex:pageBlockSectionItem rendered="{!overrideSelection}">
+				<apex:outputLabel >Since transaction</apex:outputLabel>
+				<apex:inputText value="{!sinceTransaction}"/>
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem rendered="{!overrideSelection}">
+				<apex:outputLabel >Through transaction</apex:outputLabel>
+				<apex:inputText value="{!untilTransaction}"/>
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem rendered="{!overrideSelection}">
+				<apex:outputLabel >Remember last transaction downloaded</apex:outputLabel>
+				<apex:inputCheckbox value="{!saveLastTransaction}"/>
+			</apex:pageBlockSectionItem>
+		
+		</apex:pageBlockSection>
+
+		<apex:outputPanel layout="block" 
+		style="border-top:1px solid #e0e0e0;width:75%;margin-top:10px;margin-left:auto;margin-right:auto;padding-top:5px;">
+		The transaction download will run in the background when you click the download button. 
+		When it completes, you will receive an email with a separate attachment for each 
+		General Ledger period that has transactions and the last transaction number will be
+		recorded so the next download will pick up only new transactions.
+		</apex:outputPanel>
+	
+	</apex:pageBlock>
+	
+	<apex:pageBlock >
+		<apex:pageBlockSection columns="2">
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel >Last submitted</apex:outputLabel>
+				<apex:outputText value="{!lastSubmittedDT}"/>
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel >Last completed</apex:outputLabel>
+				<apex:outputText value="{!lastCompletedDT}"/>
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel >Submitted by</apex:outputLabel>
+				<apex:outputText value="{!lastDownload.LastSubmittedBy__c}"/>
+			</apex:pageBlockSectionItem>
+		
+		</apex:pageBlockSection>
+	
+	</apex:pageBlock>
+	
+</apex:form>
+</apex:page>

@@ -1,0 +1,116 @@
+<apex:page tabStyle="dealer__Purchase_Order__c" title="Sublet Purchase Order Reverse" 
+    standardController="dealer__Purchase_Order__c" 
+    extensions="PurchaseOrderReverseEXT" >
+
+    <apex:sectionHeader title="Purchase Order" subtitle="Re-Open Sublet PO#{!dealer__Purchase_Order__c.dealer__PO_Accounting_Name__c}" />
+    
+    <apex:pageMessages id="pmessage"/>
+    
+    <apex:form >
+    <apex:actionFunction name="reopensublet" action="{!reverseSubletPO}"/>
+    <apex:pageBlock mode="maindetail" id="mainBlock">
+        <apex:pageBlockButtons location="top" id="pagebuttons">
+            <apex:commandButton action="{!returnToRO}" id="returnbtn" value="Return to Purchase Order" />
+            <apex:commandButton action="{!reverseSubletPO}" value="Re-Open Sublet PO" disabled="{!AND(AllowSubletReversal,dealer__Purchase_Order__c.dealer__Status__c!='Accepted')}" 
+                onclick="this.disabled=true;disableBtn(this,'Processing...');disableBtn('input[id$=\'returnbtn\']','');reopensublet();"/>
+        </apex:pageBlockButtons>        
+
+        <apex:pageBlockSection id="headerDetail">
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Vendor__c}" />
+            <apex:outputField value="{!dealer__Purchase_Order__c.RecordTypeId}" />
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__PO_Lines__c}"/> 
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Status__c}"/> 
+
+            <apex:outputText />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Requested_By__c}" />
+
+            <apex:outputText rendered="{!ISBLANK(dealer__Purchase_Order__c.Id)}" />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__PO_Amount__c}"/> 
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Company__c}"/>
+
+            <apex:outputText />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Service_Repair_Order__c}" />
+            <apex:outputText />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Estimated_Arrival_Time__c}" />
+
+            <apex:outputText />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Tracking__c}"/>
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Shipping_Method__c}" />
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Date_Required__c}"/>
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__VIN__c}" />
+
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection columns="1" collapsible="false">
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Comments__c}" style="width:450px;" label="Internal Comments" />
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection columns="2" collapsible="false" id="auditfields">
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel for="CreatedBy" value="Created By" />   
+                <apex:outputPanel >
+                    <apex:commandLink id="CreatedBy" action="/{!dealer__Purchase_Order__c.CreatedBy.Id}" value="{!dealer__Purchase_Order__c.CreatedBy.Name}" />
+                    <apex:outputText value=", {!dealer__Purchase_Order__c.CreatedDate}" /> 
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel for="LastModifiedBy" value="Last Modified By" />   
+                <apex:outputPanel >
+                    <apex:commandLink id="LastModifiedBy" action="/{!dealer__Purchase_Order__c.LastModifiedBy.Id}" value="{!dealer__Purchase_Order__c.LastModifiedBy.Name}" />
+                    <apex:outputText value=", {!dealer__Purchase_Order__c.LastModifiedDate}" /> 
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>                
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection title="Accepted Purchase Order" collapsible="false" >
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Invoice_Amount__c}" />
+            <apex:outputText />
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Invoice_Date__c}" />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Invoice_Number__c}" />
+
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Accepted_By__c}" />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Accepted_DateTime__c}" />
+            <apex:outputText />
+            <apex:outputField value="{!dealer__Purchase_Order__c.dealer__Post_Date_Time__c}" />
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    </apex:form>
+
+    <apex:pageBlock >
+        <!-- Column Data -->
+        <apex:variable value="{!0}" var="line_index" />
+        <apex:pageBlockTable value="{!purchaseOrderLines}" var="pol" id="poLineTable">
+            <apex:column headerValue="Line#">
+                <apex:variable value="{!line_index + 1}" var="line_index" />
+                <apex:outputText value="{!line_index}" />
+            </apex:column>
+            <apex:column headerValue="Product">
+                <apex:outputField value="{!pol.dealer__Product__c}" />
+            </apex:column>
+            <apex:column headerValue="Description">
+                <apex:outputField value="{!pol.dealer__Description__c}" />
+            </apex:column>
+            <apex:column headerValue="Quantity">
+                <apex:outputField value="{!pol.dealer__Quantity__c}"  />
+            </apex:column>
+            <apex:column headerValue="Amount">
+                <apex:outputField value="{!pol.dealer__Amount__c}"  />
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+        function disableBtn(btn, newText) {
+            $jq(btn).prop('disabled',true).addClass('btnDisabled');
+            if (newText.length>0) $jq(btn).val(newText);        
+        }
+    </script>
+</apex:page>

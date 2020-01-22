@@ -1,0 +1,438 @@
+<apex:page id="pg" standardController="rstk__soinv__c" extensions="rstk.ControllerExtnFSOInv" sideBar="true" action="{!doBeforePageLoad}" renderAs="pdf">
+<head>
+<style>
+    @page {
+        size:portrait;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    
+    }
+    body, table, th, td, div { 
+        font:normal normal 95%/1.0 arial, times new roman, verdana; 
+    }
+    body {
+        counter-reset: pg 0;
+    }
+    table {
+        cell-padding: 0;
+        cell-spacing: 0;
+    }
+    #main {
+        margin:auto;
+        width:700px;
+        background:#ffffff;
+    }
+    .headerSect {
+        width:700px;
+    }
+    .logoDiv {
+        height:95px;
+        width:190px;
+    }
+    .logoDiv img {
+        display: block;
+        height: 100%;
+    }
+    .cmpLogo {
+        max-height:90px;
+        max-width:185px;
+    }
+    .header {
+        width:480px;
+        border: 1px solid;
+        padding: 4px;
+    }
+    .formTitle {
+        float:left;
+        font-weight: bold;
+        font-size: 140%;
+        padding-left:4px;
+    }
+    .pageNumSect {
+        float:right;
+        counter-increment: pg;
+    }
+    div.pageNumSect:before {
+        content: "Page " counter(pg) " of " ;
+    
+    }
+    .headerInfo {
+        margin-top:24px;
+        padding: 2px;
+    }
+    .hdrInfoLbl {
+        font-weight: bold;
+    }
+    .hdrInfoData {
+        font-weight: normal;
+    }
+    td {
+        padding: 2px;
+    }
+    .addressSect {
+        background-color: #000000;
+        width:700px;
+        margin-top:6px;
+        margin-right:2px;
+    }
+    .addressSect th {
+        text-align:center;
+        font-weight: bold;
+        background-color:#000000;
+        color:#ffffff;
+        padding: 2px;
+    } 
+    .addressSect td {
+        background-color:#ffffff;
+    } 
+    .termsSect {
+        width:700px;
+        margin-top:6px;
+        border: 1px solid;
+    }
+    .termsSect td {
+        vertical-align:top;
+    }
+    .termsSect td:nth-child(1) {
+        width: 17%;
+        font-weight: bold;
+    }
+    .termsSect td:nth-child(2) {
+        width: 33%;
+    }
+    .termsSect td:nth-child(3) {
+        width: 15%;
+        font-weight: bold;
+    }
+    .termsSect td:nth-child(4) {
+        width: 35%;
+    }
+    table.lines {
+        width:700px;
+        table-layout:fixed;
+        background-color: #ffffff;
+        margin-top:6px;
+        margin-right:2px;
+        border-top: 1px solid;
+        border-bottom: 1px solid;
+        border-right: 1px solid;
+    }
+    table.lines td {
+        background-color:#ffffff;
+        vertical-align:top;
+        padding: 2px;
+        border-left: 1px solid black;
+    }
+    table.lines th {
+        background-color:#000000;
+        color:#ffffff;
+        padding: 3px 0px 3px 0px;
+        text-align:center;
+        font-weight:bold;
+    }
+    table.footerSect {
+        width:700px;
+        margin-top:6px;
+        margin-right:2px;
+        border-top: 1px solid;
+        border-bottom: 1px solid;
+        border-right: 1px solid;
+    }
+    table.footerSect td {
+        margin-top: 6px;
+        border-left: 1px solid black;
+    }
+    table.footerSect td td {
+        border: none;
+    }
+    //230
+    .totalLabel {
+        font-weight: bold;
+        width: 90px;
+    }
+    .totalAmt {
+        text-align:right;
+        width: 140px;
+    }
+    .totalSect td {
+        border: 0;
+    }
+    .shippingComments {
+        font-weight:bold;
+    }
+    table.lines tr.lines_content_row td.col_description {
+        text-align:left;
+        font-weight:bold;
+        text-overflow:ellipsis;
+        padding-left: 1em;
+        white-space: wrap;
+    }
+    table.lines tr.lines_content_row td.col_comment {
+        text-align:left;
+        font-style:italic;
+        padding-left: 1em;
+        text-overflow:ellipsis;
+    }
+    table.lines tr.lines_content_row td.col_empty {
+        text-align:left;
+        color: #ffffff;
+    }
+    table.lines tr.lines_content_row td.col_serial {
+        text-align:left;
+        padding-left: 4em;
+        text-overflow:ellipsis;
+    }
+    table.lines tr.lines_content_row td.col_component {
+        text-align:left;
+        padding-left:1em;
+        text-overflow:ellipsis;
+    }
+    table.lines tr.lines_content_row td.col_product{
+        text-align:left;
+        text-overflow:ellipsis;
+    }
+    table.lines tr.lines_content_row td.col_uom {
+        text-align:center;
+    }
+    table.lines tr.lines_content_row td.col_shipper {
+        text-align:left;
+    }
+    table.lines tr.lines_content_row td {
+        text-align:right; 
+        overflow:hidden;
+        text-overflow:clip;
+        white-space:nowrap;
+    }
+</style>
+</head>
+<body>
+<div id="main">
+<apex:repeat value="{!pages}" var="page">
+    <div class="headerSect" style="{!IF(page.pageNum>1,'page-break-before:always;','')}">
+      <table cellspacing="0" cellpadding="0" border="0">
+      <tr><td>
+        <!-- <div class="logoDiv">
+            <apex:image styleClass="cmpLogo" value="{!relatedTo.rstk__companylogo__c}" rendered="{!!ISBLANK(relatedTo.rstk__companylogo__c)}"/>
+        </div> -->
+        <c:TWEmailLogo />
+        <br/>
+              <apex:panelGrid columns="1" width="100%">
+                   <apex:outputText value="1090 W. Wilbeth Rd, Akron OH 44314  Phone: (330) 861-1118"/>
+              </apex:panelGrid>
+      </td><td>
+        <div class="header">
+            <div class="formTitle">Sales Invoice</div>
+            <div class="pageNumSect">{!pages.size}</div>
+            <apex:panelGrid styleClass="headerInfo" columnClasses="hdrInfoLbl,hdrInfoData" columns="2" width="100%">
+                <apex:outputText value="Invoice Number"/>
+                <apex:outputText value="{!relatedTo.rstk__invoiceno__c}"/>
+                <apex:outputText value="Invoice Date"/>
+                <apex:outputText value="{0,date,short}">
+                  <apex:param value="{!relatedTo.rstk__invdate__c}"/>
+                </apex:outputText>
+                <apex:outputText value="Sales Order Number"/>
+                <apex:outputText value="{!relatedTo.rstk__order__c}"/>
+                <apex:outputText value="Customer PO Number"/>
+                <apex:outputText value="{!relatedTo.rstk__custpo__c}"/>
+                <apex:outputText value="Sales Representative"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.Name}"/>
+                <apex:outputText value="Sales Representative Phone"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.MobilePhone}"/>
+                <apex:outputText value="Sales Representative Fax"/>
+                <apex:outputText value="{!relatedTo.rstk__fsoinvh_soinv__r.Sales_rep__r.Fax}"/>
+            </apex:panelGrid>
+        </div>
+      </td></tr></table>
+    </div>
+    <table class="addressSect" cellspacing="1">
+        <tr>
+            <th>Sold To</th><th>Ship To</th>
+        </tr>
+        <tr width="100%">
+            <td valign="top" width="50%">
+            <apex:panelGrid columns="1" width="100%">
+                <apex:outputText value="{!relatedTo.rstk__custno__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address1__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__address2__c}" rendered="{!!ISBLANK(relatedTo.rstk__address2__c)}"/>
+                <apex:outputText value="{!relatedTo.rstk__address3__c}" rendered="{!!ISBLANK(relatedTo.rstk__address3__c)}"/>
+                <apex:outputText value="{0}, {1}  {2}">
+                    <apex:param value="{!relatedTo.rstk__city__c}"/>
+                    <apex:param value="{!relatedTo.rstk__state__c}"/>
+                    <apex:param value="{!relatedTo.rstk__zip__c}"/>
+                </apex:outputText>
+                <apex:outputText value="{!relatedTo.rstk__country__c}" rendered="{!!ISBLANK(relatedTo.rstk__country__c)}"/>
+            </apex:panelGrid>
+            </td>
+            <td valign="top" width="50%">
+            <apex:panelGrid columns="1" width="100%">
+                <apex:outputText value="{!relatedTo.rstk__shiptoname__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress1__c}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress2__c}" rendered="{!!ISBLANK(relatedTo.rstk__staddress2__c)}"/>
+                <apex:outputText value="{!relatedTo.rstk__staddress3__c}" rendered="{!!ISBLANK(relatedTo.rstk__staddress3__c)}"/>
+                <apex:outputText value="{0}, {1}  {2}">
+                    <apex:param value="{!relatedTo.rstk__stcity__c}"/>
+                    <apex:param value="{!relatedTo.rstk__ststate__c}"/>
+                    <apex:param value="{!relatedTo.rstk__stzip__c}"/>
+                </apex:outputText>
+                <apex:outputText value="{!relatedTo.rstk__stcountry__c}" rendered="{!!ISBLANK(relatedTo.rstk__stcountry__c)}"/>
+                <apex:outputText styleClass="shippingComments" value="{!relatedTo.rstk__stcomments__c}" rendered="{!!ISBLANK(relatedTo.rstk__stcomments__c)}"/>
+           </apex:panelGrid>
+        </td>
+        </tr>
+    </table>
+    <table class="termsSect">
+       <!-- JRP3 Begin -->
+        <apex:outputPanel rendered="{! NOT(ISBLANK(relatedTo.rstk__fsoinvh_soinv__r.Chassis__c)) }" layout="none">  
+          <tr>
+            <td><b>Chassis:</b></td>  <td Colspan="3"><b>{!relatedTo.rstk__fsoinvh_soinv__r.Chassis__r.Name}&nbsp;&nbsp;&nbsp;
+             VIN:&nbsp;&nbsp;{!relatedTo.rstk__fsoinvh_soinv__r.Chassis__r.VIN__c}</b></td>
+          </tr>
+        </apex:outputPanel> 
+       <!-- JRP3 End -->
+        <tr>
+            <td><b>Contact Info</b></td><td>{!relatedTo.rstk__contact__c}</td>
+            <td><b>{!relatedTo.rstk__conmethod__c}</b></td><td>
+            <apex:outputText rendered="{!OR(relatedTo.rstk__conmethod__c='Email',relatedTo.rstk__conmethod__c='Text to Email')}" value="{!relatedTo.rstk__email__c}"/>
+            <apex:outputText rendered="{!OR(relatedTo.rstk__conmethod__c='Phone',relatedTo.rstk__conmethod__c='Text to Phone')}" value="{!relatedTo.rstk__phone__c}"/>
+            <apex:outputText rendered="{!relatedTo.rstk__conmethod__c='Fax'}" value="{!relatedTo.rstk__fax__c}"/>
+            </td>
+        </tr><tr>
+            <td><b>Credit Terms</b></td><td>{!relatedTo.rstk__terms__c}</td>
+            <td><b>Due Date</b></td>
+            <td>
+            <apex:outputText value="{0,date,short}">
+                <apex:param value="{!relatedTo.rstk__duedate__c}" />
+            </apex:outputText>
+            </td>
+        </tr>
+        <!-- JRP3a Begin -->
+        <apex:outputPanel rendered="{! OR( NOT(ISBLANK(relatedTo.rstk__fsoinvh_soinv__r.Dealer_code__c)) , ISBLANK(relatedTo.rstk__fsoinvh_soinv__r.Dealer_Terms__c) ) }" layout="none">  
+          <tr>
+            <td><b>Dealer Code</b></td>  <td>{!relatedTo.rstk__fsoinvh_soinv__r.Dealer_Code__c}</td>
+            <td><b>Dealer Terms</b></td> <td>{!relatedTo.rstk__fsoinvh_soinv__r.Dealer_Terms__c}</td>
+          </tr>
+        </apex:outputPanel> 
+        <!-- JRP3a End -->
+    </table>
+    <table border="0" cellspacing="0" cellpadding="0" class="lines">
+        <tr class="lines_header_row">
+          <th width="4%" >Line</th>
+          <!-- <th width="42%">Product</th>  JRP2d -->
+          <th width="49%">Product</th>  <!-- JRP2a -->
+          <th width="5%" >UOM</th>
+          <th width="13%">Shipper</th>
+          <th width="8%" >Quantity</th>
+          <th width="8%" >Unit Price</th>
+          <!-- <th width="7%" >Discount</th>  JRP2d  -->
+          <th width="10%">Extension</th>
+          <th width="3%" >Tax</th>
+        </tr>
+        <apex:repeat var="l" value="{!page.lines}">
+        <tr class="lines_content_row">
+            <apex:variable var="isSpanRow" value="{!l.rstk__linetype__c='Description'}" />
+            <!-- Description Panel - Spans Across Table -->
+            <apex:outputPanel layout="none" rendered="{! isSpanRow }">
+                <!-- Blank Line Number Column -->
+                <td></td> 
+                <!-- Description Column -->
+                <!-- JRP1d <td class="col_description" colspan="8">{!l.rstk__comment__c}</td>  -->
+                <!-- JRP!a --><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td> 
+            </apex:outputPanel>
+            <!-- Standard Panel - No Spans -->
+            <apex:outputPanel layout="none" rendered="{! !isSpanRow }">
+                <!-- Line Number Column -->
+                <td class="col_lineno">{!l.rstk__invline__c}</td>
+                <!-- Product Column -->
+                <apex:variable var="productClass" value="{! 'col_product' + IF(l.rstk__linetype__c='Empty',' col_empty','') + IF(l.rstk__linetype__c='Detail', '', '') + IF(l.rstk__linetype__c='Prepayment','','') + IF(l.rstk__linetype__c='PrepaymentApplied','','') + IF(l.rstk__linetype__c='Comment',' col_comment', '') + IF(l.rstk__linetype__c='Serial', ' col_serial', '') + IF(l.rstk__linetype__c='Component', ' col_component', '') }"/>
+                <apex:variable var="productDisplayVal" value="{! '' + IF(l.rstk__linetype__c='Empty', 'X', '') + IF(l.rstk__linetype__c='Detail', l.rstk__prod__c, '') + IF(OR(l.rstk__linetype__c='Prepayment', l.rstk__linetype__c='PrepaymentApplied', l.rstk__linetype__c='Comment', l.rstk__linetype__c='Serial'), l.rstk__comment__c, '') + IF(l.rstk__linetype__c='Component', l.rstk__component__c , '') }"/>
+                <td class="{!productClass}">
+                    {!productDisplayVal}
+                </td>
+                <!-- Unit Of Measure Column -->
+                <td class="col_uom">{!l.rstk__uom__c}</td>
+                <!-- Shipper Column -->
+                <td class="col_shipper">{!l.rstk__shipper__c}</td>
+                <!-- Quantity Column -->
+                <td class="col_qty">
+                    <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!OR(l.rstk__linetype__c='Detail',l.rstk__linetype__c='Prepayment')}">
+                        <apex:param value="{!l.rstk__qty__c}"/>
+                    </apex:outputText>
+                </td>
+                <!-- Unit Price Column -->
+                <td class="col_unitprice">
+                  <!-- JRP3d Begin
+                     <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!l.rstk__linetype__c='Detail'}">
+                       <apex:param value="{!l.rstk__price__c}"/>
+                    </apex:outputText>
+                    <apex:outputText value="{0,Number,###,###,###,##0.00}" rendered="{!l.rstk__linetype__c='Component'}">
+                       <apex:param value="{!l.rstk__unitprice__c}"/>
+                    </apex:outputText>
+                  JRP3d end-->
+                </td>
+                <!-- Discount Column 
+                <td class="col_discount">
+                    <apex:outputText value="{0,Number,###,###,###,##0.00}%" rendered="{!!ISBLANK(l.rstk__discpct__c)}">
+                    </apex:outputText>
+                </td>
+                JRP2d -->
+                <!-- Extension Column -->
+                <td class="col_extension">
+                    <!-- JRP3d 
+                       <apex:variable var="isPrepaymentApplied" value="{! l.rstk__linetype__c='PrepaymentApplied' }"/>
+                       <apex:variable var="extensionAmount" value="{! IF(isPrepaymentApplied, (l.rstk__price__c - l.rstk__discamt__c) * l.rstk__qty__c , (l.rstk__price__c - l.rstk__discamt__c) * l.rstk__qty__c )}"/>
+                       <apex:outputText value="{0,Number,###,###,###,##0.00}">
+                           <apex:param value="{!extensionAmount}"/>
+                       </apex:outputText>
+                    JRP3d  -->
+                </td>
+                <!-- Tax Column -->
+                 <td class="col_tax">
+                     <apex:outputText value="{!IF(OR(relatedTo.rstk__taxexempt__c, l.rstk__taxexempt__c),'','Y')}" rendered="{!!ISBLANK(l.rstk__invline__c)}"/>
+                 </td>
+            </apex:outputPanel>
+        </tr>
+        </apex:repeat>
+    </table>
+</apex:repeat>
+<table class="footerSect" cellpadding="0" cellspacing="0">
+  <tr><td width="460px" valign="top"><div style="overflow:hidden;max-height:85px;"><apex:outputText escape="false"  value="{!relatedTo.rstk__extcomment__c}"/>
+      </div>
+      </td>
+      <td width="230px">
+      <apex:panelGrid styleClass="totalSect" columnClasses="totalLabel,totalAmt" columns="2" width="225px" >
+        <apex:outputText value="SubTotal"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}">
+            <apex:param value="{!relatedTo.rstk__total__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Discount" rendered="{!AND(!ISNULL(relatedTo.rstk__discamt__c), relatedTo.rstk__discamt__c>0)}"/>
+        <apex:outputText value="({0,Number,###,###,###,###,##0.00})" rendered="{!AND(!ISNULL(relatedTo.rstk__discamt__c), relatedTo.rstk__discamt__c>0)}">
+            <apex:param value="{!relatedTo.rstk__discamt__c}"/>
+        </apex:outputText>
+        <!-- <apex:outputText value="Shipping"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}">
+            <apex:param value="{!relatedTo.rstk__freightamt__c+relatedTo.rstk__handlingamt__c+relatedTo.rstk__packageamt__c}"/>
+        </apex:outputText> JRP2d -->
+        <apex:outputText value="Tax"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}">
+            <apex:param value="{!relatedTo.rstk__taxamt__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Prepayment"/>
+        <apex:outputText value="({0,Number,###,###,###,###,##0.00})">
+            <apex:param value="{!relatedTo.rstk__totalppya__c}"/>
+        </apex:outputText>
+        <apex:outputText value="Invoice Total"/>
+        <apex:outputText value="{0,Number,###,###,###,###,##0.00}">
+            <apex:param value="{!relatedTo.rstk__grandtotal__c - relatedTo.rstk__totalppya__c}"/>
+        </apex:outputText>
+      </apex:panelGrid>
+  </td></tr>
+</table>
+<table class="footerSect" cellpadding="0" cellspacing="0">
+  <tr><td width="690px" valign="top" align="center">
+     PLEASE REMIT PAYMENT TO:&nbsp;&nbsp;&nbsp;Driverge,&nbsp;&nbsp;&nbsp;1090 W.Wilbeth Rd,&nbsp;&nbsp;&nbsp;Akron OH 44314
+      </td>
+  </tr> 
+</table>
+</div>
+</body>
+</apex:page>

@@ -1,0 +1,209 @@
+<apex:page showHeader="true" sidebar="false" standardController="dealer__Deal__c" showChat="true" title="Parts Kit Search" id="p" docType="html-5.0" extensions="Deal_MBW2">
+<!-- 
+    2018-01-16  B. Leaman   BLL1 - copy east/west cost structure logic from Deal screen.
+	2019-03-19  A. Miller   AMM2 - W-000582 - Adding favorites as an option for the screen
+	2019-11-15	B. Leaman	BLL2 - don't use external icons - they got changed and are making this difficult to use
+	2019-11-25	B. Leaman	W-000795 BLL3 - Can't search on notes anymore, as they're increased past 256 characters.
+ -->
+<!--BLL2-->
+<style>
+.favorite,  .favorite:visited {
+	font-size:16pt;
+	text-decoration: none!important;
+	color:black!important;
+}
+.favorite:hover {
+	font-size:16pt;
+	text-decoration: none!important;
+	color:#3366ff!important;
+}
+</style>
+<!--BLL2-->
+ <!-- AMM2 -->
+    <script type="text/javascript">
+        function setRemoteFavorite(recordId, boolFlag, locationId, showFavorites) {
+            
+            if(showFavorites === 'false')
+            {
+                alert("Must enable the checkbox 'Show Favorites' to save this favorite");
+            }
+            else
+            {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.Deal_MBW2.favoriteClick}',
+                    recordId,
+                    boolFlag,
+                    locationId,
+                    showFavorites,
+                    function(result, event){
+                        if (event.status) {
+                            console.dir(event);
+                            rerendAction();
+                        } else if (event.type === 'exception') {
+                        console.dir(event);
+                        } else {
+                        console.dir(event);
+                        }
+                    }, 
+                    {escape: true}
+                );    
+            } 
+        }
+    </script>
+    <!-- AMM2 -->
+    <apex:sectionHeader title="Additional Equipment" subtitle="Search additional equipment and parts kits" description="This screen allows you to lookup additional equipment and parts kits without being on a proposal." />
+    <apex:form id="frm">
+        
+        <!-- AMM2 -->
+        <apex:actionFunction name="rerendAction" rerender="kitTable"/>
+        <!-- AMM2 -->
+    
+    <apex:pageMessages />
+        <apex:pageBlock id="kitSearch" mode="maindetail">
+            <apex:pageBlockSection id="kitSearch" columns="1" collapsible="false" title="Search Additional Equipment">
+                <apex:outputPanel id="eqs">
+                <apex:outputText id="equipmentSelect">
+                    <apex:panelGrid columns="3" id="addEquipPanel" style="width:100%;">
+                        <!-- Row 1 -->
+                        <apex:outputText value="Category:" style="font-weight:bold;width:25%;"/>
+                        <apex:outputText value="Manufacturer:" style="font-weight:bold;width:25%;"/>
+                        <apex:outputText value="Sub Category (Qualifying Question)" style="font-weight:bold;width:15%;"/>
+                        <!-- <apex:outputText value="Show Favorites Only?" style="width:25%;"/> -->
+
+                        <!-- Row 2 -->
+                        <apex:selectList value="{!selectCategory}" size="1">
+                            <apex:selectOptions value="{!categories}" />
+                            <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                        </apex:selectList>
+
+                        <apex:selectList value="{!selectMFG}" size="1" id="mfgS">
+                            <apex:selectOptions value="{!equipmentMFG}" />
+                            <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                        </apex:selectList>
+
+                        <apex:selectList value="{!selectSubCat}" size="1" id="subCat">
+                            <apex:selectOptions value="{!subcat}"/>
+                            <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                        </apex:selectList> 
+                    </apex:panelGrid>
+
+                    <apex:panelGrid columns="1" style="width:100%">
+                        <hr/>
+                    </apex:panelGrid>
+
+                    <apex:panelGrid columns="5" id="kitCustomSearch" style="width:100%;">
+
+                        <apex:outputText value="Search Part#" style="font-weight:bold;" />
+                        <apex:outputText value="Search Description" style="font-weight:bold;" />
+						<!--BLL3-->
+						<!--apex:outputText value="Search Notes" style="font-weight:bold;" /-->
+						<!--BLL3 end-->
+                        <!-- AMM2 -->
+                        <!-- <apex:outputText /> -->
+                        <apex:outputText value="Show Favorites" style="font-weight:bold;" />  
+                        <!-- AMM2 -->
+                        <apex:outputText />   
+						<!--BLL3-->
+						<apex:outputPanel />
+						<!--BLL3 end-->
+
+                        <apex:outputPanel id="pnSearchPanel">
+                            <apex:inputText value="{!searchByPartNumber}" id="searchbypartnumber">
+                                <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                            </apex:inputText>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel id="desSearchPanel">
+                            <apex:inputText value="{!searchByDescription}" id="searchbydescription">
+                                <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                            </apex:inputText>
+                        </apex:outputPanel>
+
+						<!--BLL3d-->
+						<!--apex:outputPanel id="notesSearchPanel">
+                            <apex:inputText value="{!searchByNotes}" id="searchbynotes">
+                                <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                            </apex:inputText>                            
+						</apex:outputPanel-->
+						<!--BLL3d end -->
+
+                        <!-- AMM2 -->
+                        <apex:outputPanel >
+                            <apex:inputCheckbox value="{!showFavorites}" id="favoriteBool">
+                                    <apex:actionSupport event="onchange" reRender="eqs,kitTable" status="equipmentStatus"/>
+                            </apex:inputCheckbox>  
+                        </apex:outputPanel>
+                        <!-- AMM2 -->
+
+                        <apex:outputPanel >
+
+                        </apex:outputPanel>
+                        <apex:outputPanel >
+
+                        </apex:outputPanel>
+
+                    </apex:panelGrid>
+
+                </apex:outputText>
+                </apex:outputPanel>
+                
+                <apex:outputPanel id="kitTable">
+                    <apex:outputText ><b>Search Results</b></apex:outputText>
+                    <apex:pageBlockTable value="{!availablePartsKits}" var="a" title="Available Kits">
+
+                        <!-- AMM2 -->
+                        <apex:column headerValue="Favorite">
+							<!--BLL2-->
+							<!-- apex:image value="https://img.icons8.com/android/24/000000/christmas-star.png" onclick="setRemoteFavorite('{!a.kit.Id}', false, '{!location.Id}', '{!showFavorites}')" rendered="{!IF(a.favorited, true, false)}"/>
+							<apex:image value="https://img.icons8.com/material-outlined/24/000000/christmas-star.png" onclick="setRemoteFavorite('{!a.kit.Id}', true, '{!location.Id}', '{!showFavorites}')" rendered="{!IF(a.favorited, false, true)}"/ -->
+							<apex:outputLink onclick="setRemoteFavorite('{!a.kit.Id}', false, '{!location.Id}', '{!showFavorites}')" rendered="{!IF(a.favorited, true, false)}"
+								styleClass="favorite">
+								&#x02605;
+							</apex:outputLink>
+							<apex:outputLink onclick="setRemoteFavorite('{!a.kit.Id}', true, '{!location.Id}', '{!showFavorites}')" rendered="{!IF(a.favorited, false, true)}"
+								styleClass="favorite">
+								&#x02606;
+							</apex:outputLink>
+							<!--BLL2-->
+                        </apex:column>
+                        <!-- AMM2 -->
+
+                        <apex:column headerValue="Name">
+                            <apex:outputLink value="/{!a.Kit.Id}">{!a.Kit.Name}</apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!a.Kit.Manufacturer__c}">
+                            <apex:facet name="header">MFG</apex:facet>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Description</apex:facet>
+                            <apex:outputText value="{!a.Kit.dealer__Description__c}" />
+                            <apex:outputText rendered="{!NOT(ISBLANK(a.Kit.Kit_Notes__c))}">
+                                <br />
+                                <b>Notes:</b>&nbsp;{!a.Kit.Kit_Notes__c}
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column value="{!a.Kit.Labor_Hours__c}">
+                            <apex:facet name="header">Hours</apex:facet>
+                        </apex:column>
+                        <!-- BLL1 East/West Costing -->
+                        <apex:column value="{!a.Kit.Cost_West__c}" rendered="{!IF(location.Kit_Cost_Structure__c=='West', true, false)}"> <!-- Set to Cost West -->
+                            <apex:facet name="header">Cost</apex:facet> 
+                        </apex:column>
+                        <apex:column rendered="{!IF(location.Kit_Cost_Structure__c=='West', true, false)}">
+                            <apex:facet name="header">Sale Price</apex:facet>
+                            <apex:inputField value="{!a.Kit.Price_West__c}" /> <!-- Set To Price West -->
+                        </apex:column>
+                        <apex:column value="{!a.Kit.Cost_East__c}" rendered="{!IF(location.Kit_Cost_Structure__c=='East', true, false)}"> <!-- Set to Cost West -->
+                            <apex:facet name="header">Cost</apex:facet> 
+                        </apex:column>
+                        <apex:column rendered="{!IF(location.Kit_Cost_Structure__c=='East', true, false)}">
+                            <apex:facet name="header">Sale Price</apex:facet>
+                            <apex:inputField value="{!a.Kit.Price_East__c}" /> <!-- Set To Price West -->
+                        </apex:column>                        
+                        <!-- BLL1 Cost west/east -->
+                    </apex:pageBlockTable>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+	</apex:form>    
+</apex:page>

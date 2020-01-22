@@ -1,0 +1,299 @@
+<!--
+    Vehicle_CommercialOption
+    Programmer: Bryan Leaman
+    Date: Feb 11, 2016
+
+2016-06-10  B. Leaman   BLL1 Place entire search section in a single PageBlockSection. Add "Pull from Quote" option.    
+-->
+<apex:page title="Vehicle Commercial Options" doctype="html-5.0"
+    standardController="dealer__Vehicle_Inventory__c" 
+    extensions="VehicleInventoryCommercialOption_EXT" 
+    showHeader="true" sidebar="true">
+
+<style>
+</style>
+
+    <apex:pageBlock title="" mode="maindetail" rendered="true">
+    <apex:form id="form">
+
+        <apex:pageBlockSection >
+        <h2>Manage Commercial Options</h2>
+        <apex:commandButton action="{!returnToVehicle}" value="Return to Vehicle"/>
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="Vehicle" id="vehicleInfo">
+            <apex:outputField value="{!vico.VehicleInventory__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.dealer__Status_Code__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.dealer__Store_Location__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.Division__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.dealer__VIN__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.New_Used_Other__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.Conv_MFG__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.Conversion_Model__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.ChassisMfg__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.Wheelbase__c}"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.OptionsExtendedPrice__c}" id="optExtPrice"/>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.ChassisOptionsExtendedPrice__c }"/>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Chassis"/>
+                <apex:outputPanel layout="none">
+                    <apex:outputText value="{!chassisOption.Name}" rendered="{!chassisOption!=null}"/>
+                    <apex:commandButton value="Remove chassis" action="{!removeChassis}" reRender="vehicleInfo,vehicleOptionsList,selectCommercialOptionsBlock"
+                        rendered="{!chassisOption!=null}" style="margin-left:3em;"/>
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+            <apex:outputField value="{!dealer__Vehicle_Inventory__c.dealer__Stock_Number__c}"/>
+        </apex:pageBlockSection>
+        
+        <apex:actionFunction action="{!noAction}" name="redrawSelections" reRender="selectCommercialOptionsBlock"/>
+
+        <!-- Existing options on vehicle -->
+        <apex:pageBlockSection id="vehicleOptionsList" columns="1">
+            
+            <apex:outputPanel rendered="{!$ObjectType.VehicleInventory_CommercialOption__c.createable}">
+                <h3 style="margin-right:3em;">Vehicle options</h3>
+                <apex:commandButton action="{!editQuantities}" reRender="vehicleOptionsList" value="Change quantities" rendered="{!NOT(changeQuantities)}"/>
+                <apex:commandButton action="{!saveChanges}" reRender="vehicleOptionsList" value="Save" rendered="{!changeQuantities}" oncomplete="window.top.location.reload()" />
+                <apex:commandButton action="{!cancelChanges}" reRender="vehicleOptionsList" value="Cancel" rendered="{!changeQuantities}"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable value="{!vehicleOptions}" var="v">
+                <apex:column >
+                    <apex:facet name="header">Action</apex:facet>
+                    <apex:commandButton value="Rmv" action="{!rmvOption}" rerender="vehicleOptionsList,optionsList" 
+                        oncomplete="window.top.location.reload(); redrawSelections();"> 
+                        <apex:param name="optionId" value="{!v.Id}" assignTo="{!optionToRmv}" />
+                    </apex:commandButton>
+                </apex:column>
+                <apex:column value="{!v.Name}">
+                    <apex:facet name="header">Option name</apex:facet>
+                </apex:column>
+                <apex:column value="{!v.Description__c}">
+                    <apex:facet name="header">Description</apex:facet>
+                </apex:column>
+                <apex:column style="text-align:right;">
+                    <apex:facet name="header">Quantity</apex:facet>
+                    <apex:outputField value="{!v.Quantity__c}" rendered="{!NOT(changeQuantities)}"/>
+                    <apex:inputField value="{!v.Quantity__c}" rendered="{!changeQuantities}"/>
+                </apex:column>
+                <apex:column style="text-align:right;">
+                    <apex:facet name="header">Price</apex:facet>
+                    <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!v.SellingPrice__c}"/>
+                    </apex:outputText>
+                </apex:column>
+                <apex:column style="text-align:right;">
+                    <apex:facet name="header">Extended Price</apex:facet>
+                    <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!v.ExtendedPrice__c}"/>
+                    </apex:outputText>
+                </apex:column>
+            </apex:pageBlockTable>
+
+        </apex:pageBlockSection><!-- vehicleOptionsList -->
+
+        <pageBlockSection columns="1" rendered="{!$ObjectType.VehicleInventory_CommercialOption__c.createable}">
+            <pageBlockSectionItem>
+            <apex:outputLabel >Select new options by</apex:outputLabel>
+            <apex:selectRadio value="{!selectBy}" onchange="redrawSelections();">
+                <apex:selectOption itemValue="quote" itemLabel="Copy from Quote"/>
+                <apex:selectOption itemValue="manual" itemLabel="Manual selection"/>
+            </apex:selectRadio>
+            </pageBlockSectionItem>
+        </pageBlockSection>
+
+    
+        <!-- No authority to add options -->
+        <apex:pageBlockSection rendered="{!NOT($ObjectType.VehicleInventory_CommercialOption__c.createable)}">
+        <h1>You do not have sufficient authority to change the commercial options on inventory vehicles.</h1>
+        </apex:pageBlockSection>
+
+        <!-- Add commercial options -->
+        <apex:outputPanel id="selectCommercialOptionsBlock">
+
+        <!-- BLL1a pull options from quote -->
+        <apex:pageBlockSection id="pullFromQuote" title="Copy from the Quote" columns="1"
+            rendered="{!AND($ObjectType.VehicleInventory_CommercialOption__c.createable, veh.Division__c=='Commercial', selectBy=='quote')}">
+        
+            <apex:panelGrid columns="3" cellpadding="5">
+                <apex:panelGroup >
+                    <apex:outputLabel styleClass="labelCol">Unit number</apex:outputLabel>
+                    <apex:inputText value="{!unitNumber}" />
+                </apex:panelGroup>
+                <apex:panelGroup >
+                    <apex:outputLabel styleClass="labelCol">VIN</apex:outputLabel>
+                    <apex:inputText value="{!VIN}" />
+                </apex:panelGroup>
+                <apex:panelGroup >
+                    <button onclick="redrawSelections(); return false;">Search</button> 
+                </apex:panelGroup>
+            </apex:panelGrid>
+
+            <apex:pageMessages />
+            <apex:pageBlockTable value="{!CommercialQuotes}" var="q" rendered="{!OR(NOT(ISBLANK(unitNumber)),NOT(ISBLANK(VIN)))}">
+                <apex:column >
+                    <apex:facet name="header">Select</apex:facet>
+                    <apex:commandButton value="Select" action="{!addQuoteOptions}" rerender="vehicleInfo,vehicleOptionsList,selectCommercialOptionsBlock"
+                        oncomplete="location.reload();"> 
+                        <apex:param name="optId" value="{!q.Id}" assignTo="{!quoteToUse}"/>
+                    </apex:commandButton>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Quote name</apex:facet>
+                    <a id="quote_{!q.Id}" href="/{!q.Id}" 
+                        onblur="LookupHoverDetail.getHover(this.id).hide();" 
+                        onmouseout="LookupHoverDetail.getHover(this.id).hide();" 
+                        onfocus="LookupHoverDetail.getHover(this.id, '/{!q.Id}/m?retURL=%2F{!q.id}&isAjaxRequest=1').show();" 
+                        onmouseover="LookupHoverDetail.getHover(this.id, '/{!q.Id}/m?retURL=%2F{!q.id}&isAjaxRequest=1').show();">
+                    {!q.Name}
+                    </a>
+                </apex:column>
+                <apex:column value="{!q.UnitNumber__c}">
+                    <apex:facet name="header">Unit number</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.VIN__c}">
+                    <apex:facet name="header">VIN</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.Customer__c}">
+                    <apex:facet name="header">Customer</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.QuoteType__c}">
+                    <apex:facet name="header">Quote type</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.TypeOfSale__c}">
+                    <apex:facet name="header">Type of Sale</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.Delivery_Date__c}">
+                    <apex:facet name="header">Delivery date</apex:facet>
+                </apex:column>
+                <apex:column value="{!q.Salesperson__c}">
+                    <apex:facet name="header">Salesperson</apex:facet>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlockSection>
+    
+        <!-- Search for new options to add to vehicle -->
+        <apex:pageBlockSection id="selectionCriteria" title="Search commercial options" columns="1" 
+            rendered="{!AND($ObjectType.VehicleInventory_CommercialOption__c.createable, veh.Division__c=='Commercial', selectBy=='manual')}">
+
+            <apex:panelGrid columns="3" width="80%" cellpadding="10" id="basicsearch" style="margin-left:8%;">
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel styleClass="labelCol">Type of option</apex:outputLabel>
+                <apex:selectList value="{!optionType}" size="1">
+                    <apex:actionSupport event="onchange" action="{!generalValidations}" reRender="optionsList"/>
+                    <apex:selectOptions value="{!optionTypeOpts}"/>
+                </apex:selectList>
+            </apex:pageBlockSectionItem>
+
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel styleClass="labelCol">Chassis manufacturer</apex:outputLabel>
+                <apex:selectList value="{!chassisMfg}" size="1" disabled="{!veh.ChassisMfg__c!=null}">
+                    <apex:actionSupport event="onchange" action="{!generalValidations}" reRender="optionsList"/>
+                <apex:selectOptions value="{!chassisMfgOpts}"/>
+                </apex:selectList>
+            </apex:pageBlockSectionItem>
+
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel styleClass="labelCol">Wheelbase</apex:outputLabel>
+                <apex:selectList value="{!wheelbase}" size="1" disabled="{!veh.Wheelbase__c!=null}">
+                    <apex:actionSupport event="onchange" action="{!generalValidations}" reRender="optionsList"/>
+                <apex:selectOptions value="{!wheelbaseOpts}"/>
+                </apex:selectList>
+            </apex:pageBlockSectionItem>
+
+            </apex:panelGrid>
+        <!-- /apex:pageBlockSection -->
+    
+        <!-- apex:pageBlockSection id="optionsList" columns="1" -->  
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Keyword search"/>
+                <apex:outputPanel layout="none">
+                    <apex:inputText value="{!keywords}" onkeypress="return submitOnEnter(event);"  
+                        id="keyword1" style="margin-right:2em;"/>
+                    <apex:inputText value="{!keywords2}" onkeypress="return submitOnEnter(event);"  
+                        id="keyword2" style="margin-right:2em;"/>
+                    <apex:inputText value="{!keywords3}" onkeypress="return submitOnEnter(event);"  
+                        id="keyword3" style="margin-right:2em;"/>
+                    <apex:commandButton id="searchBtn" value="Search" action="{!generalValidations}" reRender="optionsList"
+                        style="margin-right:1em;"/>
+                    <apex:commandButton id="clearBtn" value="Clear" action="{!noaction}"
+                        onclick="clearKeywords()"/>
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+            <apex:actionFunction action="{!generalValidations}" name="doSearch" reRender="optionsList"/>
+        <!-- /apex:pageBlockSection -->
+    
+        <!-- apex:pageBlockSection id="optionsList" columns="1"  
+            rendered="{!AND($ObjectType.VehicleInventory_CommercialOption__c.createable,veh.New_Used_Other__c=='Commercial')}" -->
+            <apex:outputPanel layout="none" id="optionsList"
+                rendered="{!AND($ObjectType.VehicleInventory_CommercialOption__c.createable,veh.Division__c=='Commercial')}">
+            <apex:pageMessages />
+            <apex:pageBlockTable value="{!CommercialOptions}" var="o" rendered="{!NOT(changeQuantities)}">
+                <apex:column >
+                    <apex:facet name="header">Select</apex:facet>
+                    <apex:commandButton value="Add" action="{!addOption}" rendered="{!NOT(o.onVehicle)}"  
+                        reRender="vehicleInfo,vehicleOptionsList,optionsList" 
+                        oncomplete="redrawSelections(); window.top.location.reload()"> 
+                        <apex:param name="optId" value="{!o.Id}" assignTo="{!optionToAdd}"/>
+                    </apex:commandButton>
+                    <apex:commandButton onclick="return false;" value="selected" disabled="true" rendered="{!o.onVehicle}"/>
+                </apex:column>
+                <apex:column value="{!o.Name}">
+                    <apex:facet name="header">Option name</apex:facet>
+                </apex:column>
+                <apex:column value="{!o.Description}">
+                    <apex:facet name="header">Description</apex:facet>
+                </apex:column>
+                <apex:column value="{!o.ChassisMfg}">
+                    <apex:facet name="header">Chassis Mfg</apex:facet>
+                </apex:column>
+                <apex:column value="{!o.Wheelbase}">
+                    <apex:facet name="header">Wheelbase</apex:facet>
+                </apex:column>
+                <apex:column style="text-align:right;">
+                    <apex:facet name="header">Price</apex:facet>
+                    <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!o.Price}"/>
+                    </apex:outputText>
+                </apex:column>
+            </apex:pageBlockTable>
+            </apex:outputPanel>
+        <!-- /apex:pageBlockSection -->
+
+        <!-- apex:pageBlockSection id="optionsList" columns="1" -->  
+            <apex:outputPanel rendered="{!veh.Division__c!='Commercial'}">
+                <h1>{!veh.Name} is not a commercial vehicle</h1>
+            </apex:outputPanel>
+        <!-- /apex:pageBlockSection -->
+
+        </apex:pageBlockSection>
+
+        </apex:outputPanel><!-- end Add commercial options -->      
+        
+    </apex:form>
+    
+    </apex:pageBlock>
+
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script type="text/javascript">
+jQuery.noConflict();
+
+function submitOnEnter(ev) {
+    ev = (window.event) ? window.event : ev;
+    var keyCode = (ev.keyCode) ? ev.keyCode : ev.charCode;
+    if (keyCode==13) {
+        doSearch();
+        return false;
+    } else {
+        return true;
+    }
+}
+function clearKeywords() {
+    jQuery("input[id$='keyword1']").val('');
+    jQuery("input[id$='keyword2']").val('');
+    jQuery("input[id$='keyword3']").val('');
+}
+</script>
+
+</apex:page>

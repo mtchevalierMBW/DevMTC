@@ -1,0 +1,12 @@
+<aura:component controller="CustomLinks">
+	<aura:attribute name="groupName" type="String"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:attribute name="GroupLinks" type="Object[]" default="[]"/>
+
+	<lightning:card title="{!v.groupName}" class="slds-p-around_xx-small slds-card_boundary">
+		<aura:iteration items="{!v.GroupLinks}" var="l">
+			<lightning:formattedUrl value="{#l.Link__c}" label="{#l.Name}"/><br/>
+		</aura:iteration>
+	</lightning:card>
+
+</aura:component>

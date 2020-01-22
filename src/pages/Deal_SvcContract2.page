@@ -1,0 +1,52 @@
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Deal__c" extensions="Deal_MBW2" id="SVCSales" docType="html-5.0" >
+	<head>
+        <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+	</head>	
+	<apex:sectionHeader subtitle="Add Protection Products" title="Protection Products" description="Add new Protection Products to Proposal# {!dealer__Deal__c.Name}" />
+		<div id="force">
+		<apex:form id="svcForm">
+			<apex:inputHidden id="searchType" value="{!escType}" />		
+			<apex:pageBlock id="contractSearch" title="Search Contracts">
+				<apex:pageMessages />
+				<apex:pageBlockButtons location="top">
+					<apex:commandButton value="Return to Deal" action="{!returnToDeal}" styleClass="btn btn-primary" />
+				</apex:pageBlockButtons>
+				<apex:pageBlockSection id="contractSearchSection" columns="1">
+					<apex:panelGrid id="csPG" columns="4" style="width:100%">
+						<apex:outputText ><b>Description</b></apex:outputText>
+						<apex:outputText ><b>Code</b></apex:outputText>
+						<!--<apex:outputText ><b>Below Mileage</b></apex:outputText>-->
+						<apex:outputText ><b>Product Type</b></apex:outputText>
+						<apex:outputText />
+
+						<apex:inputText id="searchDescription" value="{!escDescription}" style="width:450px;" styleClass="form-control" />
+						<apex:inputText id="searchByCode" value="{!escCode}" style="width:150px;" styleClass="form-control" />
+						<!-- <apex:inputText id="searchMiles" value="{!escMileage}" styleClass="form-control"/> -->
+						<apex:outputText id="searchType" value="{!escType}" />
+						<apex:commandButton action="{!searchESC}" value="Search" reRender="escSearchResults" styleClass="btn btn-primary btn-sm"></apex:commandButton>
+					</apex:panelGrid>
+				</apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="escSearchResults">
+					<apex:pageBlockTable var="esc" value="{!escResults}">
+						<apex:column >
+							<apex:commandLink value="Select" styleClass="btn btn-xs btn-success" action="{!selectProduct}">
+								<apex:param name="escSelectedId" assignTo="{!escSelectedId}" value="{!esc.Id}"/>
+							</apex:commandLink>
+						</apex:column>
+						<apex:column value="{!esc.Name}" />
+						<apex:column value="{!esc.dealer__Plan_Code__c}" />
+						<apex:column value="{!esc.dealer__Description__c}" />
+						<apex:column value="{!esc.dealer__Expiration_Mileage__c}" />
+						<apex:column value="{!esc.dealer__Expiration_Months__c}" />
+						<apex:column value="{!esc.dealer__Sale_Price__c}" />
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+			</apex:pageBlock>
+
+		</apex:form>
+		</div>
+</apex:page>

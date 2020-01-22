@@ -1,0 +1,14 @@
+<apex:page showHeader="true" sidebar="true" controller="VehicleInventoryTemplateController">
+	<apex:sectionHeader title="New Vehicle Template"/>
+	<apex:form >
+		<apex:pageBlock >
+		<apex:pageBlockButtons >
+	        	<apex:commandButton action="{!save}" value="Save" id="createButton"/>        		
+		</apex:pageBlockButtons>
+		<apex:pageMessages />
+		<apex:pageBlockSection >
+        		<apex:inputField value="{!template.Name}" label="Template Name" style="width:165px;" id="vin"/>
+		</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

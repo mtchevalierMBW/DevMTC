@@ -1,0 +1,6 @@
+<aura:component implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="vehicleInventoryQuickActions">
+        
+    <!-- Archive the vehicle immediately on click -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+        
+</aura:component>

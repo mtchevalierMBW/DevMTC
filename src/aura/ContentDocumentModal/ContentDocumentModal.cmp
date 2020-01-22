@@ -1,0 +1,19 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  12/4/2018
+    Work Item:     W-000421
+    File Name:     ContentDocumentModal.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global">
+  
+    <aura:attribute name="fileSource" type="String" />
+  
+    <center>
+        <iframe src="{!v.fileSource}" width="640" height="640" frameborder="0"></iframe>
+    </center>
+</aura:component>

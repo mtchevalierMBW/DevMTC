@@ -1,0 +1,4 @@
+<aura:event type="APPLICATION" description="Event template">
+	<aura:attribute name="inMotionAccount" type="Account"/>
+    <aura:attribute name="inMotionCampaign" type="Campaign"/>
+</aura:event>

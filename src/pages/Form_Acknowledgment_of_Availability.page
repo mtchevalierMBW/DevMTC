@@ -1,0 +1,54 @@
+<apex:page renderas="PDF">
+
+<center>
+<apex:image url="{!$Resource.NWAN_Ackw_logo}" width="60%" height="25%"/><br/><br/>
+<b style="font-size:25px;font-family:Arial,Helvetica,sans-serif;">Acknowledgment of Availability of <br/>Vehicle Service Contract Coverage</b>
+</center>
+<br/><br/>
+<div style="text-align: justify;font-family:Arial,Helvetica,sans-serif;font-size:15px;">
+By signing below, you acknowledge that Vehicle Service Contract Coverage has been presented to you, and that the coverage is optional and will not be provided unless you (a) elect on a separate application to receive coverage and (b) have purchased an eligible vehicle and (c) agree to pay the purchase price for such coverage.
+</div><br/>
+<div style="text-align: justify;font-family:Arial,Helvetica,sans-serif;font-size:15px;">
+I also understand that I am responsible for any repair costs necessary after the manufacturer's warranty has expired.
+</div><br/>
+<table>
+<tr>
+<td><apex:image url="{!$Resource.RecBox}"  style="margin-left:30px;font-size:15px;"/></td>
+<td><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;">I want to apply for Vehicle Service Contract Coverage</div></td>
+</tr>
+
+<tr>
+<td><apex:image url="{!$Resource.RecBox}"  style="margin-left:30px;font-size:15px;"/></td>
+<td><div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;">I decline Vehicle Service Contract Coverage</div></td>
+</tr>
+
+</table>
+<br/><br/><br/>
+<table width="100%">
+<tr>
+<td valign="bottom" width="50%" align="center">________________________</td>
+<td valign="bottom" width="50%" align="center">________________________</td>
+</tr>
+
+<tr>
+<td valign="top" align="center" style="height:100px;font-family:Arial,Helvetica,sans-serif;font-size:15px;" >Signature of Vehicle Purchaser<br/></td>
+<td valign="top" align="center" style="height:100px;font-family:Arial,Helvetica,sans-serif;font-size:15px;" >Date</td>
+</tr>
+
+<tr>
+<td valign="bottom" align="center">________________________</td>
+<td valign="bottom" align="center">________________________</td>
+</tr>
+
+<tr>
+<td valign="top" align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;">Dealership Witness</td>
+<td valign="top" align="center" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;">Date</td>
+</tr>
+
+</table><pre>
+
+
+
+</pre>
+<center style="display:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;">Dealer Copy - White &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Customer Copy - Yellow</center>
+</apex:page>

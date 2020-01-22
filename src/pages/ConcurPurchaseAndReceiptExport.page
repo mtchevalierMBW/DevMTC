@@ -1,0 +1,74 @@
+<apex:page controller="ConcurPurchaseAndReceiptExport" docType="html-5.0">
+
+<apex:form >
+<apex:pageBlock title="Concur PO and Receipt Export">
+	<apex:pageBlockButtons location="bottom">
+		<apex:commandButton action="{!RetrieveAndGenerateExportData}" value="Generate Export Data!"/>
+		<apex:commandButton action="{!FinalizeExport}" value="Send Exported POs/Rcts"/>
+	</apex:pageBlockButtons>
+
+	<apex:pageBlockSection >
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel for="UpdatedSince" value="Updated since"/>
+			<apex:input type="datetime" value="{!updatedSinceTxt}" id="UpdatedSince"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel for="IncludePOs" value="Always include POs"/>
+			<apex:inputTextArea value="{!includePOsText}" id="IncludePOs" style="width:150px;"/>
+		</apex:pageBlockSectionItem>
+		
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel for="IncludeClosedPOs" value="Include closed/processed POs"/>
+			<apex:inputCheckbox value="{!IncludeClosedPOs}" id="IncludeClosedPOs"/>
+		</apex:pageBlockSectionItem>
+
+		<apex:pageBlockSectionItem >
+			<apex:outputLabel for="AllPOsOpen" value="All uploaded POs sent as Open POs"/>
+			<apex:inputCheckbox value="{!AllPOsOpen}" id="AllPOsOpen"/>
+		</apex:pageBlockSectionItem>
+		
+	</apex:pageBlockSection>
+	<apex:Messages />
+</apex:pageBlock>
+</apex:form>
+
+
+<apex:pageBlock title="Export summary">
+	<apex:pageBlockSection columns="1">
+		<apex:pageBlockTable var="po" value="{!ExportedPOs}">
+			<apex:column >
+				<apex:facet name="header">PO number</apex:facet>
+				<apex:outputText value="{!po.poNumber}"/>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Status</apex:facet>
+				<apex:outputText value="{!po.Status}"/>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Last Modified</apex:facet>
+				<apex:outputText value="{0,date,MM/dd/yyyy hh:mm:ss}">
+				<apex:param value="{!po.LastModified}"/>
+				</apex:outputText>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Nbr Lines</apex:facet>
+				<apex:outputText value="{!po.NbrLines}"/>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Qty Ordered</apex:facet>
+				<apex:outputText value="{!po.QtyOrdered}"/>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Qty Received</apex:facet>
+				<apex:outputText value="{!po.QtyReceived}"/>
+			</apex:column>
+			<apex:column >
+				<apex:facet name="header">Qty Outstanding</apex:facet>
+				<apex:outputText value="{!po.QtyOutstanding}"/>
+			</apex:column>
+		</apex:pageBlockTable>
+	</apex:pageBlockSection>
+</apex:pageBlock>
+
+</apex:page>

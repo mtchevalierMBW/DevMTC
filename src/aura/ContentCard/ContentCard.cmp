@@ -1,0 +1,63 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/8/2018 
+    Work Item:     W-000421
+    File Name:     ContentCard.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+    Alexander Miller    AMM1         W-000578    03/26/2019   Unrelated but wanted to clean up the card since it looked a littly ugly
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global">
+
+    <!-- child reference to parent component value for the Content record -->
+    <aura:attribute name="content" type="Content__c" />
+    <aura:attribute name="duration" type="String" />
+
+    <!-- Inter-Component Communication to tell it the Content Id selected -->
+    <aura:registerEvent name="contentSelected" type="c:ContentEvent"/>
+
+    <!-- Encompassing Div to handle click of the entire component -->
+    <div id="componentDiv" onclick="{!c.updateContentEvent}">
+        
+        <article class="slds-card changeMe">
+        <!-- <article class="slds-card slds-size_1-of-2"> -->
+            <div id="title_div" class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <!-- AMM1-->
+                            <!-- Title: <ui:outputText value="{!v.content.Title__c}"/> -->
+                            <ui:outputText class="slds-size_2-of-3" value="{!v.content.Title__c}"/>
+                            <!-- AMM1-->
+                        </h2>
+                    </div>
+                </header>
+            </div>
+            
+            <!-- AMM1-->
+            <!-- <div class="slds-card__body slds-card__body_inner" id="card_description">Description: <ui:outputText value="{!v.content.Description__c}"/></div> -->
+            <div class="slds-card__body slds-card__body_inner" id="card_description"><ui:outputText value="{!v.content.Description__c}"/></div>
+            <!-- AMM1-->
+
+            <lightning:layout horizontalAlign="left">
+                <lightning:layoutItem size="6">
+                    <!-- AMM1-->
+                    <!-- <div class="slds-card__body slds-card__body_inner" id="card_duration">Duration: <ui:outputText value="{!v.duration}"/></div> -->
+                    <div class="slds-card__body slds-card__body_inner" id="card_duration"><lightning:formattedDateTime value="{!v.content.LastModifiedDate}"/></div>
+                    <!-- AMM1-->
+                </lightning:layoutItem>
+                <lightning:layoutItem size="6">
+                    <!-- AMM1-->
+                    <!-- <div class="slds-card__body slds-card__body_inner" id="card_author">Author: <ui:outputText value="{!v.content.Owner.Name}"/></div> -->
+                    <div class="slds-card__body slds-card__body_inner" id="card_author"><ui:outputText value="{!v.content.Owner.Name}"/></div>
+                    <!-- AMM1-->
+                </lightning:layoutItem>
+            </lightning:layout>
+        </article>
+    
+    </div>
+
+</aura:component>

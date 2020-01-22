@@ -1,0 +1,239 @@
+<apex:page renderAs="PDF" standardController="CommercialQuote__c"  sidebar="false" applyHtmlTag="false" 
+			extensions="CQ_EXT" applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">       
+<html>
+<head>
+<title>SpotDeliveryForm</title>
+<style>
+ @page{size:letter Portrait; Margin:.5in;
+          @bottom-left {content:"{!CommercialQuote__c.Name}"; font-size:0.7em;
+          }
+          
+ }
+</style>
+</head>
+<body>
+<table>
+<tr><td>
+<div>
+<table align="center" width="100%">
+<tr>
+<td align="center"><span style="font-size:1.2em; font-wight:900;"><b>SPOT DELIVERY AGREEMENT</b></span></td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:15px;">
+<tr>
+  <td width="110px">Dealership Name:</td>
+  <td width="350px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!IF(ISBLANK(Location.Dealer_License_Name__c),'Mobility Works of '+Location.Name,Location.Dealer_License_Name__c)}"/>
+  </td>
+  <td width="15px">Date:</td>
+  <td style="border-bottom:0.5px solid; padding-left:2em;">
+    <apex:outputText value="{0,date,MM/dd/yyyy}">
+       <apex:param value="{!CommercialQuote__c.Delivery_Date__c}"/>
+    </apex:outputText>
+  </td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+  <td width="115px">Customer Name(s):</td>
+  <td align="left" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.Customer__r.Name}"/>
+  </td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+  <td width="90px">Street Address:</td><td align="left" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.Street__c}"/>
+  </td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:15px;">
+<tr>
+  <td width="30px">City:</td>
+  <td align="left" width="300px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.City__c}"/>
+  </td>
+  <td>State:</td>
+  <td align="left" width="115px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.State__c}"/>
+  </td>
+  <td>Zip:</td>
+  <td align="left" width="160px" style="border-bottom:0.5px solid;">
+    <apex:outputText value="{!CommercialQuote__c.Zip__c}"/>
+  </td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:15px;">
+<tr>
+  <td width="110px">Main Telephone:</td>
+  <td align="left" width="200px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.Phone__c}"/>
+  </td>
+  <td>Mobile Telephone:</td>
+  <td align="left" width="265px" style="border-bottom:0.5px solid;">
+  <apex:outputText value="{!CommercialQuote__c.Mobile__c}"/>
+  </td>
+</tr>
+</table>
+<table align="left" width="100%" style="font-size:0.9em;padding-top:10px;">
+<tr>
+<td width="120px">Vehicle Description:</td>
+<td align="left" style="border-bottom:0.5px solid;">
+<table align="left" width="100%" style="font-size:0.9em;">
+  <tr>
+    <td width="15%" align="center">
+    <apex:outputText value="{!veh.dealer__Year__c}"/>
+    </td>
+    <td width="20%" align="center">
+    <apex:outputText value="{!veh.dealer__Make__c}"/>
+    </td>
+    <td width="20%" align="center">
+    <apex:outputText value="{!veh.dealer__Model__c}"/>
+    </td>
+    <td width="45%" align="center">
+    <apex:outputText value="{!veh.dealer__VIN__c}"/>
+    </td>
+  </tr>
+  </table>
+</td>
+</tr>
+<tr>
+<td width="120px">&nbsp;</td>
+<td align="left">
+<table align="left" width="100%" style="font-size:0.9em;">
+<tr>
+    <td width="15%" align="center">Year</td>
+    <td width="20%" align="center">Make</td>
+    <td width="20%" align="center">Model</td>
+    <td width="45%" align="center">Vehicle Identificalion Number (VIN)</td>
+  </tr>
+  </table>
+</td>
+</tr>
+</table>
+
+</div>
+</td></tr>
+<tr>
+<td>
+<div style="padding-top:10px">
+<table>
+<tr>
+<td style="text-align: justify; font-size:0.9em">Although I have been permitted to take delivery of the above-described vehicle, I understand that financing for the purchase of the vehicle has not been finalized. This is known as a “Spot Delivery". The Dealership and I intend that financing for my purchase of the vehicle will be obtained directly from a third party or that the Retail Installment Contract I signed to complete the transaction will be assigned to a third party. I understand that this Spot Delivery Agreement is for the purpose of allowing me to take delivery of the vehicle, subject to the following terms and conditions until a final decision regarding my request for financing is made:
+</td>
+</tr>
+</table>
+</div>
+
+</td>
+</tr>
+
+<tr>
+ <td>
+  <div style="padding-top:8px">
+   <table align="left" width="100%">
+    <tr>
+     <td valign="top" align="right" width="5%">1.</td>
+     <td valign="top" style="text-align: justify;padding-left:10px; font-size:0.9em">I must have a valid drivers license to operate the vehicle and maintain full insurance coverage on the vehicle. I may not permit anyone who does not have a valid driver's license and insurance to operate the vehicle.</td>
+    </tr>
+   </table>
+  </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+  <div style="padding-top:8px">
+   <table align="left" width="100%">
+    <tr>
+     <td valign="top" align="right" width="5%">2.</td>
+     <td valign="top" style="text-align: justify;padding-left:10px; font-size:0.9em">In the event that financing is not obtained from a third party for my purchase of this vehicle or the Dealership is unable to assign the Retail Installment Contract to a third party within ____days, I will immediately return the vehicle to the Dealership upon request or I may pay the Dealership the balance due as reflected in the Retail Purchase Agreement.</td>
+    </tr> 
+   </table>
+  </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+   <div style="padding-top:8px">
+      <table align="left" width="100%">
+        <tr>
+           <td valign="top" align="right" width="5%">3.</td>
+           <td valign="top" style="text-align: justify;padding-left:10px; font-size:0.9em">In the event that I am required to return the vehicle to the Dealership, I will return the vehicle In the same condition it was in when it left the Dealership, normal wear and tear excepted. I understand that I am responsible for paying the cost of repairing any damage that occurred to the vehicle arising out of my use possession and control of the vehicle. Upon my return of the vehicle to the Dealership, the Dealership will refund any down payment I have made toward the vehicle purchase price and my Trade-In Vehicle will be returned to me. I will pay any amounts l owe the Dealership pursuant to this Agreement upon my return of the vehicle.</td>
+        </tr>
+      </table>
+   </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+   <div style="padding-top:8px">
+     <table align="left" width="100%">
+      <tr>
+        <td valign="top" align="right" width="5%">4.</td>
+        <td valign="top" style="text-align: justify;padding-left:10px; font-size:0.9em">If I am in breach of this Agreement or fail to return the vehicle to the Dealership as required by this Agreement, I will be required to pay all expenses incurred by the Dealership to have the vehicle returned and the Dealership, or any of its agents or employees, may peacefully retake possession of the vehicle.</td>
+      </tr>
+     </table>
+   </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+  <div style="padding-top:8px">
+   <table align="left" width="100%">
+    <tr>
+     <td valign="top" align="right" width="5%">5.</td>
+     <td valign="top" style="text-align: justify;padding-left:10px; font-size:0.9em">I will defend, indemnify and hold harmless the Dealership from and against any and all losses, liabilities, damages, injuries, <i>claims</i> , demands, costs and expenses arising out of my use, possession and control of the vehicle and/or any breach of my responsibilities set forth in this Agreement.</td>
+    </tr>
+   </table>
+  </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+  <div style="padding-top:8px">
+   <table>
+    <tr>
+     <td style="text-align: justify; font-size:0.9em">By signing below, I acknowledge that I have read this Spot Delivery Agreement and I fully understand and agree to be bound by the terms and conditions set forth herein. This Spot Delivery Agreement is incorporated by reference into the Retail Purchase Agreement.</td>
+    </tr>
+   </table>
+  </div>
+ </td>
+</tr>
+
+<tr>
+ <td>
+  <table align="left" width="100%" style="font-size:0.9em;padding-top:40px;">
+   <tr>
+    <td width="24%"></td>
+    <td width="24%"></td>
+    <td width="4%"></td>
+    <td width="34%"></td>
+    <td width="24%"></td>
+   </tr>
+   <tr>
+    <td colspan="2" align="left" style="border-bottom:0.5px solid;"></td>
+    <td></td>
+    <td colspan="2" align="right" style="border-bottom:0.5px solid;"></td>
+   </tr>
+   <tr>
+    <td valign="top" align="left">Customer</td>
+    <td valign="top" align="right">Date</td>
+    <td></td>
+    <td valign="top" align="left">Authorized Dealership Representative</td>
+    <td valign="top" align="right">Date</td>
+   </tr>
+  </table>
+ </td>
+</tr>
+
+</table>
+</body>
+</html>
+</apex:page>

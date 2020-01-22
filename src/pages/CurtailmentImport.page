@@ -1,0 +1,106 @@
+<apex:page controller="CurtailmentImportController">
+    <apex:form >
+    <script src="https://use.fontawesome.com/22da5c8c72.js"></script>
+    <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/css/theme.jui.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $jq = jQuery.noConflict();
+		function disableBtn(btn, newText) {
+			var btnselector = 'input[id$='+btn+']';
+			$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+			if (newText.length>0) $jq(btnselector).val(newText);		
+		}
+    </script>
+    <apex:includeScript value="//code.jquery.com/jquery-2.1.1.min.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.js"/>
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.18.3/js/jquery.tablesorter.widgets.js"/>
+
+    <apex:actionFunction action="{!submitCurtailments}" name="submitCurtailments"/>
+    <apex:actionFunction action="{!importCSVFile}" name="importCSVFile"/> 
+
+        <apex:pagemessages />
+            <apex:pageBlock title="Upload/Import Curtailments">
+                <apex:pageBlockSection columns="4"> 
+                      <apex:inputFile value="{!csvFileBody}"  filename="{!csvAsString}" rendered="{!ShowImportbtns}"/>
+                      <apex:commandButton id="Import_btn" value="Import File" onclick="disableBtn('Import_btn','Processing...');importCSVFile();" rendered="{!ShowImportbtns}"/>
+                    <apex:commandButton value="Reset" action="{!reset}" rendered="{!ShowResetbtn}" ></apex:commandButton>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock >
+            <div align="center" draggable="false">
+                <apex:commandButton id="Top_CurtailmentBtn" disabled="false" value="Submit Curtailments" rendered="{!ShowCurtailmentbtn}" onclick="disableBtn('CurtailmentBtn','Processing...');submitCurtailments();"/><!-- action="{!submitCurtailments}"/ -->
+            </div>
+            <apex:pageBlock title="Curtailments" mode="detail" rendered="{!ShowCurtailmentTable}">
+            <script>
+                    $(document).ready(function(){
+                        $("table").tablesorter({
+                        headerTemplate : '{content} {icon}',
+                        cssIconAsc : 'fa fa-caret-up',
+                        cssIconDesc : 'fa fa-caret-down'
+                  });
+                    });
+                </script>
+                <table class="list sortable" width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr class="headerRow" >
+                        <th style="width: 10%;text-align:center; cursor:pointer;">VIN</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Stock Num</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Floored Amount</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Payment</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <apex:repeat value="{!vehList}" var="s">
+                        <tr class="dataRow even first">
+                            <td style="text-align:center"><apex:outputText value="{!s.serial}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.stock}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.floor}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.pmt}"/></td>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:pageBlock>
+            <apex:pageBlock title="Summary" mode="detail" rendered="{!ShowSummaryTable}">
+            <script>
+                    $(document).ready(function(){
+                        $("table").tablesorter({
+                        headerTemplate : '{content} {icon}',
+                        cssIconAsc : 'fa fa-caret-up',
+                        cssIconDesc : 'fa fa-caret-down'
+                  });
+                    });
+                </script>
+                <table class="list sortable" width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr class="headerRow" >
+                        <th style="width: 10%;text-align:center; cursor:pointer;">VIN</th>
+                        <th style="width: 10%;text-align:center; cursor:pointer;">Stock Num</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Floored Amount</th>
+                        <th style="width: 10%;text-align:center;cursor:pointer;">Payment</th>
+                        <th style="width: 1%;text-align:center;cursor:pointer;">Summary</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <apex:repeat value="{!SummaryList}" var="s">
+                        <tr class="dataRow even first">
+                            <td style="text-align:center">
+                                <apex:outputLink value="/{!s.vehicle.Id}" target="_blank">
+                                    <apex:outputText value="{!s.vehicle.dealer__VIN__c}" />
+                                </apex:outputLink>
+                            </td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.dealer__Stock_Number__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.vehicle.Current_Floored_Amount__c}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.Paid}"/></td>
+                            <td style="text-align:center"><apex:outputText value="{!s.Status}"/></td>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:pageBlock>
+        <div align="center" draggable="false">
+            <apex:commandButton id="Curtailment_btnbtm" rendered="{!ShowCurtailmentbtn}" value="Submit Curtailments" onclick="disableBtn('CurtailmentBtn','Processing...');submitCurtailments();"/><!-- action="{!submitCurtailments}"/ -->
+        </div>
+     </apex:pageBlock>
+   </apex:form>
+</apex:page>

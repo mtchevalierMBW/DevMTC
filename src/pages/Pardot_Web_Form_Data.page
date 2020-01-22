@@ -1,0 +1,101 @@
+<apex:page standardController="Lead" extensions="PardotWebFormData_MW_EXT" 
+           showHeader="false" sidebar="false"
+           applyHtmlTag="false" applyBodyTag="false">
+<!--
+  To be placed as a component in the lead view
+  2015-09-09	B. Leaman	BLL1 - Add rental discount code 
+-->
+<style>
+.aligntop {vertical-align:top; padding-left:3em;}
+.dataCol {padding-left:1em;}
+h1,h2,h3,h4,h5 {display:block;}
+</style>
+    <apex:panelGrid columns="1" columnClasses="aligntop">
+        <apex:panelGroup rendered="{!lead.Desired_Vehicles__c <> null}">
+        <!-- inventory inquiry -->
+        <h2>Interested in stock#</h2>
+        <apex:outputText value="{!lead.Desired_Vehicles__c}"/><br/>
+        <apex:panelGrid columns="1" html-class="detailList" columnClasses="labelCol,dataCol">
+            <apex:panelGroup >
+            <apex:repeat value="{!Vehicles}" var="v">
+                <apex:outputLink value="{!v.inventorylink}" target="_blank"><apex:outputText value="{!v.name}"/></apex:outputLink>
+                <apex:outputLink style="margin-left:1em;" value="{!'http://www.mobilityworks.com/inventory/inventory_detail.php?stock='+v.stocknbr}" target="_blank">
+                    <apex:outputText value="MBW inventory {!v.stocknbr}"/>
+                </apex:outputLink><br/>
+            </apex:repeat>
+            </apex:panelGroup>
+        </apex:panelGrid>
+        </apex:panelGroup>
+    </apex:panelGrid>
+
+    <apex:panelGrid columns="3" columnClasses="aligntop">
+
+        <apex:panelGroup rendered="{!lead.Rental_pick_up__c <> null}">
+        <!-- Rental request -->
+        <h2>Rental request</h2>
+        <apex:panelGrid columns="2" html-class="detailList" columnClasses="labelCol,dataCol">
+            <apex:outputLabel value="Vehicle preference"/>
+            <apex:outputText value="{!lead.Vehicle_preference__c}"/>
+            <apex:outputLabel value="Pickup location"/>
+            <apex:outputText value="{!lead.Rental_pickup_location__c}"/>
+            <apex:outputLabel value="Pick up"/>
+            <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                <apex:param value="{!lead.Rental_pick_up__c}"/>
+            </apex:outputText>
+            <apex:outputLabel value="Drop off"/>
+            <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                <apex:param value="{!lead.Rental_drop_off__c}"/>
+            </apex:outputText>
+            <apex:outputLabel value="Discount code"/><!-- BLL1a -->
+            <apex:outputText value="{!lead.RentalDiscountCode__c}"/><!-- BLL1a -->
+        </apex:panelGrid>
+        </apex:panelGroup>
+
+        <apex:panelGroup rendered="{!lead.Van_year__c <> null}">
+        <!-- sell -->
+        <h2>Sell your vehicle</h2>
+        <apex:panelGrid columns="2" html-class="detailList" columnClasses="labelCol,dataCol">
+            <apex:outputLabel value="Year"/>
+            <apex:outputText value="{!lead.Van_year__c}"/>
+            <apex:outputLabel value="Make"/>
+            <apex:outputText value="{!lead.Van_make__c}"/>
+            <apex:outputLabel value="Model"/>
+            <apex:outputText value="{!lead.Van_model__c}"/>
+            <apex:outputLabel value="VIN"/>
+            <apex:outputText value="{!lead.Van_VIN__c}"/>
+            <apex:outputLabel value="Vehicle miles"/>
+            <apex:outputText value="{!lead.Van_odometer__c}"/>
+            <apex:outputLabel value="Currently own"/>
+            <apex:outputText value="{!lead.Currently_own__c}"/>
+            <apex:outputLabel value="Best time to contact"/>
+            <apex:outputText value="{!lead.Contact_availability__c}"/>
+        </apex:panelGrid>
+        </apex:panelGroup>
+
+        <apex:panelGroup rendered="{!lead.Nearest_location__c <> null}">
+        <!-- trade -->
+        <h2>Trade-in your vehicle</h2>
+        <apex:panelGrid columns="2" html-class="detailList" columnClasses="labelCol,dataCol">
+            <apex:outputLabel value="Nearest location"/>
+            <apex:outputText value="{!lead.Nearest_location__c}"/>
+            <apex:outputLabel value="How did you hear about us"/>
+            <apex:outputText value="{!lead.Referral_method__c}"/>
+            <apex:outputLabel value="Have you visited a store"/>
+            <apex:outputText value="{!lead.Visited_a_store__c}"/>
+            <apex:outputLabel value="Vehicle information"/>
+            <apex:outputText value="{!lead.Vehicle_information__c}"/>
+            <apex:outputLabel value="Approx. mileage"/>
+            <apex:outputText value="{!lead.Van_odometer__c}"/>
+        </apex:panelGrid>
+        </apex:panelGroup>
+
+        <apex:panelGroup rendered="{!lead.Vehicle_preference__c <> null && lead.Rental_pick_up__c == null}">
+        <!-- toyota spring sales event -->
+        <h2>Toyota Spring Sales Event</h2>
+        <apex:panelGrid columns="2" html-class="detailList" columnClasses="labelCol,dataCol">
+            <apex:outputLabel value="Vehicle preference"/>
+            <apex:outputText value="{!lead.Vehicle_preference__c}"/>
+        </apex:panelGrid>
+        </apex:panelGroup>
+    </apex:panelGrid>
+</apex:page>

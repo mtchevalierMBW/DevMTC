@@ -1,0 +1,92 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/15/2018
+    Work Item:     W-000421
+    File Name:     ContentLearningUtility.cmp
+
+    Modified By         Alias       Work Item       Date          Reason
+    __________________________________________________________________________________________________
+    Alexander Miller    AMM1        W-000568       2/4/2018       Update to handle all page routing in simplest form
+    Alexander Miller    AMM2        W-000601       2/25/2019      Update to handle changing the Title automatically
+    Alexander Miller    AMM3        W-000578       03/26/2019     Update to handle visual changes
+    Alexander Miller    AMM4        IR-0053017     04/19/2019     Update to handle errors better when Salesforce fails
+-->
+<aura:component implements="force:hasRecordId,flexipage:availableForAllPageTypes" access="global" controller="ContentLearningController">
+    
+    <lightning:utilityBarAPI aura:id="utilitybar" />
+    <lightning:overlayLibrary aura:id="overlayLib"/>
+    <!-- AMM1 -->
+    <aura:handler event="aura:locationChange" action="{!c.update}"/>
+    <!-- AMM1 -->
+
+    <!-- AMM2 -->
+    <aura:attribute name="newContentCount" type="Integer" />
+    <aura:method name="checkNewContentCount" action="{!c.initNewCount}" />
+    <!-- AMM2 -->
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" description="Handler for valueInit event fired when the component has been initialised"/>
+    <aura:handler name="change" value="{!v.recordId}" action="{!c.onRecordIdChange}"/>
+
+    <aura:attribute name="pageName" type="String" />
+    <aura:attribute name="objectName" type="String" />
+
+    <!-- Global decleration for the Content Id selected -->
+    <aura:attribute name="ContenList" type="Content__c[]"/>
+
+    <aura:method name="toggleLoadingStart" action="{!c.toggleLoadingStart}" />
+    <aura:method name="toggleLoadingEnd" action="{!c.toggleLoadingEnd}" />
+
+    <aura:attribute name="showLoading" type="Boolean"/>
+
+    <!-- AMM4 -->
+    <aura:attribute name="errorMessageFound" type="Boolean" />
+    <aura:attribute name="errorMessage" type="String" />
+    <aura:attribute name="userURL" type="String" />
+    <!-- AMM4 -->
+    
+    <aura:if isTrue="{!v.showLoading}">
+        <lightning:spinner variant="brand" size="large"/>
+    </aura:if>
+
+    <!-- AMM4 -->
+    <!-- <aura:iteration items="{!v.ContenList}" var="store">
+        AMM3
+        <c:ContentLearningUtilityCard content="{!store}" duration="1" />
+        <c:ContentLearningUtilityCard content="{!store}" />
+        AMM3
+    </aura:iteration>
+    -->
+    <aura:if isTrue="{!v.errorMessageFound}">
+        <center>
+            
+            <br/>
+            <br/>
+            
+            <img height="200" width="200" src="{!$Resource.OLAF_ERROR_ICON}"/>
+            
+            <br/> 
+            <br/>
+        
+            <h1>Darn!</h1>
+
+            <h2>Looks like this program failed to load</h2>
+            
+            <!-- <br/>
+            
+            <a href="{!'mailto:ithelp@mobilityworks.com?cc=alex.miller@mobilityworks.com&amp;subject=OLAF%20Error&amp;body=' + v.errorMessage + ' ' + v.userURL}">
+                Send this error to your Help Desk so we can help
+            </a> -->
+        </center>
+
+        <aura:set attribute="else">
+            <aura:iteration items="{!v.ContenList}" var="store">
+                <c:ContentLearningUtilityCard content="{!store}" />
+            </aura:iteration>
+        </aura:set>
+    
+    </aura:if>
+    <!-- AMM4 -->
+
+</aura:component>

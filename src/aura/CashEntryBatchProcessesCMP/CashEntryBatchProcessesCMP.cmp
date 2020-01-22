@@ -1,0 +1,67 @@
+<aura:component implements="flexipage:availableForAllPageTypes"
+		controller="CashEntryBatchProcesses">
+	
+<aura:attribute name="createcriteria" type="String" default="CreatedDate &lt; TODAY"/>
+<aura:attribute name="postcriteria" type="String" default="&lt;= TODAY"/>
+<aura:attribute name="spinner" type="boolean" default="false"/>
+<aura:attribute name="messages" type="String[]"/>
+
+<lightning:card title="Cash Entry Batch Processes" class="slds-p-around_small">
+
+<!-- spinner start... style=Brand Medium (blue dots) -->
+	<aura:if isTrue="{!v.spinner}">
+	   <div aura:id="spinnerId" class="slds-spinner_container">
+		   <div class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative" role="alert">
+			   <span class="slds-assistive-text">Loading</span>
+			   <div class="slds-spinner__dot-a"></div>
+			   <div class="slds-spinner__dot-b"></div>
+		   </div>
+	   </div>
+	</aura:if>
+	<!-- spinner end -->    
+
+	<h3><b>Note:</b> These processes will change your FinancialForce company selection as
+		each company is processed. Do not change your FinancialForce company nor generate
+		other FinancialForce transactions until the process has completed.
+	</h3>
+
+	<lightning:messages/>
+		
+	<!-- Start buttons off as disabled, enable in c.doInit -->
+	<table border="0" style="padding: .5em 0;">
+
+		<tr>
+			<td style="padding: 1em 0;">
+				Payment selection
+				<lightning:input type="text" value="{!v.createcriteria}" class="nolabel"/>
+			</td>
+			<td style="padding: 0 1em 0 0;">
+				<lightning:button onclick="{!c.create}" label="Create Cash Entries"/>
+			</td>
+		</tr>
+
+		<tr>
+			<td style="padding: 1em 0;">
+				All automatically-created cash entries
+			</td>
+			<td>
+				<lightning:button onclick="{!c.post}" label="Post Cash Entries"/>
+			</td>
+		</tr>
+
+		<tr>
+			<td style="padding: 1em 0;">
+				All available matching will be considered
+			</td>
+			<td>
+				<lightning:button onclick="{!c.match}" label="Match Cash"/>
+			</td>
+		</tr>
+
+	</table>
+
+
+
+</lightning:card>
+
+</aura:component>

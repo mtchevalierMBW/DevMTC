@@ -1,0 +1,10 @@
+.THIS {
+}
+.THIS .error-text {
+    
+    color: red;
+}
+.THIS.slds-spinner_container {  
+  z-index: 10000;
+  position: fixed;   
+}

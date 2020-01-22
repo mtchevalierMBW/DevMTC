@@ -1,0 +1,58 @@
+<apex:page showHeader="true" title="Proposal - Add Sublet" sidebar="true" standardController="dealer__Deal__c" extensions="Deal_MBW2" id="subletSales" docType="html-5.0" >
+<!--
+2019-07-19	B. Leaman	BLL1 - set focus on sublet description field when page is displayed
+-->
+	<head>
+        <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+        <!-- Bootsrap Includes -->
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/bootstrap.min.js')}"/>
+       <apex:includeScript value="{!URLFOR($Resource.dealer__SDLResources,'/js/typeahead-bundle.min.js')}"/>
+       <apex:stylesheet value="{!URLFOR($Resource.dealer__SDLResources,'/css/VFbootstrap.css')}"/>
+       <script type="text/javascript">
+           $dt = jQuery.noConflict();
+           
+           $dt(document).ready(function() {
+			   $dt("input[id$=description]").focus();	// BLL1
+               $dt(".currencyClass").keydown(function (e) {
+                    // Allow: backspace, delete, tab, escape, enter and .
+                    if ($dt.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+                         // Allow: Ctrl+A, Command+A
+                        (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) || 
+                         // Allow: home, end, left, right, down, up
+                        (e.keyCode >= 35 && e.keyCode <= 40)) {
+                             // let it happen, don't do anything
+                             return;
+                    }
+                    // Ensure that it is a number and stop the keypress
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                    }
+              });
+          });
+       </script>
+    </head> 
+
+    <apex:sectionHeader title="{!dealer__Deal__c.Name}" subtitle="Add Sublet to this Proposal." />
+    <apex:pageMessages ></apex:pageMessages>
+    <apex:form id="serviceSales">
+        <apex:pageBlock title="Additional Sublet" id="pB">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="Return to Deal" action="{!returnToDeal}" styleClass="btn btn-primary" />
+                </apex:pageBlockButtons>        
+            <apex:pageBlockSection columns="1" id="searchBlock">
+            <apex:panelGrid columns="4" id="pG" style="width:100%;">
+                <apex:outputPanel >Sublet Description</apex:outputPanel>
+                <apex:outputPanel >Cost</apex:outputPanel>
+                <apex:outputPanel >Sale</apex:outputPanel>
+                <apex:outputText />
+
+                <apex:inputText value="{!subletDescription}" id="dasubdescription"/>
+                <apex:inputText styleClass="currencyClass" value="{!subletCost}" id="dasubcost" />
+                <apex:inputText styleClass="currencyClass" value="{!subletSale}" id="dasubsale" />
+                <apex:commandButton action="{!saveSublet}" value="Add Sublet"/>
+
+            </apex:panelGrid>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

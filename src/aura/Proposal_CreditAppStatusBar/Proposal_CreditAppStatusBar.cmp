@@ -1,0 +1,77 @@
+<!-- W-000579 -->
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId"
+	controller="CreditApplicationProcess">
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<!-- aura:handler name="ProposalUpdatedEvent" event="c:Proposal_DealUpdatedEvent" 
+		action=" { ! c.handleProposalUpdatedEvent}" / -->
+	<aura:method name="signalProposalUpdated"/>
+
+	<!-- dealer__Deal__c -->
+	<aura:attribute name="dealFields" type="Object"/> 
+	<aura:attribute name="dealError" type="String"/> 
+	<force:recordData aura:id="dealEditor" 
+		recordId="{!v.recordId}" 
+		fields="Id,Name,RecordType.Name,Credit_Application__c,Credit_App_Missing_Items__c,Credit_App_Incomplete__c,Credit_Application_Received__c,dealer__VIN__c" 
+		targetFields="{!v.dealFields}" 
+		targetError="{!v.dealError}" 
+		recordUpdated="{!c.dealHandleRecordUpdated}" 
+		mode="EDIT" 
+	/>
+
+	<!-- aura:attribute name="newCreditAppId" type="String"/ -->
+	<aura:attribute name="creditapps" type="Object[]"/>
+
+	<aura:attribute name="received" type="String" default="slds-path__item slds-is-incomplete"/>
+	<aura:attribute name="missing" type="String" default="slds-path__item slds-is-incomplete"/>
+	<aura:attribute name="submitted" type="String" default="slds-path__item slds-is-incomplete"/>
+	<aura:attribute name="decision" type="String" default="slds-path__item slds-is-incomplete"/>
+	<aura:attribute name="delivered" type="String" default="slds-path__item slds-is-incomplete"/>
+
+	<article class="slds-card" style="line-height:1;">
+		<div class="slds-path">
+			<div class="slds-grid slds-path__track">
+				<div class="slds-grid slds-path__scroller-container">
+					<div class="slds-path__scroller" role="application">
+						<div class="slds-path__scroller_inner">
+							<ul class="slds-path__nav" role="listbox" aria-orientation="horizontal">
+							<li class="{!v.received}" role="presentation">
+								<a aria-selected="false" class="slds-path__link" href="javascript:void(0);" id="path-6" role="option" tabindex="-1">
+									<span class="slds-path__stage">Application received</span>
+									<span class="slds-path__title">Application received</span>
+								</a>
+							</li>
+							<li class="{!v.missing}" role="presentation">
+								<a aria-selected="false" class="slds-path__link" href="javascript:void(0);" id="path-6" role="option" tabindex="-1">
+									<span class="slds-path__stage">Missing items</span>
+									<span class="slds-path__title">Missing items</span>
+								</a>
+							</li>
+							<li class="{!v.submitted}" role="presentation">
+								<a aria-selected="false" class="slds-path__link" href="javascript:void(0);" id="path-6" role="option" tabindex="-1">
+									<span class="slds-path__stage">Submitted</span>
+									<span class="slds-path__title">Submitted</span>
+								</a>
+							</li>
+							<li class="{!v.decision}" role="presentation">
+								<a aria-selected="false" class="slds-path__link" href="javascript:void(0);" id="path-6" role="option" tabindex="-1">
+									<span class="slds-path__stage">Decision</span>
+									<span class="slds-path__title">Decision</span>
+								</a>
+							</li>
+							<li class="{!v.delivered}" role="presentation">
+								<a aria-selected="false" class="slds-path__link" href="javascript:void(0);" id="path-6" role="option" tabindex="-1">
+									<span class="slds-path__stage">Delivered</span>
+									<span class="slds-path__title">Delivered</span>
+								</a>
+							</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</article>
+
+
+</aura:component>

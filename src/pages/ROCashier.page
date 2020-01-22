@@ -1,0 +1,222 @@
+<!--
+2015-09-14	J. Kuljis	Cashier amount needs to be the sum of Customer and Warranty total. To allow the accounting to collect split payments.
+2015-12-22	B. Leaman	BLL1 - Change dealer__Customer_Invoice_Total__c to CustomerInvoiceTotal__c for avatax impl.
+2016-04-05  RedTeal     RT1  - Confirmation before voiding RO, hide button if there are any charges on RO
+2016-04-13	B. Leaman	BLL2a IT#19657 - Confirmation window when trying to post an RO with no labor or no parts.
+2016-05-11	B. Leaman	BLL3 - Refresh balance due after each payment is applied.                              
+2016-06-12  J. Kuljis	JVK1 - Prevent Double Posting, disabled the post button.  
+2016-06-15	B. Leaman	BLL4 - Fix so that if posting generated an error, the message will be displayed. (Like open POs exists, etc)
+						Do not return to the RO. Just stay on the screen with the message. Also added a "Posted" info message
+						to be more clear that they hit the button, but at that point, an "Already posted" error will be displayed
+						if they try it again.
+2017-11-30	B. Leaman	BLL5 - allow void on invoiced ROs (invoicing for MBW doesn't do anything except set the date/time value & status).
+2018-10-24   B. Leaman   W-000471   BLL6 - disable "Apply Payment" button if amount is $0 or missing.
+2019-07-30	B. Leaman	W-000473 BLL7 - show warranty deductible field.
+-->
+<apex:page showHeader="true" sidebar="true" controller="Cashier" tabStyle="dealer__Service_Repair_Order__c" title="Cashier">
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+	<apex:sectionHeader title="Cashier" subtitle="Cashiering and Payment Processing" />
+	<apex:form >
+		<apex:pageMessages id="messages"/>
+		<apex:actionFunction name="applyPayment" action="{!applyPayment}"/><!--BLL6a-->
+		<apex:pageBlock title="Cashier" mode="maindetail" id="cashier_block">
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!returnToRo}" value="Return to Repair Order" id="roReturnButton" immediate="true" />
+				
+				<!--
+				<apex:commandButton action="{!postInvoice}" value="Post to Accounting" id="postRO" rendered="{!ISBLANK(ro.dealer__Posted_Date_Time__c)}" 
+					onclick="return ConfirmPost();"/>
+				-->
+
+				<!-- // JVK3 -->
+		        <apex:actionfunction name="postRepairFunction" action="{!postInvoice}" status="str"
+		        	rerender="messages,cashier_block"/>
+		        <apex:commandbutton value="Post to Accounting" id="postRO" onclick="this.disabled=true;disableClass(); processPostRO();"
+		        	disabled="{!NeedToCalcTax}"/><!-- BLL4 remove rerender="" -->
+		        <apex:actionstatus startText="Posting..." stopText="" id="str" />
+		        <!-- // End JVK3 -->
+
+				<apex:commandButton action="{!invoiceRO}" id="invoiceRO" value="Invoice Internal / Warranty Repair Order" rendered="{!ISBLANK(ro.dealer__Invoiced_Date_Time__c)}" 
+					disabled="{!NeedToCalcTax}" />
+				<!--RT1-->
+				<!-- BLL5 allow Void on invoiced ROs, but not posted ones -->
+				<apex:commandButton action="{!doVoid}" id="voidRO" value="Void RO" disabled="{!ro.Total_RO_Charges__c != 0}" rendered="{!ISBLANK(ro.dealer__Posted_Date_Time__c)}" onclick="if(!confirm('Are you sure you want to void this RO?')){return false};" />
+			
+                <apex:commandButton action="{!reverseRepairOrder}" value="Re-Open" rendered="{!AND($Permission.DealerTeam_RO_Reversal, NOT(ISBLANK(ro.dealer__Posted_Date_Time__c)))}" onclick="if(!confirm('Are you sure you want to re-open this RO?')){return false};" />
+			</apex:pageBlockButtons>
+
+			<apex:pageBlockSection title="Repair Order Information" collapsible="false">
+
+				<apex:outputField value="{!ro.Name}" />
+				<apex:outputField value="{!ro.dealer__Status__c}" /><!-- BLL4a -->
+
+				<apex:outputField value="{!ro.dealer__Customer__c}" label="Customer" />
+				<apex:outputField value="{!ro.dealer__Posted_Date_Time__c}" />
+
+				<apex:outputField value="{!ro.dealer__Create_Date_Time__c}" />
+				<apex:outputField value="{!ro.dealer__Company__c}" />
+
+				<apex:outputField value="{!ro.dealer__Vehicle__c}" />
+				<!-- JVK1 : Needs to be the sum of Customer and Warranty Total -->
+				<!-- BLL1d apex : outputField value=" { ! ro.dealer__Customer_Invoice_Total__c}" / -->
+				<apex:outputField value="{!ro.CustomerInvoiceTotal__c}"/><!-- BLL1a -->
+				<!-- END JVK1 -->
+
+				<!--BLL6-->
+				<apex:outputText />
+				<apex:outputField value="{!ro.dealer__Warranty_Deductible__c}"/>
+				<!--BLL6 end -->
+
+				<apex:outputText />
+
+
+                <apex:outputText value="${!balance_due}" label="Balance Due" id="balancedue"/><!-- BLL3a add id -->
+                <apex:outputText ></apex:outputText>
+
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Enter Payment Information" columns="1" collapsible="false" id="pInfo" rendered="{!ISBLANK(ro.dealer__Posted_Date_Time__c)}">
+				<apex:panelGrid width="100%" columns="6">
+
+					<apex:outputText value="Amount" />
+					<apex:outputText value="Paid By" />
+					<apex:outputText value="Method" />
+					<apex:outputText value="Auth Code / Notes" />
+					<apex:outputText value="Deposit" />
+					<apex:outputText />
+
+					<apex:inputText value="{!amount}" id="Amount">
+						<apex:actionSupport event="onchange" action="{!noaction}" reRender="applyPaymentButton"/><!--BLL6a-->
+					</apex:inputText>
+					<apex:inputField value="{!paidBy.dealer__Customer__c}" id="Paid_By">
+							<apex:actionSupport event="onchange" action="{!noaction}" reRender="applyPaymentButton"/><!--BLL6a-->
+					</apex:inputField>
+					<apex:selectList value="{!method}" size="1" id="Payment_Method">
+						<apex:actionSupport event="onchange" action="{!noaction}" reRender="applyPaymentButton"/><!--BLL6a-->
+						<apex:selectOptions value="{!paymentMethods}" />
+					</apex:selectList>
+					<apex:inputText value="{!authcode}" />
+					<apex:inputCheckbox value="{!deposit}" />
+					<!--BLL6 no more re-render, just refresh whole screen-->
+					<!--BLL6d apex:commandButton action="{!applyPayment}" value="Apply Payment" id="applyPaymentButton"
+						reRender="paymentTable,pInfo,balancedue,messages" / --><!-- BLL3c add balancedue -->
+					<!--BLL6 add disabled attr, double-click protection-->
+					<apex:commandButton value="Apply Payment" id="applyPaymentButton"
+						onclick="applyPaymentClick()" disabled="{!NOT(HaveValidData)}"/>
+					<!--BLL6 end -->
+
+				</apex:panelGrid>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Applied Payments" columns="1" collapsible="false" id="paymentTable">
+				<apex:pageBlockTable value="{!cashier_entries}" var="e">
+					<apex:column headerValue="Date" value="{!e.dealer__Close_Date__c}" />
+					<apex:column headerValue="Transaction" value="{!e.Name}" />
+					<apex:column headerValue="Paid By" value="{!e.dealer__Customer__c}" />
+					<apex:column headerValue="Amount" value="{!e.dealer__Amount__c}" />
+					<apex:column headerValue="Auth#/Note" value="{!e.dealer__Credit_Card_Authorization_Code__c}" />
+					<apex:column headerValue="Deposit" value="{!e.dealer__Deposit__c}" />
+				</apex:pageBlockTable>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+	<script>
+		$dt = jQuery.noConflict();
+		$dt(document).ready(function() {
+			// this isn't doing anything -- the on-click handler isn't getting called
+			//$dt('[id$="applyPaymentButton"]').on("click", function() {
+			//	console.log("Disabling button");
+			//	$dt('[id$="applyPaymentButton"]').prop('disabled', true);
+			//	alert("Button disabled");
+			//});
+			// BLL4a
+			if ('{!ro.dealer__Status__c}'=='Posted' || '{!ro.dealer__Status__c}'=='Void') {
+				$dt('[id$="postRO"]').prop('disabled',true).removeClass("btn").addClass("btnDisabled");
+				$dt('[id$="invoiceRO"]').prop('disabled',true).removeClass("btn").addClass("btnDisabled");
+				$dt('[id$="voidRO"]').prop('disabled',true).removeClass("btn").addClass("btnDisabled");
+			}
+			// BLL4a end
+
+		});
+		
+		// JVK3
+		function disableClass() {
+			$dt('[id$="postRO"]').prop('disabled',true);	// BLL4a
+			$dt('[id$="postRO"]').removeClass("btn");
+			$dt('[id$="postRO"]').addClass("btnDisabled");		
+			$dt('[id$="invoiceRO"]').prop('disabled',true).removeClass("btn").addClass("btnDisabled");
+			$dt('[id$="voidRO"]').prop('disabled',true).removeClass("btn").addClass("btnDisabled");
+		}
+
+		function enableClass() {
+			$dt('[id$="postRO"]').removeClass("btnDisabled");					
+			$dt('[id$="postRO"]').addClass("btn");
+			$dt('[id$="postRO"]').prop('disabled',false);	// BLL4a
+			$dt('[id$="invoiceRO"]').prop('disabled',false).removeClass("btnDisabled").addClass("btn");
+			if ({!ro.Total_RO_Charges__c == 0}) {	// Don't enable Void button if there are charges!
+				$dt('[id$="voidRO"]').prop('disabled',false).removeClass("btnDisabled").addClass("btn");
+			}
+		}
+
+		function processPostRO() {
+			// validation
+
+			var rtn = true;
+			var msg = '';
+			var junct = '';
+
+			if ({!ro.LaborHoursCustomer__c + ro.LaborHoursInternal__c + ro.LaborHoursWarranty__c}==0) {
+				msg += junct + 'no labor';
+				junct = ' and ';
+			}
+			if ({!ro.dealer__Customer_Parts_Charges__c + ro.dealer__Internal_Parts_Charges__c + ro.dealer__Warranty_Parts_Charges__c}==0) {
+				msg += junct + 'no parts';
+				junct = ' and ';
+			}
+			
+			var doprocess = false;
+			if(msg.length==0) {
+				doprocess = true;
+			} else {
+				doprocess = confirm('This RO has ' + msg + '.  \nAre you sure you want to post this RO?');
+			}
+
+			if(doprocess) {
+				postRepairFunction();
+			} else {
+				enableClass();
+				return false;
+			}
+		}
+		// End JVK3
+		
+		// BLL2a
+		function ConfirmPost() {
+
+			var rtn = true;
+			var msg = '';
+			var junct = '';
+			if ({!ro.LaborHoursCustomer__c + ro.LaborHoursInternal__c + ro.LaborHoursWarranty__c}==0) {
+				msg += junct + 'no labor';
+				junct = ' and ';
+			}
+			if ({!ro.dealer__Customer_Parts_Charges__c + ro.dealer__Internal_Parts_Charges__c + ro.dealer__Warranty_Parts_Charges__c}==0) {
+				msg += junct + 'no parts';
+				junct = ' and ';
+			}
+			rtn = (msg.length==0) || confirm('This RO has ' + msg + '.  \nAre you sure you want to post this RO?');
+			return rtn;
+		}
+		// BLL2a end
+
+		// BLL5a
+		function applyPaymentClick() {
+			$dt('input[id$="applyPaymentButton"]').prop("disabled",true).addClass("btnDisabled");
+			applyPayment();
+		}
+		// BLL5a end
+
+	</script>
+</apex:page>

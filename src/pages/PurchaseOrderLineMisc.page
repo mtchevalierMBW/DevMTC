@@ -1,0 +1,59 @@
+<!--
+PurchaseOrderLineMisc
+Programmer: Bryan Leaman
+Date: December 4, 2018
+Project: W-?
+
+Modifications:
+
+-->
+<apex:page standardController="dealer__Purchase_Order_Line__c" extensions="PurchaseOrderExpLine_EXT">
+
+	<apex:detail id="polineid" subject="{!dealer__Purchase_Order_Line__c.Id}" relatedList="true"
+		rendered="{!NOT(ISNULL(dealer__Purchase_Order_Line__c.Id))}"/>
+
+	<apex:form rendered="{!ISNULL(dealer__Purchase_Order_Line__c.Id)}">
+		<apex:pageBlock title="Purchase OrderLine Detail" mode="edit">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="Save" action="{!save}"/>
+				<apex:commandButton value="Cancel" action="{!cancel}"/>
+			</apex:pageBlockButtons>
+
+			<apex:pageBlockSection columns="1">
+				<apex:outputField value="{!dealer__Purchase_Order_Line__c.dealer__Purchase_Order__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Description__c}"
+					style="width:75%;"/>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" title="Amounts">
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Amount__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.GeneralLedgerAcct__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Customer_Total__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.General_Ledger_Account__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.Add_to_Chassis__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.Dimension_1__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.Add_to_Conversion__c}"/>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" title="Information">
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Special_Instructions__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Drop_Ship_Address__c}"/>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" title="Parts Information">
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Part_Quantity__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Part__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Part_Quantity_Received__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Pack_Part_Override__c}"/>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" title="System Information">
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Service_Job_Line__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Parts_Master__c}"/>
+				<apex:inputField value="{!dealer__Purchase_Order_Line__c.dealer__Parts_Line__c}"/>
+			</apex:pageBlockSection>
+
+		</apex:pageBlock>
+	</apex:form>
+
+</apex:page>

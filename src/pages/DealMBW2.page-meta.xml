@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>44.0</apiVersion>
+    <availableInTouch>true</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <label>DealMBW2</label>
+    <packageVersions>
+        <majorNumber>17</majorNumber>
+        <minorNumber>0</minorNumber>
+        <namespace>c2g</namespace>
+    </packageVersions>
+    <packageVersions>
+        <majorNumber>4</majorNumber>
+        <minorNumber>11</minorNumber>
+        <namespace>dealer</namespace>
+    </packageVersions>
+    <packageVersions>
+        <majorNumber>1</majorNumber>
+        <minorNumber>9</minorNumber>
+        <namespace>dtffa</namespace>
+    </packageVersions>
+    <packageVersions>
+        <majorNumber>1</majorNumber>
+        <minorNumber>189</minorNumber>
+        <namespace>dtmob</namespace>
+    </packageVersions>
+</ApexPage>

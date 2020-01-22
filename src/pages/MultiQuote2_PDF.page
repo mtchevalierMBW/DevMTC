@@ -1,0 +1,402 @@
+<!-- 
+    2017-02-06  B. Leaman   BLL1 - Balloon amount (residual value)
+ -->
+<apex:page renderAs="pdf" applyHtmlTag="false" showHeader="false" showChat="false" standardStylesheets="false" standardController="dealer__Deal__c" extensions="Deal_MBW2">
+<html>
+<head>
+    <apex:stylesheet value="//fonts.googleapis.com/css?family=Roboto:400,300,500,700" />
+
+    <style type="text/css"> 
+
+        @page {
+          size:portrait;
+          margin: 0.5in;
+        }
+
+        body {
+            font-family: 'Roboto','Helvetica-Nue', 'Helvetica', sans-serif;
+            font-size: 12px;
+            font-weight: 300;
+        }
+
+        .sigline {
+            border-top: 1px solid #999999;
+            display: block;
+            margin-top: 40px;
+        }
+
+        .date_right {
+            float: right;
+        }
+
+        .main_logo {
+            float: left;
+            height: 50px;
+            width: auto;
+            margin-right: 15px; 
+            margin-top: -5px;
+        }
+
+        /** Typography **/
+
+        h1, h2, h3 {
+            margin-top: .25em;
+            margin-bottom: .75em;
+        }
+
+        h1 small {
+          display: block;
+          font-size: .6em;
+          font-weight: 400;
+          color: #777;
+        }
+
+        h2 {
+            /*border-top: 1px solid #DEDEDE;*/
+            padding-top: .25em;
+            font-weight: 200;
+            font-size: 16px;
+            margin-top: 1em;
+        }
+
+        h2:first-child {
+            margin-top: .25em;
+        }
+
+        strong {
+          font-weight: bold;
+        }
+
+        .pumped {
+            font-size: 1.25em;
+            font-weight: bold;
+        }
+
+        /** Table Style **/
+        table {
+            border: 0;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        table.zebra tbody tr:nth-child(odd) td {
+            background-color: #F9F9F9;w
+        }
+
+        .zebra tr th {
+            border-bottom: 2px solid #EEEEEE;
+        }
+
+        .zebra tr td {
+            border-bottom: 1px solid #EEEEEE;
+        }
+
+        .zebra tr:last-child td {
+            border: 0;
+        }
+
+        th {
+            text-align: left;
+        }
+
+        td, th {
+            padding: 5px 5px;
+        }
+
+        .pricing td {
+            font-size: 1.125em;
+        }
+
+        .pricing td, .pricing th {
+            text-align: center;
+        }
+
+        .pricing th span {
+            color: #777;
+            font-weight: normal;
+            font-size: 1.125em;
+        }
+
+        /*** Layout ***/
+        .row {
+            clear: both;
+            margin-bottom: 3em;
+            display: block;
+        }
+
+        .row .row:last-child {
+            margin-bottom: 0;
+        }
+
+        .row:first-child{
+            margin-bottom: 1em;
+        }
+
+        #wrap {
+            /*width: 900px;*/
+            /*margin: 0 auto;*/
+        }
+
+        .col-2 {
+            width: 45%;
+            float: left;
+            display: block;
+            margin-left: 5%;
+        }
+
+        .col-2:first-child{
+            margin-left: 0;
+        }
+
+        .clearfix{
+            overflow: hidden;
+        }
+
+        .pricing input[type="checkbox"] {
+            border: 1px solid black;
+            height: 20px;
+            width: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="wrap">
+        <div class="row">
+
+            <apex:image value="{!$Resource.FormLogo}" styleClass="main_logo" rendered="{!NOT(location.NoLogoOnForms__c)}"/>
+            <h1>
+                Monthly Payment Examples 
+                <small>Proposal #:<apex:outputText value="{!dealer__Deal__c.Name}" /></small>
+            </h1>
+        </div><!-- end .row -->
+
+        <div class="row clearfix">
+            <div class="col-2">
+                <h2>Vehicle</h2>
+                <p>
+                    Chassis:  <br/><strong class="pumped"><apex:outputText value="{!dealer__Deal__c.dealer__Vehicle__r.Name}" /></strong>
+                </p>
+                Conversion: <br/>
+                MFG: &nbsp;
+                <strong><apex:outputText value="{!vehicle.Conv_MFG__c}" /></strong><br />
+                Ramp Type:  &nbsp;
+                <strong><apex:outputText value="{!vehicle.MV_Ramp_Type__c}" /></strong><br/>
+                Conversion Model: &nbsp;
+                <strong><apex:outputText value="{!vehicle.Conversion_Model__c}" /></strong><br />
+                Ramp Operation: &nbsp;
+                <strong><apex:outputText value="{!vehicle.MV_Ranp_Operation__c}" /></strong><br />
+
+            </div>
+
+            <div class="col-2">
+                <h2>Customer<apex:outputText value="s" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer__c))}"/></h2>
+                <div class="row clearfix">
+                    <div class="col-2">
+                        <strong class="pumped"><apex:outputText value="{!dealer__Deal__c.dealer__Buyer__r.Name}" /></strong> <br/>
+                        <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Address__c}" /> <br/>
+                        <apex:outputText value="{!dealer__Deal__c.dealer__Buyer_City__c}" />&nbsp;<apex:outputText value="{!dealer__Deal__c.dealer__Buyer_State__c}" />&nbsp;<apex:outputText value="{!dealer__Deal__c.dealer__Buyer_Postal_Code__c}" /><br/>
+                        <apex:outputText value="Phone: {0}" id="buyer_phone" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Home_Phone__c))}">
+                            <apex:param value="{!dealer__Deal__c.dealer__Buyer_Home_Phone__c}" /><br/>
+                        </apex:outputText>
+
+                        <apex:outputText value="Mobile: {0}" id="buyer_mobilephone" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Mobile_Phone__c))}">
+                            <apex:param value="{!dealer__Deal__c.dealer__Buyer_Mobile_Phone__c}" /><br/>
+                        </apex:outputText>
+                    </div>
+                    <div class="col-2">
+                        <strong class="pumped"><apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer__r.Name}" /></strong> <br/>
+                        <apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer_Address__c}" /> <br/>
+                        <apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer_City__c}" />&nbsp;<apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer_State__c}" />&nbsp;<apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer_Postal_Code__c}" /><br/>
+                        <apex:outputText value="Phone: {0}" id="co_buyer_phone" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer_Home_Phone__c))}">
+                            <apex:param value="{!dealer__Deal__c.dealer__Co_Buyer_Home_Phone__c}" /><br/>
+                        </apex:outputText>
+
+                        <apex:outputText value="Mobile: {0}" id="co_buyer_mobilephone" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer_Mobile_Phone__c))}">
+                            <apex:param value="{!dealer__Deal__c.dealer__Co_Buyer_Mobile_Phone__c}" /><br/>
+                        </apex:outputText>
+                    </div>
+                </div><!-- end .row -->
+            </div><!-- end .row -->
+
+        </div><!-- end .row -->
+        <!--
+        <div class="row">
+            <h2>Mobility Equipment</h2>
+
+            <table cellpadding="0" cellspacing="0" class="zebra">
+                <thead>
+                    <tr>
+                        <th width="150">Code</th>
+                        <th>Desc</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat var="pk" value="{!selectedKits}">
+                    <tr>
+                        <td><apex:outputText value="{!pk.Name}" /> </td>
+                        <td><apex:outputText value="{!pk.dealer__Description__c}" /> </td>
+                    </tr>
+                    </apex:repeat>
+                </tbody>
+            </table> 
+            
+        </div><
+        <div class="row">
+            <h2>Extended Service Contracts</h2>
+
+            <table cellpadding="0" cellspacing="0" class="zebra">
+                <thead>
+                    <tr>
+                        <th width="150">Code</th>
+                        <th>Desc</th>
+                        <th>Exp Mileage</th>
+                        <th>Exp Months</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat var="esc" value="{!soldOnProposal}">
+                    <tr>
+                        <td><apex:outputText value="{!esc.dealer__Plan_Code__c}" /> </td>
+                        <td><apex:outputText value="{!esc.dealer__Description__c}" /> </td>
+                        <td><apex:outputText value="{!esc.dealer__Expiration_Mileage__c}" /> </td>
+                        <td><apex:outputText value="{!esc.dealer__Expiration_Months__c}" /> </td>
+                        
+                    </tr>
+                    </apex:repeat>
+
+                </tbody>
+            </table> 
+            
+        </div>
+        <div class="row">
+
+            <h2>Trade In<apex:outputText value="s" rendered="{!IF(tradeInList.size > 0,true,false)}"/></h2>
+            <table cellpadding="0" cellspacing="0" class="zebra">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Make</th>
+                        <th>Model</th>
+                        <th>VIN</th>
+                        <th>Odometer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat var="t" value="{!tradeInList}">
+                    <tr>
+                        <td><apex:outputText value="{!t.dealer__Year__c}" /> </td>
+                        <td><apex:outputText value="{!t.dealer__Make__c}" /> </td>
+                        <td><apex:outputText value="{!t.dealer__Model__c}" /> </td>
+                        <td><apex:outputText value="{!t.dealer__VIN__c}" /> </td>
+                        <td><apex:outputText value="{!t.dealer__Odometer_at_Trade_In__c}" /> </td>
+                    </tr>
+                    </apex:repeat>
+                </tbody>
+            </table> 
+
+        </div>
+        --> 
+        <div class="row">
+            <h2>Payment Options</h2>
+            <table cellpadding="0" cellspacing="0" class="zebra pricing">
+                <thead>
+                    <tr>
+                        <th width="150">Down Payment</th>
+                        <th>
+                            Plan 1 <br/>
+                            <span>
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.term1}" /></strong> Mo.
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.rate1}" /></strong>% APR
+                            </span>
+                        </th>
+
+                        <th>
+                            Plan 2 <br/>
+                            <span>
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.term2}" /></strong> Mo.
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.rate2}" /></strong>% APR
+                            </span>
+                        </th>
+
+                        <th>
+                            Plan 3 <br/>
+                            <span>
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.term3}" /></strong> Mo.
+                            <strong><apex:outputText styleClass="pumped" value="{!multiquote.rate3}" />%</strong> APR
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><apex:outputText value="{!multiquote.down1}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment1_1}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment1_2}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment1_3}" /> </td>
+                    </tr>
+
+                    <tr>
+                        <td><apex:outputText value="{!multiquote.down2}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment2_1}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment2_2}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment2_3}" /> </td>
+                    </tr>
+
+                    <tr>
+                        <td><apex:outputText value="{!multiquote.down3}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment3_1}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment3_2}" /> </td>
+                        <td><apex:outputText value="{!multiquote.payment3_3}" /> </td>
+                    </tr>
+
+                    <!-- BLL1a -->
+                    <apex:outputPanel layout="none" rendered="{!NULLVALUE(multiquote.balloon,0)!=0}">
+                    <tr>
+                        <td>Balloon pmt</td>
+                        <td>{!multiquote.balloon}</td>
+                        <td>{!multiquote.balloon}</td>
+                        <td>{!multiquote.balloon}</td>
+                    </tr>
+                    </apex:outputPanel>
+                    <!-- BLL1a end -->
+
+                    <tr>
+                        <td>&nbsp; </td>
+                        <td><input type="checkbox" /> </td>
+                        <td><input type="checkbox" /> </td>
+                        <td><input type="checkbox" /> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><!-- end .row -->
+
+        <!--<h2>Signature<apex:outputText value="s" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer__c))}"/></h2>
+         <div class="row clearfix">
+            <div class="col-2">
+                <span class="sigline">
+                    <apex:outputText value="{!dealer__Deal__c.dealer__Buyer__r.Name}" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Contact__c))}" />
+
+                    <apex:outputText styleClass="date_right" value="{0,date,MM'/'dd'/'yyyy}" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Buyer_Contact__c))}">
+                        <apex:param value="{!TODAY()}" /> 
+                    </apex:outputText>
+
+                </span>
+            </div>
+            <div class="col-2">
+                <span class="sigline">
+                    <apex:outputText value="{!dealer__Deal__c.dealer__Co_Buyer__r.Name}" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer__c))}" />
+                    <apex:outputText styleClass="date_right" value="{0,date,MM'/'dd'/'yyyy}" rendered="{!NOT(ISBLANK(dealer__Deal__c.dealer__Co_Buyer__c))}">
+                        <apex:param value="{!TODAY()}" /> 
+                    </apex:outputText>
+                </span>
+            </div>
+        </div> -->
+
+    </div><!-- /#wrap -->
+
+</body>
+</html>
+</apex:page>

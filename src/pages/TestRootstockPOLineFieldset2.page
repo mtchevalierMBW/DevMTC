@@ -1,0 +1,11 @@
+<apex:page standardController="rstk__poline__c">
+    <apex:form >
+    <apex:pageBlock >
+    <apex:pageBlockSection >
+    <apex:repeat value="{!$ObjectType.rstk__poline__c.FieldSets.rstk__RSFieldSet}" var="f">
+        <apex:inputField value="{!rstk__poline__c[f]}"/><br/>
+    </apex:repeat>
+    </apex:pageBlockSection>
+    </apex:pageBlock>
+    </apex:form>
+</apex:page>

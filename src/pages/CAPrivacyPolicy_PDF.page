@@ -1,0 +1,126 @@
+<apex:page renderAs="PDF" sidebar="false" applyHtmlTag="false" 
+           applyBodyTag="false" showHeader="false" showChat="false" standardStylesheets="false">
+<html>
+<head>
+<title>CAPrivacyPolicy</title>
+</head>
+<body>
+<div>
+<table width="100%" align="left">
+<tr>
+<td align="center"><I style="font-size:20px">Privacy Act</I></td>
+</tr>
+<tr>
+<td>
+   <font style="font-size:0.8em"><B>INTRODUCTION</B></font>
+</td>
+</tr>
+<tr>
+  <td style="text-align: justify;font-size:0.8em">As a valued customer, we want to ensure your private information is kept private and only shared with
+those companies who are authorized either by yourself or as allowed or required by law. This document
+explains our privacy policy, gives you reasons why we ask for the type of information we do, and if we do
+reserve a right to share information with non-affiliated third parties, lets you "opt-out" of our reservation to
+do so. Please take a moment to read this entire policy-<B> IT IS FOR YOUR PROTECTION.</B></td>
+</tr>
+<tr>
+<td style="padding-top:10px;">
+   <font style="font-size:0.8em"><B>COLLECTION INFORMATION</B></font>
+</td>
+</tr>
+<tr>
+ <td style="text-align: justify;font-size:0.8em;">The purchase of a motor vehicle requires considerable accumulation of nonpublic personal information. For
+example, if we sell or lease you a vehicle- extending you credit at your request- we will receive information
+from you in order to determine your creditworthiness. We may also obtain information from third parties
+such as employers, references, and insurance companies.</td>
+</tr>
+<tr>
+  <td style="text-align: justify;padding-top:10px;font-size:0.8em">Some of the information we obtain from you may be required by state or federal agencies, such as the Department of Motor Vehicles or the Internal Revenue Service. This information may be required even if you were to pay cash for your vehicle. Examples would be a driver's license or social security number.</td>
+</tr>
+<tr>
+<td style="padding-top:10px;">
+   <font style="font-size:0.8em"><B>PROTECTING YOUR INFORMATION</B></font>
+   </td>
+  </tr>
+  <tr>
+  <td style="text-align: justify;font-size:0.8em">We safeguard nonpublic personal information
+     according to established industry standards and procedures. We maintain physical and
+     electronic safeguards that comply with state and federal law. We restrict access to 
+     nonpublic personal information about you to those employees and outside contractors who 
+     need to know the information to provide product or service to you. We prohibit our employees 
+     and agents from giving information about you to anyone in a manner that would violate any 
+     applicable law or privacy policy.</td>
+</tr>
+<tr>
+<td style="padding-top:10px;">
+  <font style="font-size:0.8em"><B>INFORMATION SHARING</B></font>
+   </td>
+  </tr>
+ <tr>
+  <td style="text-align: justify;font-size:0.8em">Unless we have indicated our desire to share your nonpublic personal information with non-affiliated third
+parties (By checking the box in the section below) we share information:</td>
+</tr>
+ <tr>
+ <td style="padding-top:10px;">
+ <table width="100%" align="left" style="font-size:0.8em">
+ <tr>
+ <td align="right" width="50px" valign="top">a)</td><td align="left" valign="top">As permitted by federal or state law.</td>
+ </tr>
+ <tr>
+ <td align="right" valign="top">b)</td><td align="left" valign="top">For purposes of processing a sale or lease transaction as you request or authorize, such a
+submitting information to a third party financial institutions that may be requested to
+ take an assignment of the contract or verifying insurance coverage information.</td>
+ </tr>
+  <tr>
+ <td align="right" valign="top">c)</td><td align="left" valign="top">When using outside service providers to help us provide you with products and services.
+Before providing information to our service providers we enter into contractual agreements prohibiting them from disclosing or using the information other than for the purpose it was disclosed.</td>
+ </tr>
+   <tr>
+ <td align="right" valign="top">d)</td><td align="left" valign="top">With "Affiliated" companies. Companies that are affiliated with us include any company that
+controls us, any company we control, or any company under common control with us.</td>
+ </tr>
+ </table>
+ </td>
+ </tr>
+ <tr>
+ <td style="padding-top:10px;">
+  <font style="font-size:0.8em"><B>NON-AFFILIATED THIRD PARTY SHARING</B></font>
+   </td>
+ </tr>
+ <tr>
+<td>
+    <font style="text-align: justify;font-size:0.8em"><B>____IF THE LINE TO THE LEFT IS CHECKED</B>, then we reserve the right to disclose nonpublic personal information to third parties, such as market research firms, direct marketing companies, finance service providers and others who may from time to time seek to provide you information on valuable products or services. YOU MAY OPT OUT of this sharing by checking the line below.</font>
+</td>
+  </tr>
+ <tr>
+<td style="border-bottom:3px solid;padding-top:10px;">
+
+  
+   <font style="text-align: justify;font-size:0.8em"><B>____I DIRECT YOU NOT TO SHARE</B> nonpublic information about me to non-affiliate third parties, except as provided in this Privacy Policy.</font>
+  
+   </td>
+  </tr>
+  <tr>
+  <td style="text-align: justify;padding-top:10px;font-size:0.8em">I have read the above and acknowledge receiving a copy of this privacy act:</td>
+</tr>
+<tr>
+<td style="padding-top:30px">
+<table width="100%" align="left" style="font-size:0.8em">
+<tr>
+<td>_________________________________________________Buyer</td>
+<td>Date_____________________</td>
+</tr>
+<tr>
+<td style="padding-top:30px">_________________________________________________Co-Buyer</td>
+<td>Date_____________________</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+
+</body>
+</html>
+
+
+</apex:page>

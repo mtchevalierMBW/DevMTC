@@ -1,0 +1,5 @@
+<apex:page standardController="dealer__Vehicle_Inventory__c" 
+			extensions="FormControlVehicleInventory_EXT,FormControl_EXT"
+			showHeader="false" sidebar="false" id="fdfData" contentType="text/plain">
+    <apex:dynamicComponent componentValue="{!fdf}" />
+</apex:page>

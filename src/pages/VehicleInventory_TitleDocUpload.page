@@ -1,0 +1,337 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alex Bangle
+    Created Date:  12/6/2016
+    Work Item:     
+    File Name:     VehicleInventory_TitleDocUpload.page
+
+    Modified By         Alias       Work Item       Date       Reason
+    __________________________________________________________________________________________________
+    Alexander Miller    AMM1        W-000413     10/26/2018    Update to handle Lightning Files       
+-->
+
+<apex:page docType="html-5.0" standardcontroller="dealer__Vehicle_Inventory__c" extensions="VehicleInventory_TitleDocUpload">
+    <style>
+        article {width:275px; margin:5px; float:left;}
+        #holder {
+            border: 2px dashed #ccc;
+            width: 200px;
+            text-align: center;
+            padding: 40px 25px;
+        }
+        #holder span, #uploadCompleted span {
+            position: relative;
+            font-size:1.5em;
+            color:#333;
+        }
+        #holder.hover { border: 2px dashed #31a1ff; }
+        
+        #holder p { margin: 10px; font-size: 14px; }
+            progress { width: 200px;  height:50px;  }
+
+            position: absolute;
+            left: 0;
+        }
+        .fail { background: #c00; padding: 2px; color: #fff; }
+        .hidden { display: none;}
+        .dragDropComponentSize{ height:120px ; overflow-y:auto; }
+
+    </style>
+
+    <!-- AMM1 -->
+    <!-- <script src="../../soap/ajax/42.0/connection.js" type="text/javascript"></script> -->
+    <!-- AMM1 -->
+
+    <apex:form >
+        <apex:selectList label="Select Document" value="{!titleDocItems}" size="1" style="padding:8px; border-radius:5px; margin-right:5px;">
+            <apex:selectOptions value="{!Items}"></apex:selectOptions>
+        </apex:selectList>
+        <apex:commandButton value="Select" action="{!docSelection}" reRender="out" status="status" style="padding:10px; border-radius:5px"/>
+        <apex:actionFunction name="updateFlags" action="{!updateFlags}" reRender="placeholder"/>
+        <apex:actionFunction name="updateDocLinks" action="{!updateDocLinks}" reRender="docList"/>
+    </apex:form>
+    <apex:outputPanel id="placeholder"></apex:outputPanel>
+    <apex:outputPanel id="out">
+        <apex:outputPanel rendered="{!titleDocItems == ''}" style="width:275px; height:125px; display:block; float:left">
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!titleDocItems != ''}">
+            <article class="dragDropComponentSize" id="dndContainer">
+                <div id="holder" >
+                    <span id="holder_txt1">Drop Document Here</span>
+                    <span id="holder_txt2" class="hidden">Upload Document</span>
+                </div>
+                <p id="upload" class="hidden"><label>Drag &amp; drop not supported by your browser, but you can still upload via this input field:<br /><input type="file" /></label></p>
+                <p id="filereader">File API &amp; FileReader API not supported</p>
+                <p id="formdata">XHR2's FormData is not supported</p>
+                <p id="progress">XHR2's upload progress isn't supported</p>
+                <p id="uploadStatus" class="hidden"><progress id="uploadprogress" min="0" max="100" value="0">0</progress></p>
+            </article>
+        </apex:outputPanel>
+        <script>
+            var holder = document.getElementById('holder');
+            var holder_txt1 = document.getElementById('holder_txt1');
+            var holder_txt2 = document.getElementById('holder_txt2');
+            var uploadStatus = document.getElementById('uploadStatus'); 
+        
+            var sfdcHostName =window.location.host.split('.')[1]; 
+        
+            updateFlags(); //calls updateFlag in class on load, this runs again on completed upload
+        
+            tests = {
+              filereader: typeof FileReader != 'undefined',
+              dnd: 'draggable' in document.createElement('span'),
+              formdata: !!window.FormData,
+              progress: "upload" in new XMLHttpRequest
+            },
+            support = {
+              filereader: document.getElementById('filereader'),
+              formdata: document.getElementById('formdata'),
+              progress: document.getElementById('progress')
+            },
+            progress = document.getElementById('uploadprogress'),
+            fileupload = document.getElementById('upload');
+        
+        "filereader formdata progress".split(' ').forEach(function (api) {
+          if (tests[api] === false) {
+            support[api].className = 'fail';
+          } else {
+            support[api].className = 'hidden';
+          }
+        });
+        
+        function resetAll()
+        {
+            holder.className = holder_txt1.className = '';
+            holder_txt2.className = uploadStatus.className = 'hidden';
+        }
+        
+        function readfiles(files) { 
+        
+            var formData = tests.formdata ? new FormData() : null;
+
+              //Not sure why multiple files dropping, so for time being disable multi file functionality
+              if(files.length > 1)
+              {
+                  alert('Multi Upload is not supported, please try to upload single file');
+                  return;
+              }
+        
+            for (var i = 0; i < files.length; i++) {
+                uploadStatus.className = '';
+                holder.className = 'hidden';
+                // now post a new XHR request
+
+                if (tests.formdata) {
+
+                // AMM1
+                  var xhr = new XMLHttpRequest();
+                
+                  var sfdcurl = 'https://'+sfdcHostName+'.salesforce.com/services/apexrest/DragAndDrop/v1?FileName={!stockNum}-{!titleDocItems}&cType='+encodeURIComponent(files[i].type)+ '&parId={!Id}' ;
+                
+                  xhr.open('POST','/services/proxy' );
+                
+                  //xhr.setRequestHeader("Content-type",'multipart/form-data');
+                  //xhr.setRequestHeader("Content-type",'');
+                  xhr.setRequestHeader("Authorization","Bearer {!$Api.Session_ID}");
+                  xhr.setRequestHeader('SalesforceProxy-Endpoint', sfdcurl);
+                  xhr.setRequestHeader('X-User-Agent', 'DragAndDropAPI v1.0');
+                   
+                  xhr.addEventListener("load", transferComplete);
+                  xhr.addEventListener("error", transferFailed);
+                  xhr.addEventListener("abort", transferCanceled);
+                   
+                  function transferComplete(evt) {
+                    console.log("TitleDocUpload - The transfer is complete.");
+                    updateFlags(); //calls updateFlag in class
+                    uploadStatus.innerHTML = 'UPLOAD SUCCESSFUL';
+                    updateDocLinks();
+                  }
+                   
+                  function transferFailed(evt) {
+                    console.log("TitleDocUpload - An error occurred while transferring the file.");
+                    alert("Document Upload Failed!");
+                  }
+                   
+                  function transferCanceled(evt) {
+                    console.log("TitleDocUpload - The transfer has been canceled by the user.");
+                    alert("Document Upload Canceled");
+                  }
+                
+                  xhr.onload = function() {
+                    progress.value = progress.innerHTML = 100;
+                    //resetAll();
+                  };
+                
+                  if (tests.progress) {
+                    xhr.upload.onprogress = function (event) {
+                      if (event.lengthComputable) {
+                        var complete = (event.loaded / event.total * 100 | 0);
+                        progress.value = progress.innerHTML = complete;
+                      }
+                    }
+                  }
+                
+                  xhr.onreadystatechange=function()
+                    {
+                        if (xhr.readyState==4 && xhr.status != 200)
+                        {
+                            if(xhr.responseText)
+                                alert(xhr.responseText);
+                            else
+                                alert('Some error occurred while uploading file');
+                
+                             console.log(xhr);
+                        }
+                    }
+                
+                  xhr.send(files[i]);
+                }
+
+                // var reader = new FileReader();
+                // reader.readAsDataURL(files[i]);
+                // reader.onload = function () {
+                    
+                //     var fileContent = String(reader.result);
+
+                //     // remove the junk part of this process
+                //     fileContent = fileContent.substr(fileContent.indexOf(',') + 1);
+
+                //     //console.log(reader.result);
+                //     console.log('file read');
+
+                //     var ContentVersion  = new sforce.SObject("ContentVersion"); 
+
+                //     ContentVersion.ContentLocation = 'S';
+                //     ContentVersion.VersionData = fileContent;
+                //     ContentVersion.Title = '{!stockNum}-{!titleDocItems}';
+                //     ContentVersion.PathOnClient = '{!stockNum}-{!titleDocItems}';
+
+                //     var result = sforce.connection.create([ContentVersion], {
+                //         onSuccess:function(result, source) {
+                //             if (result[0].getBoolean("success")) {
+                //                 console.log("New Content Version id: " + result[0].id);
+
+                //                 var tempid = result[0].id;
+
+                //                 console.log('tempid: ' + tempid);
+                                
+                //                 // Get the ContentDocumentId back
+                                
+                //                 var result2 = sforce.connection.retrieve("Id,ContentDocumentId", "ContentVersion", [tempid]);
+                //                 console.log("result2: " + result2);
+
+                //                 var contentDocumentId = result2[0].ContentDocumentId;
+
+                //                 console.log("contentDocumentId: " + contentDocumentId);
+
+                //                 // Create ContentDocumentLink
+                //                 var ContentDocumentLink  = new sforce.SObject("ContentDocumentLink");
+
+                //                 ContentDocumentLink.ContentDocumentId = contentDocumentId;
+                //                 ContentDocumentLink.LinkedEntityId = '{!Id}';
+                //                 ContentDocumentLink.ShareType = 'V';
+                //                 ContentDocumentLink.Visibility = 'AllUsers';
+
+                //                 var result3 = sforce.connection.create([ContentDocumentLink], {
+                //                     onSuccess:function(result, source) {
+                //                         if (result[0].getBoolean("success")) {
+                //                             console.log('result3 success');
+                //                             updateFlags(); //calls updateFlag in class
+                //                             uploadStatus.innerHTML = 'UPLOAD SUCCESSFUL';
+                //                             updateDocLinks();
+                //                         }
+                //                         else
+                //                         {
+                //                             console.log("Failed to create ContentDocumentLink: " + result[0]);
+                //                         }
+                //                     },
+                //                     onFailure:function(error, source) {
+                //                         console.log("Error: " + error);
+                //                     }
+                //                 });
+
+                //             // Content Document Link
+                    
+                //     } else {
+                //         console.log("Failed to create Content Version: " + result[0]);
+                //     }
+                //     },
+                //     onFailure:function(error, source) {
+                //         console.log("Error: " + error);
+                //     }
+                //     });
+                //     }
+                // };
+                // reader.onerror = function (error) {
+                //     console.log('Error: ', error);
+                // };
+
+                // AMM1
+            } 
+        
+        }
+        
+        if (tests.dnd) {
+          holder.ondragover = function () {
+                this.className = 'hover';
+                return false;
+              };
+          holder.ondragleave = function () {
+                this.className = '';
+                return false;
+              };
+          holder.ondrop = function (e) {
+                this.className = '';
+        
+                e.preventDefault();
+
+                readfiles(e.dataTransfer.files);
+          }
+        } else {
+                fileupload.className = 'hidden';
+                fileupload.querySelector('input').onchange = function () {
+                readfiles(this.files);
+          };
+        }
+        
+        </script>
+    </apex:outputPanel>
+    <apex:outputPanel style="font-size:91%; line-height: 180%; font-weight: bold; font-family: Arial,Helvetica,sans-serif" id="docList">
+        <!-- AMM1 --> 
+        <apex:outputText value="Lien Release: "></apex:outputText>
+        <apex:outputLink rendered="{!lienRelease != ''}" value="/servlet/servlet.FileDownload?file={!lienRelease}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Power of Attorney: "></apex:outputText>
+        <apex:outputLink rendered="{!powerOfAttorney != ''}" value="/servlet/servlet.FileDownload?file={!powerOfAttorney}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="MSO/Title:  "></apex:outputText>
+        <apex:outputLink rendered="{!msoTitle != ''}" value="/servlet/servlet.FileDownload?file={!msoTitle}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Proof Payment/Trade: "></apex:outputText>
+        <apex:outputLink rendered="{!proofPaymentTrade != ''}" value="/servlet/servlet.FileDownload?file={!proofPaymentTrade}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Invoice: "></apex:outputText>
+        <apex:outputLink rendered="{!invoice != ''}" value="/servlet/servlet.FileDownload?file={!invoice}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Rental Registration: "></apex:outputText>
+        <apex:outputLink rendered="{!rentalRegistration != ''}" value="/servlet/servlet.FileDownload?file={!rentalRegistration}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Rental Insurance: "></apex:outputText>
+        <apex:outputLink rendered="{!rentalInsurance != ''}" value="/servlet/servlet.FileDownload?file={!rentalInsurance}" target="_blank">View</apex:outputLink><br/>
+        <!-- 
+        <apex:outputText value="Lien Release: "></apex:outputText>
+        <apex:outputLink rendered="{!lienRelease != ''}" value="/{!lienRelease}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Power of Attorney: "></apex:outputText>
+        <apex:outputLink rendered="{!powerOfAttorney != ''}" value="/{!powerOfAttorney}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="MSO/Title:  "></apex:outputText>
+        <apex:outputLink rendered="{!msoTitle != ''}" value="/{!msoTitle}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Proof Payment/Trade: "></apex:outputText>
+        <apex:outputLink rendered="{!proofPaymentTrade != ''}" value="/{!proofPaymentTrade}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Invoice: "></apex:outputText>
+        <apex:outputLink rendered="{!invoice != ''}" value="/{!invoice}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Rental Registration: "></apex:outputText>
+        <apex:outputLink rendered="{!rentalRegistration != ''}" value="/{!rentalRegistration}" target="_blank">View</apex:outputLink><br/>
+        <apex:outputText value="Rental Insurance: "></apex:outputText>
+        <apex:outputLink rendered="{!rentalInsurance != ''}" value="/{!rentalInsurance}" target="_blank">View</apex:outputLink><br/>
+        -->
+        <!-- AMM1 -->
+    </apex:outputPanel>
+    <apex:outputPanel style="font-size:80%; line-height: 180%; font-weight: bold; font-family: Arial,Helvetica,sans-serif; color:red;">
+        <apex:outputText value="Files must already be in PDF format.  To delete documents, scroll down to 'Notes & Attachments'."></apex:outputText>
+    </apex:outputPanel>
+</apex:page>

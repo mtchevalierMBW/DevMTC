@@ -1,0 +1,58 @@
+<apex:page controller="FindClosestStore_CTLR" lightningStylesheets="true">
+
+<!-- apex:slds/ -->
+
+	<apex:form >
+		<apex:pageBlock title="Find Closest Store">
+	    	       
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!GeoLookup}" value="Lookup"/>
+			</apex:pageBlockButtons>
+
+			<apex:pageMessages id="pageMessages"/>
+
+			<apex:pageBlockSection title="Address" columns="1">
+				<apex:outputText >Enter address:</apex:outputText>
+                <apex:inputTextArea value="{!address}" style="width:50%;height=80px;"/>
+			</apex:pageBlockSection>
+
+			<apex:outputPanel layout="none" rendered="{!loc!=null}">
+			<apex:pageBlockSection title="Standardized address" id="standardAddress" columns="1">
+				<apex:pageBlockSectionItem html-style="display:none;">
+					<apex:outputLabel >Latitude/Longitude</apex:outputLabel>
+                	<apex:outputText >{!loc.Latitude} / {!loc.Longitude}</apex:outputText>
+                </apex:pageBlockSectionItem>
+                <apex:outputText value="{!loc.Street}" label="Street"/>
+                <apex:PageBlockSectionItem >
+                	<apex:outputLabel >City/State/ZIP</apex:outputLabel>
+                	<apex:outputPanel layout="block">
+                		<apex:outputText value="{!loc.City}" label="City"/>,&nbsp;
+                		<apex:outputText value="{!loc.StateCode}" label="State"/>&nbsp;&nbsp;
+                		<apex:outputText value="{!loc.PostalCode}" label="Postal code"/>
+                	</apex:outputPanel>
+                </apex:PageBlockSectionItem>
+			</apex:pageBlockSection>
+
+	<apex:pageBlock title="Store Locator">
+		<apex:pageBlockTable value="{!LocationsByDistance}" var="location">
+			<apex:column value="{!location.locationReference.Store_Location__c}" />
+			<apex:column value="{!location.location.dealer__Street__c}" />
+			<apex:column value="{!location.location.dealer__City__c}" />
+			<apex:column value="{!location.location.dealer__State__c}" />
+			<apex:column value="{!location.location.dealer__Postal_Code__c}" />
+			<apex:column value="{!location.location.dealer__Main_Phone__c}" />
+			<apex:column value="{!location.distance}">
+			      <apex:facet name="header">Miles</apex:facet>
+			</apex:column>
+		</apex:pageBlockTable>
+	</apex:pageBlock>
+
+
+			</apex:outputPanel>
+ 
+	    </apex:pageBlock>
+	    
+    </apex:form>
+
+
+</apex:page>

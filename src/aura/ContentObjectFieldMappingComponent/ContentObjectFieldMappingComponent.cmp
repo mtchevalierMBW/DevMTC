@@ -1,0 +1,187 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/13/2018
+    Work Item:     W-000421
+    File Name:     ContentObjectFieldMappingComponent.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentObjectFieldMappingController">
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <aura:attribute name="columns" type="List" />
+    <aura:attribute name="maxRowSelection" type="Integer" default="100"/>
+
+    <!-- Global attribute for the selected Content -->
+    <aura:attribute name="content" type="Content__c" />
+    <aura:handler event="c:ContentEvent" action="{!c.handleContentEvent}"/>
+
+    <!-- Global attribute for the current object-field mappings -->
+    <aura:attribute name="contentObjectFieldList" type="Content_Object_Field__c[]" />
+    <aura:method name="initMapping" action="{!c.initializeObjectField}" description="Function loads the current mappings" />
+
+    <!-- Global attribute for the current objects -->
+    <aura:attribute name="objectList" type="String[]" />
+
+    <!-- Global attribute for the current object selected in the mapping -->
+    <aura:attribute name="currentObject" type="String" default= ""/>
+
+    <!-- Global attribute for the current objects -->
+    <aura:attribute name="fieldList" type="String[]" />
+    <aura:method name="initFields" action="{!c.initFieldList}" description="Function which goes out into the system and gets the list of available fields to a given object" />
+
+    <!-- Global attribute for the current legal operators in the Object Field object -->
+    <aura:attribute name="operatorList" type="String[]" />
+    <aura:method name="initOperators" action="{!c.initOperatorList}" description="Function which goes out into the system and gets current list of operators" />
+
+    <aura:attribute name="fieldValueInput" type="String" default=""/>
+    <aura:attribute name="pageValueInput" type="String" />
+
+    <aura:attribute name="radioViewType" type="String" />
+    <aura:attribute name="radioObject" type="String" default="Object" />
+    <aura:attribute name="radioPage" type="String" default="Page" />
+    <aura:attribute name="objectFieldInputDisabled" type="Boolean" default="false"/>
+
+    <aura:attribute name="newRecordBool" type="Boolean" />
+
+    <aura:method name="addObjectMapping" action="{!c.mappingSelectionAdd}" />
+    <aura:method name="addNewObejctMapping" action="{!c.mappingSelectionNewRecordAdd}" />
+    <aura:method name="addPageMapping" action="{!c.mappingSelectionPageAdd}" />
+
+    <aura:attribute name="options" type="List" default="[
+    {'label': 'Objects', 'value': 'Object'},
+    {'label': 'Pages', 'value': 'Page'}
+    ]"/> 
+    <aura:attribute name="value" type="String" default=""/>
+
+    <aura:attribute name="selectedObjectMappings" type="Content_Object_Field__c[]" />
+
+    <aura:method name="toggleLoadingStart" action="{!c.toggleLoadingStart}" />
+    <aura:method name="toggleLoadingEnd" action="{!c.toggleLoadingEnd}" />
+
+    <aura:attribute name="showLoading" type="Boolean"/>
+    
+    <aura:if isTrue="{!v.showLoading}">
+        <lightning:spinner variant="brand" size="large"/>
+    </aura:if>
+
+    <aura:if isTrue="{!v.content != null}">
+        <article class="slds-card">
+            <div class="slds-p-horizontal_small">
+                <lightning:card title="Content Mapping">
+                    
+                    <aura:if isTrue="{!v.content == null}">
+                        <div class="slds-p-horizontal_small">
+                            No Content Selected
+                        </div>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.content != null}">
+
+                        <lightning:radioGroup 
+                            aura:id="radioGrp"
+                            name="radioGroupRequired"
+                            options="{! v.options }"
+                            value="{! v.radioViewType }"
+                            type="button"/>
+
+                            <lightning:layout horizontalAlign="left">
+
+                                <aura:if isTrue="{!v.radioViewType == v.radioObject}">
+
+                                    <!-- Available Tags -->
+                                    <lightning:layoutItem size="5">
+                                        
+                                        <lightning:select label="Objects" name="a_opt" aura:id="a_opt" onchange="{!c.objectSelectionChange}">
+                                            <option value="">...Select an Object...</option>
+                                            <aura:iteration items="{!v.objectList}" var="object">
+                                                <option value="{!object}">{!object}</option>
+                                            </aura:iteration>
+                                        </lightning:select>
+                                        
+                                        <br/>
+
+                                        <ui:inputCheckbox aura:id="checkbox" label="New Record?" change="{!c.newRecordCheckboxSelected}"/>
+
+                                        <br/>
+
+                                        <lightning:select label="Fields" name="b_opt" aura:id="b_opt" onchange="{!c.change}">
+                                            <option value="">...Select a Field...</option>
+                                            <aura:iteration items="{!v.fieldList}" var="field">
+                                                <option value="{!field}">{!field}</option>
+                                            </aura:iteration>
+                                        </lightning:select>
+
+                                        <br/>
+
+                                        <lightning:select label="Operators" name="c_opt" aura:id="c_opt" onchange="{!c.change}">
+                                            <option value="">...Select an Operator...</option>
+                                            <aura:iteration items="{!v.operatorList}" var="operator">
+                                                <option value="{!operator}">{!operator}</option>
+                                            </aura:iteration>
+                                        </lightning:select>
+
+                                        <br/>
+
+                                        <lightning:input id="valueField" name="valueField" value="{!v.fieldValueInput}" disabled="{!v.objectFieldInputDisabled}" placeholder="Field value (e.g. Won, Pending)"/>
+                                    
+                                    </lightning:layoutItem>
+                                
+                                </aura:if>
+
+                                <aura:if isTrue="{!v.radioViewType == v.radioPage}">
+                                   
+                                    <!-- Available Pages -->
+                                    <lightning:layoutItem size="5">
+
+                                        <lightning:input value="{!v.pageValueInput}" placeholder="Page Name as seen in the URL"/>
+                                    
+                                    </lightning:layoutItem>
+
+                                </aura:if>
+                                
+                                <aura:if isTrue="{!v.radioViewType != null}">
+                                    <!-- Controls -->
+                                    <lightning:layoutItem size="1">
+
+                                        <br/>
+                                        <br/>
+                                        <br/>
+                                        <br/>
+                                        <br/>
+
+                                        <center>
+                                            <div class="slds-button-group slds-list_vertical-space-medium" role="group">
+                                                <ul>
+                                                    <li><lightning:button variant="brand" label="" iconName="utility:left" onclick="{! c.mappingSelectionRemove }" /></li>
+                                                    <br/>
+                                                    <li><lightning:button variant="brand" label="" iconName="utility:right" onclick="{! c.addRule }" /></li>
+                                                </ul>
+                                            </div>
+                                        </center>
+
+                                    </lightning:layoutItem>
+
+                                    <!-- Selected Mappings -->
+                                    <lightning:layoutItem size="6">
+                                        
+                                        <lightning:datatable 
+                                            data="{!v.contentObjectFieldList}" 
+                                            columns="{!v.columns}" 
+                                            keyField="id"
+                                            onrowselection="{!c.tableSelection}"/>
+
+                                    </lightning:layoutItem>
+                                </aura:if>
+                        </lightning:layout>
+                    </aura:if>
+                </lightning:card>
+            </div> 
+        </article>
+    </aura:if>
+
+</aura:component>

@@ -1,0 +1,17 @@
+<!--Developer Alexander Miller. Quick Fix for Chuck MAS -> RS needs -->
+<apex:page controller="ConfigSearcher"> 
+    <apex:form >
+        <apex:pageBlock >
+            <p>Enter the name of the Configuration Session below. (e.g. "459 TOYOTA SIENNA MINI (Completed Toyota Sienna Vehicle)" -> 459</p>
+            <apex:inputText value="{!sessionIdName}" id="theTextInput"/>
+            <apex:commandButton action="{!search}" value="Search" id="theButton"/>
+            <br></br>
+            <br></br>
+            <apex:pageBlockTable value="{!accs}" var="a">
+
+                <apex:column value="{!a.rstk__confdsel_confsess__r.Name}"/>
+                <apex:column value="{!a.rstk__confdsel_confsel__r.rstk__confsel_helptext__c}"/>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

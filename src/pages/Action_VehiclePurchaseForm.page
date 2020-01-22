@@ -1,0 +1,5 @@
+<apex:page applyBodyTag="false" standardStylesheets="false" standardController="dealer__Appraisal__c">
+<br />
+<br />
+    <a class="btn" href="/apex/Form_VehiclePurchaseAgreement?id={!dealer__Appraisal__c.Id}" target="_blank">Print Vehicle Purchase Agreement</a>
+</apex:page>

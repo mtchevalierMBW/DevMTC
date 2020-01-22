@@ -1,0 +1,16 @@
+.THIS div.slds-path__track {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    padding-left: 0rem;
+    padding-right: 0rem;
+}
+.THIS .hidden  {
+	display:none !important;
+}
+.THIS a.slds-path__link {color:white;}
+.THIS a.slds-path__link:hover {color:white;}
+.THIS a.slds-path__link:visited {color:white;}
+.THIS .slds-path__nav .slds-is-complete.yellow {background-color: #f90;}
+.THIS .slds-path__nav .slds-is-complete.yellow:before, .THIS .slds-path__nav .slds-is-complete.yellow:after {
+	background-color: #f90;
+}

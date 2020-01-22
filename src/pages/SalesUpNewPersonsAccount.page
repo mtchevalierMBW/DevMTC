@@ -1,0 +1,99 @@
+<apex:page tabStyle="dealer__Sales_Up__c" title="New Sales Up" standardController="dealer__Sales_Up__c" extensions="SalesUpMBW">
+<!--
+	2019-10-25	B. Leaman	W-000730	BLL1 Kathi noticed double-click creates 2 sol opps during v5 testing
+-->
+	<apex:sectionHeader title="Solution Opportunity" subtitle="New Solution Opportunity" /> 
+    <apex:pageMessages />
+    <apex:form id="supf">
+        <apex:pageBlock id="supTop" mode="maindetail">
+			<!--BLL1-->
+			<apex:actionFunction name="saveRcd" action="{!Save}"/>
+			<!--BLL1 end -->
+            <apex:pageBlockButtons >
+				<!-- apex:commandButton action="{!Save}" value="Save"/ -->
+				<!-- BLL1 -->
+				<apex:commandButton value="Save" id="btnSave" onclick="this.disabled=true;disableBtns('btnSave','Saving...');saveRcd();"/>
+				<!-- BLL1 end -->
+                <!--<apex:commandButton action="{!Cancel}" value="Cancel" /> -->
+            </apex:pageBlockButtons>
+
+            <apex:actionRegion >
+            <apex:pageBlockSection collapsible="false" id="accountInfo">
+                <!-- apex : inputField value="{ ! dealer__Sales_Up__c.dealer__Customer_Account__c}" id="Account" taborderhint="1" -->
+                    <!-- apex:actionSupport event="onchange" action="{ ! updateCustInfo}" reRender="accountInfo"/ -->
+                <!-- / apex : inputField -->
+                <apex:inputField value="{!dealer__Sales_Up__c.BuyerContact__c}" id="Contact" taborderhint="2" required="true" label="Buyer Contact">
+                    <apex:actionSupport event="onchange" action="{!updateCustInfo}" reRender="accountInfo"/>
+                </apex:inputField>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Customer_Account__c}" id="Account"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Mobile__c}" id="Mobile" taborderhint="3"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Email__c}" id="Email" taborderhint="4"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Home_Phone__c}" id="Phone" taborderhint="5"/>
+                <apex:outputText />
+            </apex:pageBlockSection>
+            </apex:actionRegion>
+            <apex:pageBlockSection collapsible="false">
+                <apex:inputField value="{!dealer__Sales_Up__c.Company__c}" required="true" taborderhint="9"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Lead_Date__c}" required="true" taborderhint="6"/>  
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Salesperson_1__c}" taborderhint="11"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Lead_Status__c}" required="true" taborderhint="7"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.Solution_Type__c}" required="true" taborderhint="12"/>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Lead_Type__c}" required="true" id="LeadType" taborderhint="8" />
+                <apex:inputField value="{!dealer__Sales_Up__c.Decision_Date__c}" required="true" taborderhint="13" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Source__c}" required="true"  taborderhint="10"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1">
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Comments__c}" id="Comments" style="width:600px;"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Desired Vehicle" collapsible="false"> 
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Desired_Stock_Num__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__VIN__c}" />
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel for="yearhigh" value="Year High / Low" /> 
+                    <apex:outputPanel >
+                        <apex:inputField value="{!dealer__Sales_Up__c.dealer__Year_High__c}" id="yearhigh"/>
+                        <apex:inputField value="{!dealer__Sales_Up__c.dealer__Year_To__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Color_Preference_Ext__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Make__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Color_Preference_Int__c}" />
+                <apex:inputText value="{!dealer__Sales_Up__c.dealer__Model__c}" />
+                <apex:outputText />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trim__c}" />
+                
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Finance" collapsible="false">
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Desired_Monthly_Payment__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Finance_Method__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Pre_qualified_Loan_Amount__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Trade In" collapsible="false">
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_Year__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_VIN__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_Make__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_Mileage__c}" />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_Model__c}" />
+                <apex:outputText />
+                <apex:inputField value="{!dealer__Sales_Up__c.dealer__Trade_Trim_Level__c}" />
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+	</apex:form>
+	
+	<!--BLL1-->
+	<apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"/>
+	<script type="text/javascript">
+		$jq = jQuery.noConflict();
+		function disableBtns(btn, newText) {
+			var btnselector = 'input[id$='+btn+']';
+			$jq(btnselector).prop('disabled',true).addClass('btnDisabled');
+			if (newText.length>0) $jq(btnselector).val(newText);		
+		}
+	</script>
+	<!--BLL1 end -->
+</apex:page>

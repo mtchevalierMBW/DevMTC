@@ -1,0 +1,28 @@
+.THIS {}
+.THIS.slds-spinner_container {  
+  z-index: 10000;
+  position: fixed;   
+}
+.THIS .mw_required input {
+ 	border-color:gray!important;
+ } 
+.THIS .mw_required:before{    
+ 	content: "*";
+ 	margin: 0 0.125rem 0 0.125rem;
+ 	color: darkred;
+ 	float: left; 
+ } 
+ .THIS .mw_required label {
+ 	color:darkred;
+ 	font-weight:bold;
+ }
+ .THIS .slds-dropdown-trigger {
+ 	display:inline;
+ }
+ .THIS div.recordError {
+ 	color:darkred; 
+ 	background-color: rgba(192,0,0,0.1);
+ 	border: 1px solid darkred;
+ 	padding:.2rem .5rem .2rem .5rem; 
+ 	border-radius: 5px;
+ }

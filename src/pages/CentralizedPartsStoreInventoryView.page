@@ -1,0 +1,82 @@
+<!--
+Modifications:
+2018-11-23	B. Leaman	w-000492	BLL1 - tidy up, add slds styles
+-->
+<apex:page showHeader="true" sidebar="false" standardController="dealer__Stock_Order__c" extensions="CentralizedPartsStoreInventory"
+lightningStylesheets="true">
+<!--BLL1-->
+<style>
+	h3.pbtitle {margin-left:1em;}
+	.pbSubheader {color:black !important;}
+	.pbSubheader > a { color:black !important;}
+	.pbSubheader > a:link { color:black !important;}
+	.pbSubheader > a:visited { color:black !important;}
+</style>
+<!--BLL1 end -->
+	<apex:pageBlock title="Other Inventory">
+		<!--BLL1-->
+		<apex:facet name="header">
+		<!-- h1>Inventory available at other locations for <apex:outputLink value="/{!order.Id}"> Order {!order.Name} </apex:outputLink></h1> <br/ -->
+		<h3 class="pbtitle"> Inventory available at other locations for Order <a href="{!URLFOR($Action.dealer__Stock_Order__c.View, order.Id)}">{!order.Name}</a></h3>
+	</apex:facet>
+		<!--BLL1 end -->
+		<apex:repeat value="{!partOrderWrappers}" var="partOrderWrapper"> 
+			<apex:variable value="{!partOrderWrapper.partOrder}" var="partOrder"/>
+			<!--BLL1-->
+			<apex:pageBlockSection columns="1">
+			<apex:facet name="header">
+			<!-- apex:outputLink value="/{!partOrder.dealer__Parts_Inventory__c}"> Part {!partOrder.dealer__Parts_Inventory__r.Name} </apex:outputLink> for <apex:outputLink value="/{!partOrder.Id}"> Part Order {!partOrder.Name} < / apex:outputLink>: -->	
+			Part &nbsp;<a href="{!URLFOR($Action.dealer__Parts_Inventory__c.View, partOrder.dealer__Parts_Inventory__c)}">{!partOrder.dealer__Parts_Inventory__r.Name}</a>&nbsp; for Parts order &nbsp;<a href="{!URLFOR($Action.dealer__Parts_Order__c.View, partOrder.Id)}">{!partOrder.Name}</a>
+			</apex:facet>
+			<!--BLL1 end-->
+			<apex:pageBlockTable value="{!partOrderWrapper.partMaster.dealer__Parts_Inventories__r}" var="partInventory">
+				
+				<!--BLL1-->
+				<!-- apex:column width="25%" -->
+				<apex:column >
+				<!--BLL1 end-->
+				<apex:facet name="header">Location</apex:facet>
+					<apex:outputField value="{!partInventory.dealer__Location__r.Name}"/>
+				</apex:column>
+				<!--BLL1-->
+				<!-- apex:column width="50%" -->
+				<apex:column >
+				<!--BLL1 end-->
+				<apex:facet name="header">Inventory</apex:facet>
+					<!--BLL1-->
+					<!-- apex:outputLink value="/{!partInventory.Id}" -->
+					<apex:outputLink value="{!URLFOR($Action.dealer__Parts_Inventory__c.View, partInventory.Id)}">
+					<!--BLL1 end -->
+					<apex:outputField value="{!partInventory.Name}"/>
+					</apex:outputLink>
+				</apex:column>
+				<!--BLL1-->
+				<!-- apex:column width="25%" -->
+				<apex:column >
+				<!--BLL1 end-->
+				<apex:facet name="header">On Hand</apex:facet>
+					<apex:outputField value="{!partInventory.dealer__On_Hand__c}"/>
+				</apex:column>
+				<!--BLL1-->
+				<apex:column >
+					<apex:facet name="header">Min</apex:facet>
+					<apex:outputField value="{!partInventory.dealer__Min__c}"/>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Max</apex:facet>
+					<apex:outputField value="{!partInventory.dealer__Max__c}"/>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Re-order point</apex:facet>
+					<apex:outputField value="{!partInventory.dealer__Re_Order_Point__c}"/>
+				</apex:column>
+				<!--BLL1 end-->
+			</apex:pageBlockTable><br/>
+
+		<!--BLL1-->
+		</apex:pageblockSection>
+		<!--BLL1 end-->
+
+		</apex:repeat>
+	</apex:pageBlock>
+</apex:page>

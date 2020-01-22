@@ -1,0 +1,193 @@
+<!-- 
+	2016-01-08	B. Leaman	BLL1 IT#18287 Show FF company on screen; pull recalc button from production, missing in sandbox;
+	2016-04-14	B. Leaman	BLL2 IT#23367 Support for commercial quotes in posting template
+	2016-04-27	B. Leaman	BLL3 IT#23367 Change dimension1 to lookup & allow changing
+	2016-05-18	RedTeal		RT1 - Add control# and allow manual updates to it.
+	2016-06-15	B. Leaman	BLL4 - Prevent posting if any ROs are open on the vehicle.
+	2016-07-01	B. Leaman	BLL5 - Add support for pulling vehicle's actual inventory balance (chassis/conversion) into the template.
+	2017-04-06	B. Leaman	BLL6 - show releasing dealer from propopsal, if specified.
+	2017-05-16	B. Leaman	BLL7 - Show line types and account lookups.
+	2018-07-17	B. Leaman	BLL8 - Show proposed delivery date and proposal status.
+ -->
+<apex:page showHeader="true" sidebar="true" id="postingCreateJournal" title="Posting Template" tabStyle="dealer__Deal__c" 
+	standardController="Posting_Entry__c" extensions="JournalManager">
+	<apex:sectionHeader id="pHead" title="Posting Template" subtitle="Journal Posting Template" description="Create a set of journal entries via this posting template" />
+
+	<style>
+	.aright {
+		text-align: right
+	}
+	</style>
+
+	<apex:form id="pForm">
+	<apex:actionFunction action="{!calcLines}" name="recalc" reRender="balance_top,balance_bottom" />
+	<apex:actionFunction action="{!createJournal}" name="createJournal"/>
+		<apex:pageMessages id="messages" />
+		<apex:pageBlock title="Posting Template" mode="edit" id="pB">
+			<apex:pageBlockButtons id="pBButtons">
+				<apex:commandButton value="Save" action="{!Save}" />
+				<apex:commandButton value="Lookup Template Rules" action="{!lookupTemplateRules}" reRender="detail,messages,pB" onclick="alert('reloading template rules');"/>
+				<apex:commandButton value="Create Journal" id="createJournal" 
+					onclick="disableBtn('createJournal','Processing...');createJournal();"
+					disabled="{!NOT(haveLines)}"/>
+				<apex:commandButton value="ReCalc" action="{!calcLines}" reRender="balance_top,balance_bottom" /><!-- BLL1a -->
+				<apex:commandButton action="{!pullVehicleInventoryFromGL}" rendered="{!entry.Stock__c!=null}" rerender="detail" value="Use GL Inventory" 
+					id="btnPullFromGL" onclick="disableBtn('btnPullFromGL','Using GL Inventory');" 
+					disabled="{!NOT(AND(haveLines,haveInventory,vehInvBal!=0))}"/><!-- BLL5a -->
+
+			</apex:pageBlockButtons>
+
+			<apex:pageBlockSection columns="1" collapsible="false">
+				<apex:inputField value="{!entry.Posting_Template__c}" id="templateId" style="width:500px;" onselect="String"/>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection columns="2" collapsible="false">
+                <!-- BLL1d apex:inputField value=" { ! entry.Location__c}" / -->
+                <apex:outputField value="{!entry.Location__c}" /><!--BLL1a-->
+                <apex:pageBlockSectionItem >
+                	<apex:outputLabel value="Company"/>
+					<apex:outputText value="{!loc.Company__r.Name}"/>
+				</apex:pageBlockSectionItem>
+
+                <apex:inputField value="{!entry.Proposal__c}" rendered="{!OR(entry.Id==null, entry.Proposal__c!=null)}"/><!-- BLL2c add rendered -->
+                <apex:outputField value="{!recordType.Name}" rendered="{!OR(entry.Id==null, entry.Proposal__c!=null)}" label="Proposal record type"/><!-- BLL2a -->
+                <apex:inputField value="{!entry.CommercialQuote__c}" rendered="{!OR(entry.Id==null, entry.CommercialQuote__c!=null)}" /><!-- BLL2a -->
+                <apex:outputField value="{!cq.QuoteType__c}" rendered="{!OR(entry.Id==null, entry.CommercialQuote__c!=null)}"/><!-- BLL2a -->
+                <!-- apex:outputText / --><!-- BLL1d -->
+                <!-- BLL2d apex:outputField value="{!Posting_Entry__c.Proposal__r.dealer__Store_Location__r.Company__c}"/><!-- BLL1a -->
+
+				<!-- BLL8a Add delivery date & status fields -->
+				<apex:outputField value="{!proposal.Proposed_Delivery_Date__c}" rendered="{!entry.Proposal__c!=null}"/>
+				<apex:outputField value="{!proposal.dealer__Status__c}" rendered="{!entry.Proposal__c!=null}"/>
+				<!-- BLL8a end -->
+		
+				<apex:inputField value="{!entry.Stock__c}" />
+
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel >New/Used/Other</apex:outputLabel>
+					<apex:outputText value="{!NewUsedOther}"/>
+				</apex:pageBlockSectionItem>
+
+				<apex:pageBlockSectionItem ><!-- BLL4a -->
+					<apex:outputLabel >Open ROs on vehicle</apex:outputLabel>
+					<apex:outputText value="{!vehOpenRos}"/>
+				</apex:pageBlockSectionItem><!-- BLL4a end -->
+
+                <apex:outputField value="{!proposal.dealer__Deal_Type__c}" rendered="{!OR(entry.Proposal__c!=null)}" label="Sale type"/><!-- BLL6a -->
+                <apex:outputField rendered="{!OR(entry.Proposal__c==null)}"/><!-- BLL6a -->
+
+				<apex:outputField value="{!proposal.ReleasingDealer__c}" rendered="{!entry.Proposal__c!=null}"/><!-- BLL6a -->
+
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+
+		<!-- BLL5a -->
+		<apex:pageBlock title="Vehicle Inventory Costs" id="vehicleInventory" mode="maindetail"
+			rendered="{!entry.Stock__c!=null}">
+			<apex:pageBlockSection collapsible="true" id="vehicleInventorySection" columns="1" title="Inventory Costs">
+				<apex:pageBlockSectionItem >
+				<apex:pageBlockTable value="{!VehicleTransactions}" var="t">
+					<apex:column >
+						<apex:facet name="header">Transaction Line</apex:facet>
+						<apex:outputLink value="/{!t.Id}"><apex:outputText value="{!t.c2g__Transaction__r.Name}-{!t.c2g__LineNumber__c}"/></apex:outputLink>
+					</apex:column>
+   					<apex:column value="{!t.c2g__GeneralLedgerAccount__c}" style="min-width: 12em;">
+     					<apex:facet name="header">GL Account</apex:facet>
+   					</apex:column>
+   					<apex:column value="{!t.c2g__Dimension1__c}" style="min-width: 12em;">
+     					<apex:facet name="header">Dimension 1</apex:facet>
+   					</apex:column>
+   					<apex:column value="{!t.c2g__HomeValue__c}" style="min-width: 13em;">
+     					<apex:facet name="header">Value</apex:facet>
+     					<apex:facet name="footer">
+     						 <apex:outputText value="{0,number,currency}">
+     						 	<apex:param value="{!vehInvBal}"/>
+     						 </apex:outputText>
+     					</apex:facet>
+   					</apex:column>
+				   	<apex:column value="{!t.Control__c}">
+     					<apex:facet name="header">Control Nbr</apex:facet>
+   					</apex:column>
+   					<apex:column value="{!t.Vehicle_Inventory__c}">
+					     <apex:facet name="header">Vehicle Inventory</apex:facet>
+   					</apex:column>
+				</apex:pageBlockTable>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			<script> 
+				//twistSection(document.getElementById('{!$Component.vehicleInvenotry.vehicleInventorySection}').getElementsByTagName('img')[0]); 
+			</script>
+		</apex:pageBlock>
+		<!-- BLL5a end -->
+
+		<apex:pageBlock title="Detail" id="detail">
+
+			<apex:pageBlockSection id="balance_top" collapsible="false" columns="2">
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="G/L Gross Profit" />
+				<apex:outputText value="{!GrossProfit}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Transaction Balance" />
+				<apex:outputText value="{!tBalance}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Proposal/Quote Gross Profit" />
+				<apex:outputText value="{!DealGP}" />
+				</apex:pageBlockSectionItem>
+				<apex:outputText />
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Actual GP over Quoted" />
+				<apex:outputText value="{!GrossProfit-DealGP}" />
+				</apex:pageBlockSectionItem>
+				<apex:outputText />
+			</apex:pageBlockSection>
+
+			<!-- apex:pageBlockSection columns="1" id="dpbs" collapsible="false" -->
+				<apex:variable var="tabOrder" value="{!1}" />
+				<apex:pageBlockTable value="{!lines}" var="l">
+					<apex:column headerValue="Title" >
+						<apex:outputText value="{!l.action}" style="width:120px;"/>
+					</apex:column>
+					<apex:column headerValue="Account">
+						<apex:inputField value="{!l.template.General_Ledger_Account__c}" style="width:320px;" />
+					</apex:column>
+					<apex:column width="70" headerValue="Control#"><!-- RT1a -->
+						<apex:inputText value="{!l.controlNumber}" style="width:100px;" />
+					</apex:column>
+					<apex:column width="80" headerValue="Amount" headerClass="aright">
+						<apex:inputText value="{!l.amount}" onchange="recalc();" styleClass="aright" style="float:right;width:120px;" tabindex="{!tabOrder}" />
+					</apex:column>
+					<apex:column width="100" headerValue="Memo">
+						<apex:inputText value="{!l.memo}" style="width:120px;"/>
+					</apex:column>
+					<apex:column width="80" headerValue="Dimmension 1">
+						<!-- apex:inputText value="{!l.division}"/ -->
+						<apex:inputField value="{!l.jline.c2g__Dimension1__c}" style="width:120px;"/><!-- BLLa -->
+					</apex:column>
+					<apex:column headerValue="Account"><!-- BLL7a -->
+						<apex:inputField value="{!l.jline.c2g__Account__c}" style="width:180px;"/><!-- BLL7a -->
+					</apex:column><!-- BLL7a -->
+					<apex:column headerValue="Line type"><!-- BLL7a -->
+						<apex:inputField value="{!l.jline.c2g__LineType__c}" style="width:180px;"/><!-- BLL7a -->
+					</apex:column><!-- BLL7a -->
+					<apex:variable var="tabOrder" value="{!tabOrder+1}" />
+				</apex:pageBlockTable>
+			<!-- /apex:pageBlockSection -->
+
+			<apex:pageBlockSection title="Balance" id="balance_bottom" collapsible="false">
+				<apex:outputText value="Transaction Balance" />
+				<apex:outputText value="{!tBalance}" />
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script type="text/javascript">
+		$jq = jQuery.noConflict();
+		function disableBtn(btnid, newText) {
+			$jq('input[id$=' + btnid + ']').prop('disabled',true).addClass('btnDisabled');
+			if (newText.length>0) $jq('input[id$=' + btnid + ']').val(newText);		
+		}
+	</script>
+</apex:page>

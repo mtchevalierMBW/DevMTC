@@ -1,0 +1,278 @@
+<!-- 2015-10-06  B. Leaman  BLL1 change to use qzTray -->
+<apex:page docType="html-5.0" controller="PartLabelPrint_CTLR">
+<apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" />
+
+<style>
+#qz-status {
+    display:inline-block;
+    vertical-align:middle;
+    background-color:#FAFAA0;
+    border-radius:8px; 
+    height:16px;
+    width:16px;
+    margin-left:.3em;
+    margin-right:.3em;
+}
+</style>
+
+<script type="text/javascript">
+
+            $dt = jQuery.noConflict();
+
+			//var qzArchiveRoot = ' { ! URLFOR($Resource.qzResources)}';
+			var qzArchiveRoot = '{!URLFOR($Resource.dealer__QZtrayResources)}';
+
+/* Cookie routines */
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0; i<ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1);
+        if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+    }
+    return "";
+}
+
+/* BLL1a begin */
+/**
+ * Automatically gets called when applet has loaded.
+ */
+var localPrinters = [];
+var printerNameText = 'LABELS';
+var printerName     = ''; //'{ ! printerip }';
+
+function setLocalPrinters(printers) {
+   var ptrselect = $dt('#localPrinter');
+   var option = null;
+   try {
+       option = ptrselect[0].options;
+   } catch(e) {}
+   if (option!=null) option.length = 0;
+   var pname = getCookie('LabelPrinter');
+   var setDefault = false;
+   for(i=0; i<printers.length; i++) {
+       var ptr = printers[i].split('\\');
+       if (ptr[ptr.length-1].indexOf(printerNameText)>=0) {
+           localPrinters[localPrinters.length] = {'printer':printers[i], 'name':ptr[ptr.length-1]};
+           var sel = (printers[i]==pname);
+           var o = new Option(ptr[ptr.length-1], printers[i], sel, sel);
+           ptrselect.append($dt(o));
+           setDefault = setDefault | sel;
+       } 
+   }
+   //if (setDefault==false) {  // set first printer as default until changed
+      changePrinter();
+   //}
+}
+
+function changePrinter() {
+   printerName = $dt('#localPrinter').val();
+   if (console) console.log('Set printer to: ' + printerName);
+   //setCookie('LabelPrinter', $dt('#localPrinter').val(), 91);
+   //window['qzDoneFinding'] = null;
+   //qz.findPrinter(printerName);
+}
+
+function findLocalPrinters() {
+   var status = document.getElementById("qz-status");
+   window['qzDoneFinding'] = function() {
+      if (console) console.log('Done finding');
+      var printers = qz.getPrinters();
+      if (console) console.log('Got printers');
+      window['qzDoneFinding'] = null;
+      if (printers) {
+         setLocalPrinters(printers.split(','));
+         if (status) status.style.background = "#09FF09";
+      } else {
+         alert('No printers found');
+      }
+   }
+   if (status) status.style.background = "#FAFAA0";
+   if (console) console.log('Finding printer(s) ' + printerNameText);
+   qz.findPrinter(printerNameText);
+}
+
+function qzReady() {
+    if (console) console.log('qzReady running');
+    // If the qz object hasn't been created, fallback on the <applet> tags
+    if (!qz) {
+        window["qz"] = document.getElementById('qz');
+    }
+    var title = document.getElementById("title");
+    var status = document.getElementById("qz-status");
+    if (qz) {
+        try {
+            var qzVer = qz.getVersion();
+            if (title) title.innerHTML = title.innerHTML + " " + qzVer;
+            if (status) status.style.background = "#A0FAFA";
+            qzInstalled = true;
+            if (console) console.log('Finding printer ' + printerName);
+            findLocalPrinters();
+        } catch(err) { // LiveConnect error, display a detailed message
+            if (console) console.log(err);
+            if (status) status.style.background = "#F5A0A0";
+            alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
+                    "applet has failed, likely caused by Java Security Settings.  \n\n" +
+                    "CAUSE:  \nJava 7 update 25 and higher block LiveConnect calls " +
+                    "once Oracle has marked that version as outdated, which " +
+                    "is likely the cause.  \n\nSOLUTION:  \n  1. Update Java to the latest " +
+                    "Java version \n          (or)\n  2. Lower the security " +
+                    "settings from the Java Control Panel.");
+        }
+    } else {
+            alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
+                    "applet has failed, likely caused by Java Security Settings.  \n\n" +
+                    "CAUSE:  \nJava 7 update 25 and higher block LiveConnect calls " +
+                    "once Oracle has marked that version as outdated, which " +
+                    "is likely the cause.  \n\nSOLUTION:  \n  1. Update Java to the latest " +
+                    "Java version \n          (or)\n  2. Lower the security " +
+                    "settings from the Java Control Panel.");
+    }
+}
+/* BLL1a end */
+             
+        </script>        
+
+    <apex:sectionHeader title="Labels" subtitle="Print Part Labels"/>
+
+    <div style="margin:3px;">Label Printer:
+       <select name="localPrinter" id="localPrinter"
+               onchange="javascript:changePrinter();">
+          <!-- option value="">-- please select --</option -->
+       </select>
+       <div id="qz-status">&nbsp;</div>
+    </div>
+
+    <apex:form >
+
+    <apex:pageBlock title="{!title}">
+    
+        <apex:pageBlockButtons >
+            <apex:commandButton action="{!print}" value="Print" reRender="printLabels"/>
+            <apex:commandButton action="{!back}" value="Back"/>
+        </apex:pageBlockButtons>
+    
+        <!-- apex : pageBlockSection -->
+            <!-- apex : pageBlockSectionItem  -->
+                <!-- apex : outputLabel >Printer Name/IP:< / apex : outputLabel -->
+                <!-- apex : outputPanel  -->
+                    <!-- apex:inputText value="{ ! printerip}" rendered="{ ! canChangePrinter}"/ -->
+                    <!-- apex:outputText value="{ ! printerip}" rendered="{ ! NOT(canChangePrinter)}"/ -->
+                <!-- / apex : outputPanel -->
+            <!-- / apex : pageBlockSectionItem -->
+        <!-- / apex : pageBlockSection -->
+    
+        <apex:pageBlockSection > 
+        
+            <apex:pageBlockTable value="{!LabelInfos}" var="lbl">
+                <apex:column >
+                    <apex:facet name="header">Selected</apex:facet>
+                    <apex:inputCheckbox value="{!lbl.selected}"/>
+                </apex:column> 
+                <apex:column >
+                    <apex:facet name="header">#Labels</apex:facet>
+                    <apex:input type="number" value="{!lbl.copies}" style="width:3em;"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Mfg Part</apex:facet>
+                    <apex:inputText value="{!lbl.mfgPartNumber}" style="width:12em;"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Part Description</apex:facet>
+                    <apex:inputText value="{!lbl.partDescription}" style="width:18em;"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">PO Number</apex:facet>
+                    <apex:inputText value="{!lbl.poNumber}" style="width:8em;"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">RO Number</apex:facet>
+                    <apex:inputText value="{!lbl.roNumber}" style="width:8em;"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Customer name</apex:facet>
+                    <apex:inputText value="{!lbl.customerName}" style="width:22em;"/>
+                </apex:column>
+            </apex:pageBlockTable>        
+        </apex:pageBlockSection>
+    
+    </apex:pageBlock>
+
+    </apex:form>    
+
+
+<apex:outputPanel id="printLabels" >
+
+<apex:pageMessages />
+
+    <apex:repeat value="{!labels}" var="l">
+        <table>
+        <tr><td>
+        <div style="display:block;padding:5px;border-radius:3px;border:1px solid silver;">
+        <div style="font-size:20pt;color:white;background-color:black;display:block;">
+           <apex:outputText value="{!l.mfgPartNumber}"/>
+        </div>
+        <div style="display:block;">
+            <apex:outputText value="{!l.partDescription}"/><br/>
+            <apex:outputText value="{!'RCV: ' + l.rcvDateString}"/><br/>
+            <table style="width:100%; border:none; margin:0px; padding:0px;">
+                <tr>
+                    <td width="50%"><apex:outputText value="{!'PO: ' + l.poNumber}"/></td>
+                    <td width="50%"><apex:outputText value="{!'RO: ' + l.roNumber}"/></td>
+                </tr>
+            </table>
+            <apex:outputText value="{!'CUSTOMER: ' + l.customerName}"/><br/>
+            <div style="width:90%; height:25px; background: silver; padding:5px; font-size:16px;">| || | || | | || | ||| | || |</div>
+        </div>
+        </div>
+        </td></tr>
+        </table>
+    </apex:repeat>
+
+    <apex:repeat value="{!zpls}" var="z">
+    <apex:outputText value="{!z}" style="display:none;"/><br/>
+    <script type="text/javascript">
+          var zpl = "{!z}";
+          if (printerName>'') {
+          qz.findPrinter(printerName);
+          qz.append(zpl);
+          qz.print();             
+          setCookie('LabelPrinter', printerName, 91);
+          } else {
+            alert('Printer not specified. You may need to wait for the printer selection to be ready.');
+          }
+          //try {
+          //   xmlhttp = new XMLHttpRequest();
+          //   xmlhttp.open("POST",'http://{ ! printerip}:9100',true);
+          //   xmlhttp.send(zpl);
+          //} catch(e) {
+          //   alert('Unable to send label to printer');
+          //}
+    </script>
+    </apex:repeat>
+    
+</apex:outputPanel>
+
+
+    <!-- QZ JAVA -->
+    <!-- script type="text/javascript" src=" { ! URLFOR($Resource.qzResources,'js/deployJava.js')}"></script><!-- BLL1a -->
+    <!-- script type="text/javascript" src=" { ! URLFOR($Resource.qzResources,'js/qz-websocket.js')}"></script><!-- BLL1a -->
+    <!-- script type="text/javascript" src=" { ! URLFOR($Resource.qzResources,'js/QZmethods.js')}"></script><!-- BLL1a -->
+
+    <!-- script type="text/javascript" src=" { ! URLFOR($Resource.dealer__QZtrayResources,'js/deployJava.js')}"></script --><!-- BLL1a -->
+    <script type="text/javascript" src="{!URLFOR($Resource.dealer__QZtrayResources,'js/qz-websocket.js')}"></script><!-- BLL1a -->
+    <script type="text/javascript" src="{!URLFOR($Resource.dealer__QZtrayResources,'js/QZmethods.js')}"></script><!-- BLL1a -->
+
+<script type="text/javascript">
+deployQZ();
+</script>
+
+</apex:page>

@@ -1,0 +1,229 @@
+<!-- 
+  MobilityWorks (c) - 2018 
+
+  Programmer: Alexander Miller
+  Description: Page to handle the upload of VMI/Braun inventory data
+
+Modifications
+2019-10-30	B. Leaman	W-000773 BLL1 - Key can be either VIN or STOCK;
+
+-->
+<apex:page controller="InventoryDataUploaderController" docType="html-5.0">
+   
+   <style type="text/css">
+        .imgclass:hover{
+            background-image: url(/img/help/helpOrbs.gif);
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;   
+            background-position: right;
+       
+        }
+        .imgclass{
+            background-image: url(/img/help/helpOrbs.gif);
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;
+        }
+    </style>
+
+   <apex:form id="mainForm">
+
+      <apex:sectionHeader title="MBW Inventory Mass Update Tool"/>
+      
+      <apex:pagemessages id="message" />
+
+      <apex:actionFunction action="{!updateInventory}" name="upload"/>
+
+      <apex:actionFunction action="{!ReadFile}" name="readFile"/>
+
+      <apex:pageBlock >
+            <h1>Instructions:</h1>
+            <br/>
+            <br/>
+            <h2> &#8226; CSV is the only accepted format.</h2>
+			<br/>
+			<!-- BLL1 -->
+			<h2>&#8226; Vehicle selection can be based on STOCK or VIN column.</h2> 
+            <br/>
+			<br/>
+			<!-- BLL1 end -->
+			<h2> &#8226; Accepted column headers are without quotes, order does not matter: </h2>
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Del Date</div> = Inbound Transport Requested </h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Order Date</div> = Acquisition Date </h2>
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Complete Date</div> = Retail Ready </h2>
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Date Shipped</div> = Outbound Transport Requested </h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Compl Dt</div> = Production Completion Date </h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Conv MFG</div> = Conversion MFG</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Conversion Model</div> = Conversion Model</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">MV Ramp Type</div> = MV Ramp Type</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">MV Ramp Operation</div> = MV Ramp Operation</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Floor Cut</div> = Floor Cut</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Conversion</div> = Conversion</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Kneeling</div> = Kneeling</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Featured Van</div> = Featured Van</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Tracking</div> = Tracking</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Odometer</div> = Odometer</h2> 
+            <br/>
+            <h2>&#8226; <div style="width:130px;display:inline-block;">Ramp Location</div> = Ramp Location</h2> 
+            <br/>
+			<h2>&#8226; <div style="width:130px;display:inline-block;">Conv MSRP</div> = Conversion MSRP</h2> 
+			<br/>
+			<h2>&#8226; <div style="width:130px;display:inline-block;">MSRP</div>  = Chassis MSRP</h2> 
+			<br/>
+			<br/>
+            <h2> &#8226; All CSVs uploaded must be 1000 rows or fewer.</h2>
+            <br/>
+            <br/>
+            <h2> &#8226; Date formats must be either MM/DD/YYYY or MM-DD-YYYY to be accepted.</h2>
+            <br/>
+            <br/>
+             <center>
+              Validation Upload --> <apex:inputFile value="{!contentFile}" filename="{!nameFile}" accept="csv" onchange="readFile();"/> 
+              Commit Upload --> <apex:inputFile value="{!contentFile}" filename="{!nameFile}" accept="csv" onchange="upload();"/> 
+             </center>  
+       
+      <br/>
+      <br/>
+        <apex:pageblocktable id="theTable" value="{!listOfAllRecords}" var="key" rendered="{!NOT(ISNULL(listOfAllRecords))}">
+        <!-- <apex:pageblocktable id="theTable" value="{!mapOfFinalUploadData}" var="key" rendered="{!NOT(ISNULL(mapOfFinalUploadData))}"> -->
+            
+            <apex:column headerValue="Status">
+              <apex:outputPanel >                                       
+                  <img src="{!key.iconImage}" Class="imgclass" title="{!key.errorReason}"/>
+                  <!-- <img src="{!mapOfFinalUploadData[key].iconImage}" Class="imgclass" title="{!mapOfFinalUploadData[key].errorReason}"/> -->
+              </apex:outputPanel>
+            </apex:column>
+
+            <apex:column headerValue="Vehicle Record">
+              <!-- <apex:outputlink rendered="{!NOT(ISNULL(mapOfFinalUploadData[key].vehicle))}" target="_blank" value="/{!mapOfFinalUploadData[key].vehicle.Id}">{!mapOfFinalUploadData[key].vehicle.Name}</apex:outputlink> -->
+              <apex:outputlink rendered="{!NOT(ISNULL(key.vehicle))}" target="_blank" value="/{!key.vehicle.Id}">{!key.vehicle.Name}</apex:outputlink>
+            </apex:column>
+
+            <apex:column headerValue="VIN">
+              {!key.VIN}
+              <!-- {!mapOfFinalUploadData[key].VIN} -->
+            </apex:column>
+
+            <apex:column headerValue="Stock #">
+              {!key.vehicle.dealer__Stock_Number__c}
+              <!-- {!mapOfFinalUploadData[key].vehicle.dealer__Stock_Number__c} -->
+            </apex:column>
+
+            <apex:column headerValue="Status">
+              {!key.vehicle.dealer__Status_Code__c}
+              <!-- {!mapOfFinalUploadData[key].vehicle.dealer__Status_Code__c} -->
+            </apex:column>
+
+            <apex:column headerValue="Stage">
+              {!key.vehicle.Stage__c}
+              <!-- {!mapOfFinalUploadData[key].vehicle.Stage__c} -->
+            </apex:column>
+
+            <apex:column headerValue="Inbound Transport Requested">
+              <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                <apex:param value="{!key.inboundTransportRequested}" /> 
+                <!-- apex:param value="{!mapOfFinalUploadData[key].inboundTransportRequested}" /> -->
+              </apex:outputText>
+            </apex:column>
+
+            <apex:column headerValue="Outbound Transport Requested">
+              <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                <apex:param value="{!key.outboundTransportRequested}" /> 
+                <!-- <apex:param value="{!mapOfFinalUploadData[key].outboundTransportRequested}" /> -->
+              </apex:outputText>
+            </apex:column>
+
+            <apex:column headerValue="Acquisition Date">
+              <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                <apex:param value="{!key.acquisitionDate}" /> 
+                <!-- <apex:param value="{!mapOfFinalUploadData[key].acquisitionDate}" /> -->
+              </apex:outputText>
+            </apex:column>
+
+            <apex:column headerValue="Retail Ready Date">
+              <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                <apex:param value="{!key.retailReady}" /> 
+                <!-- <apex:param value="{!mapOfFinalUploadData[key].retailReady}" /> -->
+              </apex:outputText>
+            </apex:column>
+
+            <apex:column headerValue="Production Completion Date">
+              <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                <apex:param value="{!key.productionComplete}" /> 
+                <!-- <apex:param value="{!mapOfFinalUploadData[key].retailReady}" /> -->
+              </apex:outputText>
+            </apex:column>
+
+            <apex:column headerValue="Conv MFG">
+              {!key.convMFG}
+            </apex:column>
+
+            <apex:column headerValue="Conversion Model">
+              {!key.conversionModel}
+            </apex:column>
+
+            <apex:column headerValue="MV Ramp Type">
+              {!key.MVRampType}
+            </apex:column>
+
+            <apex:column headerValue="MV Ramp Operation">
+              {!key.MVRampOperation}
+            </apex:column>
+
+            <apex:column headerValue="Floor Cut">
+              {!key.floorCut}
+            </apex:column>
+
+            <apex:column headerValue="Conversion">
+              {!key.conversion}
+            </apex:column>
+
+            <apex:column headerValue="Kneeling">
+              {!key.kneeling}
+            </apex:column>
+
+            <apex:column headerValue="Featured Van">
+              {!key.featuredVan}
+            </apex:column>
+            
+            <apex:column headerValue="Tracking">
+              {!key.tracking}
+            </apex:column>
+
+            <apex:column headerValue="Odometer">
+              {!key.odometer}
+            </apex:column>
+
+            <apex:column headerValue="Ramp Location">
+              {!key.rampLocation}
+            </apex:column>
+
+            <apex:column headerValue="Conversion MSRP">
+              {!key.convMSRP}
+            </apex:column>
+
+            <apex:column headerValue="Chassis MSRP">
+              {!key.MSRP}
+            </apex:column>
+						
+        </apex:pageblocktable> 
+      </apex:pageBlock>      
+   </apex:form>   
+
+</apex:page>

@@ -1,0 +1,69 @@
+<apex:page showHeader="true" sidebar="false" standardController="dealer__Deal__c" showChat="true" 
+   title="Clone {!dealer__Deal__c.Name}" id="p" docType="html-5.0" extensions="DealClone_MBW">
+<!-- 
+2017-02-21	B. Leaman	Written.
+-->
+<apex:form >
+
+	<apex:actionFunction name="refreshByStockNbr" action="{!refreshByStockNbr}" rerender="cloneVINlist"/>
+	<apex:actionFunction name="refreshByVIN" action="{!refreshByVIN}" rerender="cloneVINlist"/>
+
+	<apex:pageBlock title="Clone {!dealer__Deal__c.RecordType.Name} Proposal {!dealer__Deal__c.Name}">
+	
+		<apex:pageBlockButtons location="top">
+			<apex:commandButton action="{!returnToProposal}" value="Return to Proposal"/>
+			<apex:commandButton action="{!cloneProposal}" value="Clone"/>
+		</apex:pageBlockButtons>
+	
+		<apex:pageBlockSection columns="2">
+			<apex:outputField value="{!dealer__Deal__c.Name}"/>
+			<apex:outputField value="{!dealer__Deal__c.dealer__Status__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.dealer__Buyer__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.Proposed_Delivery_Date__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.TotalUnitPrice__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.Chassis_QTY__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.Commercial_Quote__c}"/>
+			<apex:outputField value="{!dealer__Deal__c.Commercial_Quote__r.Chassis_QTY__c}"/>
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection columns="1">
+			<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Clone type"/>
+				<apex:selectRadio value="{!cloneType}">
+					<apex:actionSupport event="onchange" action="{!changedCloneType}" rerender="addVINbtn,cloneVINlist"/>
+					<apex:selectOption itemValue="Full" itemLabel="Full copy"/>
+					<apex:selectOption itemValue="Unit" itemLabel="Delivering units"/>
+				</apex:selectRadio>
+			</apex:pageBlockSectionItem>
+		</apex:pageBlockSection>
+
+		<apex:commandButton action="{!newVIN}" value="Add VIN" rerender="cloneVINlist"
+			rendered="false" disabled="{!cloneType=='Full'}" id="addVINbtn"/><!-- multi-proposal clone failes in DealerTeam -->
+		<apex:pageBlockSection columns="1">
+			<apex:pageBlockTable value="{!cloneVINs}" var="cloneVIN" id="cloneVINlist">
+				<!-- No delete, as we cannot add lines either at this time -->
+				<!-- apex:column >
+					<apex:facet name="header">Action</apex:facet>
+					<apex:commandLink value="Delete" action="{!deleteCloneVIN}" reRender="cloneVINlist">
+   						<apex:param name="cloneVINidx" value="{!cloneVIN.dealer__vRank__c}" assignTo="{!cloneVINidx}" />
+					</apex:commandLink>
+				</apex:column-->
+				<apex:column >
+					<apex:facet name="header">VIN</apex:facet>
+					<apex:inputField value="{!cloneVIN.dealer__VIN__c}" required="false"
+						onchange="refreshByVIN()"/>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Stock#</apex:facet>
+					<apex:inputField value="{!cloneVIN.dealer__Stock_Number__c}" required="false"
+						onchange="refreshByStockNbr()"/>
+				</apex:column>
+				<apex:column value="{!cloneVIN.Name}"/>
+			</apex:pageBlockTable>
+		</apex:pageBlockSection>
+		
+	</apex:pageBlock>
+</apex:form>
+
+
+</apex:page>

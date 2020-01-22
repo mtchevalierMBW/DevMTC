@@ -1,0 +1,88 @@
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Service_Repair_Order__c" extensions="SROCreate">
+
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+	<apex:sectionHeader title="Service Repair Order Edit" subtitle="New Service Repair Order" />
+	<apex:form id="form">
+	<apex:messages />
+		<apex:pageBlock id="pb" >
+			<apex:pageBlockButtons id="bb">
+				<apex:commandButton action="{!save}" value="Save" id="save"  styleClass="saveBtn" onclick="setTimeout('document.getElementById(\'' + this.id + '\').disabled=true;', 50);"/><!-- status="oneclick_quicksave" -->
+				<apex:commandButton action="{!cancel}" value="Cancel" />
+				<!-- <apex:actionStatus id="oneclick_quicksave" onstart="disable_quicksave()" onstop="enable_quicksave()" /> -->
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection title="Service Repair Order Create" collapsible="false" id="contactBlock">
+
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="Account" />
+				<apex:actionRegion >
+					<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Customer__c}"  required="true" id="custLookup">
+						<apex:actionSupport event="onchange" action="{!accountSelected}" reRender="contactBlock" />
+					</apex:inputField>
+				</apex:actionRegion> 
+				</apex:pageBlockSectionItem>         
+				<!-- B2B Contact Lookup -->
+				<!-- <apex:outputPanel id="contactBlock"> -->
+					<apex:pageBlockSectionItem rendered="{!NOT(showContact)}" />
+					<apex:pageBlockSectionItem rendered="{!showContact}">
+						<apex:outputLabel value="Contact" for="account__name"/>
+						<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Customer_Contact__c}" />
+					</apex:pageBlockSectionItem>
+				<!-- </apex:outputPanel> -->
+				<!-- /B2B contact lookup -->				
+
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Vehicle__c}" />
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Service_Advisor__c}" label="Service Manager"/>
+
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Mileage_In__c}" id="mileage" />
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Company__c}" />				
+
+				<apex:outputText />
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Tag__c}" />
+
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Inventory Vehicle" columns="2" collapsible="false">
+				<apex:inputField value="{!dealer__Service_Repair_Order__c.dealer__Vehicle_Inventory__c}" />
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		
+		<!-- <apex:actionFunction name="showContact" action="{!accountSelected}" rerender="contactBlock" /> -->
+
+	</apex:form>
+
+	<script type="text/javascript">
+		$dt = jQuery.noConflict();
+
+		$dt(document).ready(function(){
+			// Document Ready 
+		});
+
+		function disable_quicksave() {
+			// document.getElementById("{!$Component.form.pb.bb.save}").disabled=true;
+		}
+
+		function enable_quicksave() {
+			// document.getElementById("{!$Component.form.pb.bb.save}").disabled=false;
+		}
+
+		/*
+		$dt('[id$="custLookup"').change(function(e){
+			if( $dt('[id$="mileage"').val() == '' )  {
+				$dt('[id$="custLookup"').next('.closeIcon').trigger('click');
+				alert('Please enter Mileage before Selecting the customer');
+				e.preventDefault();
+			} else {
+				showContact();
+			}
+		});
+		*/
+		/* JVK - B2B action runction requires mileage as a value 
+		$dt('[id$="custLookup"').change(function(e){
+			if($dt('[id$="mileage"').val() == '') { $dt('[id$="mileage"').val(0); }
+			showContact();
+		});
+		*/
+
+	</script>
+</apex:page>

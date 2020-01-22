@@ -1,0 +1,155 @@
+<!-- 
+    ItemsToApprove custom screen showing additional columns by object type
+    To include other columns, create a fieldset called "ApprovalInformation" in each object that may
+    appear in the "Items to Approve" list. It is preferable to standardize the type of information
+    selected and the order of the fields so that you can set standard column headings using the 
+    "MobilityForceSettings__c.ApprovalColumnHeadings__c" custom setting.
+    
+    2018-05-21  B. Leaman   BLL3 - Add ability to see items one is a delegated approver for. 
+    2018-09-07  B. Leaman   BLL4 - Add lightningStylesheets and mark available for salesforce mobile (and lightning) 
+ -->
+ <apex:page controller="ItemsToApprove_CTLR" docType="html-5.0" lightningStylesheets="true"
+ showHeader="{!IF(embed==true,'false','true')}" sidebar="{!IF(embed==true,'false','true')}">
+
+<style type="text/css">
+.empty-column-content {
+display: none;
+}
+a.actionlink:link {color: #015ba7; text-decoration:none;}
+a.actionlink:visited {color: #015ba7; text-decoration:none;}
+a.actionlink:hover {color: #015ba7; text-decoration:underline;}
+a.actionlink:active {color: #015ba7; text-decoration:none;}
+/* only showing at top anyway div.pbBottomButtons {display:none;} */
+.slds-vf-scope th.headerRow {font-size:0.65rem!Important;text-transform:none!important;}
+.slds-vf-scope td {font-size:0.75rem;}
+</style>
+<body class="homeTab">
+<apex:form >
+<apex:actionFunction name="refreshTable" action="{!noAction}" rerender="PendingApprovals"
+oncomplete="enableFilter();"/><!-- BLL3a -->
+<apex:pageBlock title="Items to Approve">
+<apex:pageBlockButtons location="top">
+<apex:commandButton rendered="{!embed}" value="Manage All" 
+ onclick="window.open('/apex/ItemsToApprovePage','_top');"/>
+<apex:commandButton rendered="{!CONTAINS($User.UIThemeDisplayed,'Theme4')}" value="Manage All" 
+ onclick="sforce.one.navigateToURL('/apex/ItemsToApprovePage');"/>
+<apex:inputText id="FilterTextBox" html-placeholder="Search items" style="margin: 0px 1em 0px 1em;"/>
+<apex:outputLabel for="DelegateFor">Include items delegated to me</apex:outputLabel><!-- BLL3a -->
+<apex:inputCheckbox id="DelegateFor" value="{!includeDelegateFor}" style="margin: 0px 1em 0px 1em;"
+ onchange="refreshTable();"/><!-- BLL3a -->
+</apex:pageBlockButtons>
+<apex:pageBlockSection columns="1" id="PendingApprovals"><!-- BLL3c assign id -->
+<apex:pageBlockTable value="{!ApprovalItems}" var="a" styleclass="filterable">
+ <apex:column headerValue="Action" style="color:#999;min-width:150px">
+     <apex:outputPanel layout="none" rendered="{!NOT(CONTAINS($User.UIThemeDisplayed,'Theme4'))}">
+     <apex:outputLink value="/{!a.WOrkId}/e?et=REASSIGN" target="_top">Reassign</apex:outputLink>
+     &nbsp;|&nbsp;
+     <apex:outputLink value="/p/process/ProcessInstanceWorkitemWizardStageManager?id={!a.WorkId}" target="_top">
+         Approve/Reject
+     </apex:outputLink>
+     </apex:outputPanel>
+     <apex:outputPanel layout="none" rendered="{!CONTAINS($User.UIThemeDisplayed,'Theme4')}">
+     <a href="{!URLFOR($Action.ProcessInstanceWorkitem.View, a.WorkId, null, true)}">Approval Item</a>
+     <!--a href="/lightning/r/ProcessInstanceWorkitem/{!a.WorkId}/view">
+         Approval Item</a -->
+     </apex:outputPanel>
+ </apex:column>
+ <apex:column value="{!a.ItemLabel}"> 
+     <apex:facet name="header">Document type</apex:facet>
+ </apex:column>
+ <apex:column >
+     <apex:facet name="header">Document</apex:facet>
+     <!-- a href="#" onclick="navigate('/{!a.ItemId}');">{!a.ItemName}</a -->
+     <apex:outputPanel layout="none" rendered="{!NOT(CONTAINS($User.UIThemeDisplayed,'Theme4'))}">
+         <apex:outputLink value="{!a.DocumentLink}" target="_top">{!a.ItemName}</apex:outputLink>
+     </apex:outputPanel>
+     <apex:outputPanel layout="none" rendered="{!CONTAINS($User.UIThemeDisplayed,'Theme4')}">
+         <a href="{!a.DocumentLink}">{!a.ItemName}</a>
+     </apex:outputPanel>
+ </apex:column>
+ <apex:column > 
+     <apex:facet name="header">Last Approver</apex:facet>
+     <!--a href="#" onclick="navigate('/{!a.LastActorId}');">{!a.LastActorName}</a -->
+     <apex:outputPanel layout="none" rendered="{!NOT(CONTAINS($User.UIThemeDisplayed,'Theme4'))}">
+         <apex:outputLink value="{!URLFOR($Action.User.View, a.LastActorId, null, false)}" target="_top" rendered="{!BEGINS(a.LastActorId,'005')}">
+             {!a.LastActorName}
+         </apex:outputLink>
+         <apex:outputText rendered="NOT(BEGINS(a.LastActorId,'005'))">{!a.LastActorName}</apex:outputText>
+     </apex:outputPanel>
+     <apex:outputPanel layout="none" rendered="{!CONTAINS($User.UIThemeDisplayed,'Theme4')}">
+         <a href="{!URLFOR($Action.User.View, a.LastActorId, null, false)}">{!a.LastActorName}</a>
+     </apex:outputPanel>
+     <apex:outputText rendered="{!NOT(BEGINS(a.LastActorId,'005'))}">{!a.LastActorName}</apex:outputText>
+</apex:column>
+ <apex:column rendered="{!includeDelegateFor}"> 
+     <apex:facet name="header">Current Approver</apex:facet>
+     <!-- a href="#" onclick="navigate('/{!a.ActorId}');">{!a.ActorName}</a -->
+     <apex:outputPanel layout="none" rendered="{!NOT(CONTAINS($User.UIThemeDisplayed,'Theme4'))}">
+         <apex:outputLink value="{!URLFOR($Action.User.View, a.ActorId, null, false)}" target="_top" rendered="{!AND(NOT(ISBLANK(a.ActorId)), BEGINS(a.ActorId,'005'))}">
+             {!a.ActorName}
+         </apex:outputLink>
+         <apex:outputText rendered="{!AND(NOT(ISBLANK(a.ActorId)), NOT(BEGINS(a.ActorId,'005')))}">{!a.ActorName}</apex:outputText>
+     </apex:outputPanel>
+     <apex:outputPanel layout="none" rendered="{!CONTAINS($User.UIThemeDisplayed,'Theme4')}">
+         <a href="{!URLFOR($Action.User.View, a.ActorId, null, false)}">
+             {!a.ActorName}
+         </a>
+     </apex:outputPanel>
+     <apex:outputText rendered="{!AND(NOT(ISBLANK(a.ActorName)), NOT(BEGINS(a.ActorId,'005')))}">{!a.ActorName}</apex:outputText>
+</apex:column>
+ <apex:column >
+     <apex:outputText value="{0,date,MM/dd/yyyy}">
+         <apex:param value="{!a.ItemDateTime}"/> 
+     </apex:outputText>
+     <apex:facet name="header">Date/Time</apex:facet>
+ </apex:column>
+ <apex:repeat value="{!a.ItemCustomFields}" var="f">
+     <apex:column headerValue="" value="{!f}">
+     </apex:column>
+ </apex:repeat>
+ <apex:repeat value="{!columns}" var="c">
+     <apex:column headerValue="{!c}" styleClass="empty-column-content"/>
+ </apex:repeat>
+</apex:pageBlockTable>
+</apex:pageBlockSection>
+</apex:pageBlock>
+</apex:form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script type="text/javascript">
+$jq = jQuery.noConflict();
+$jq(document).ready(function(){
+enableFilter();
+});//document.ready
+
+//function navigate(url) {
+//  var themedetect = '{!$User.UIThemeDisplayed}';
+//  if (themedetect.startsWith("Theme4d"))
+//      sforce.one.navigateToURL(url);
+//  else
+//      window.open(url, "_top");
+//}
+
+function enableFilter() {
+// hide bottom button version of text search box
+// only showing top buttons; already hiding all bottom buttons; $jq("input[id$=bottom\\:FilterTextBox]").hide();
+// add index column with all content.
+$jq(".filterable tr:has(td)").each(function(){
+console.log($jq(this));
+var t = $jq(this).text().toLowerCase(); //all row text
+$jq("<td class='indexColumn'></td>").hide().text(t).appendTo(this);
+});//each tr
+
+$jq("input[id$=FilterTextBox]").keyup(function(){
+var s = $jq(this).val().toLowerCase().split(" ");
+//show all rows
+$jq(".filterable tr:hidden").show();
+$jq.each(s, function(){
+$jq(".filterable tr:visible .indexColumn:not(:contains('"
+ + this + "'))").parent().hide();
+});//each
+});//key up.
+}
+</script>
+</body>
+</apex:page>

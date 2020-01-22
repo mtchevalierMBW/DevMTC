@@ -1,0 +1,102 @@
+<aura:component
+ implements="flexipage:availableForAllPageTypes,force:appHostable"
+		controller="AvalaraSalesTaxValidator">
+	<aura:handler name="init" value=" {!this}" action=" {!c.doInit}"/>
+	<!-- aura:attribute name="settings" type="Object" /-->
+
+	<aura:attribute name="locabbrevs" type="String" 
+		default="AKR,ALB,ALE,AST,BEA,BTV,BET,BUR,BIR,BNL,CHI,CLT,COL,CNM,DEK,DET,HRT,ESJ,GAL,GRB,GRA,MER,NAT,LAS,LON,MIL"/>
+	<aura:attribute name="result" type="Object[]"/>
+	<aura:attribute name="taxcode" type="String" default="PH050302"/>
+	<aura:attribute name="taxdate" type="Date"/>
+	<aura:attribute name="amount" type="Decimal" default="10000"/>
+	<aura:attribute name="testcompany" type="boolean" default="true"/>
+
+<!-- spinner start... style=Brand Medium (blue dots) -->
+<aura:attribute name="spinner" type="boolean" default="false"/>
+<aura:if isTrue="{!v.spinner}">
+   <div aura:id="spinnerId" class="slds-spinner_container">
+	   <div class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative" role="alert">
+		   <span class="slds-assistive-text">Loading</span>
+		   <div class="slds-spinner__dot-a"></div>
+		   <div class="slds-spinner__dot-b"></div>
+	   </div>
+   </div>
+</aura:if>
+<!-- spinner end -->    
+
+<lightning:card title="Sales Tax Calculator" iconName="custom:custom83" class="slds-p-around_small">
+	<!-- Start buttons off as disabled, enable in c.doInit -->
+	<aura:set attribute="actions">
+		<lightning:button aura:id="stdbutton" variant="brand" type="button" name="calculate" 
+			label="Calculate!" onclick="{!c.CalculateTaxes}" />
+	</aura:set>
+
+	<div class="slds-grid slds-wrap slds-gutters">
+		<div class="slds-col slds-size_12-of-12">
+			<lightning:input value="{!v.locabbrevs}" label="Location abbreviations"/>
+		</div>
+		<div class="slds-col slds-size_3-of-12">
+			<lightning:input value="{!v.amount}" label="Simulated Sales Price"/>
+		</div>
+		<div class="slds-col slds-size_3-of-12">
+			<lightning:input value="{!v.taxcode}" label="Avalara tax code"/>
+		</div>
+		<div class="slds-col slds-size_3-of-12">
+			<lightning:input type="Date" value="{!v.taxdate}" label="Effective date"/>
+		</div>
+		<div class="slds-col slds-size_3-of-12">
+			<label class="slds-form-element__label">Avalara Test Company</label>
+			<lightning:input type="toggle" checked="{!v.testcompany}" 
+				messageToggleActive="Test company" messageToggleInactive="WMK/Production"/>
+		</div>
+	</div>
+	
+
+</lightning:card>
+
+<aura:if isTrue="{!not(empty(v.result))}">
+	<lightning:card title="Results" class="slds-p-around_small">
+		
+			<div id="tablename">
+			<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+			<thead>
+				<tr class="slds-line-height_reset">
+					<th scope="col">Location</th>
+					<th scope="col">State</th>
+					<th scope="col">Sale Amount</th>
+					<th scope="col">Taxable Amount</th>
+					<th scope="col">Sales Tax</th>
+					<th scope="col">Rate%</th>
+				</tr>
+			</thead>
+			<tbody>
+			<aura:iteration items="{!v.result}" var="item">  
+				<tr class="slds-hint-parent">
+					<th data-label="colHeading" scope="row">
+						<ui:outputText value="{#item.location.Name}"/>
+					</th>
+					<td>
+						{#item.location.dealer__State__c} 
+					</td>
+					<td>
+						{#item.Amount} 
+					</td>
+					<td>
+						{#item.TaxableAmount}
+					</td>
+					<td>
+						{#item.TaxAmount}
+					</td>
+					<td>
+						{#item.EffectiveRate}
+					</td>
+				</tr>
+			</aura:iteration>
+			</tbody>
+			</table>
+			</div>
+	</lightning:card>
+</aura:if>
+
+</aura:component>

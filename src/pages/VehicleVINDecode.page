@@ -1,0 +1,30 @@
+<apex:page showHeader="true" sidebar="true" standardController="dealer__Vehicle_Inventory__c">
+	<apex:sectionHeader title="VIN Decode" subtitle="Select VIN Style" />
+	<apex:form >
+		<apex:pageBlock title="VIN Decoder" >
+			<apex:PageBlockSection >
+				<apex:outputField value="{!dealer__Vehicle_Inventory__c.dealer__VIN__c}" />
+				<apex:outputField value="{!dealer__Vehicle_Inventory__c.Name}"/>
+			</apex:PageBlockSection>
+		</apex:pageBlock>
+		<apex:pageBlock title="Model Trim Levels" id="modelblock" >
+		<apex:pageBlockSection >
+			<!--
+			<apex:repeat var="m" value="{!ModelKeyList}">
+				<apex:pageBlockSectionItem >
+				<apex:commandLink action="{!editPage}" value="Select" styleClass="btn">
+					<apex:param name="ModelKeyNumber" value="{!m.vehicle_id}" assignTo="{!SelectedStyleId}" />
+				</apex:commandLink>
+				<apex:outputText value="{0} : {1}" >
+					<apex:param value="{!m.basic_data.trim}" />
+					<apex:param value="{!m.Name}" />
+					<apex:param value="{!m.vehicle_id}" />
+				</apex:outputText>
+				</apex:pageBlockSectionItem>
+			</apex:repeat>
+			-->
+		</apex:pageBlockSection>
+		</apex:pageBlock>
+		<apex:pageBlock id="hiddenBlock" rendered="false"></apex:pageBlock>
+	</apex:form>
+</apex:page>

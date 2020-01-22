@@ -1,0 +1,39 @@
+<!-- 
+    2017-02-27	B. Leaman	Copied from CQEmail
+    2019-05-14  A. Miller   Update to handle ContentVersions
+ -->
+<apex:page id="ProposalEmailer" standardController="dealer__Deal__c" extensions="Deal_MBW2" title="Email Proposal">
+    <apex:sectionHeader title="{!RecordTypeName} Proposal {!dealer__Deal__c.Name}" subtitle="Email Proposal" />
+    <apex:form >
+        <apex:pageBlock title="Email Header" id="emailHeader">
+        	<apex:pageMessages />
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!emailPDFDirect}" value="Send Email" />
+                <apex:commandButton action="{!returnToDeal}" value="Cancel" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1">
+             	<apex:inputText value="{!toAddress}" label="To" style="width:400px;" />
+                <apex:inputText value="{!subject}" label="Subject" style="width:400px;"  />
+                <apex:inputTextarea value="{!body}" label="Body" richtext="true" rows="10" cols="5" />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+		<apex:pageBlock title="Attachment: Proposal_{!dealer__Deal__c.Name}.pdf">
+			<apex:outputLink value="/apex/{!emailPageName}?id={!dealer__Deal__c.Id}" target="_blank">Proposal_{!dealer__Deal__c.Name}.pdf</apex:outputLink>
+    	</apex:pageBlock>
+
+          <apex:pageBlock >
+              <apex:pageBlockSection title="Add Attachments" collapsible="false">
+                <apex:inputFile value="{!aBody}" fileName="{!aFileName}" contentType="{!aContentType}" />
+                <apex:commandButton value="Add Attachment" action="{!addAttachment}" />
+              </apex:pageBlockSection>
+              <apex:pageBlockSection title="Included Attachments" columns="1">
+                <apex:pageBlockTable value="{!referenceAttachments}" var="ia">
+                    <!-- <apex:column value="{!ia.Name}" /> -->
+                    <apex:column value="{!ia.Title}" />
+                </apex:pageBlockTable>  
+              </apex:pageBlockSection>
+          </apex:pageBlock>
+
+    </apex:form>
+</apex:page>

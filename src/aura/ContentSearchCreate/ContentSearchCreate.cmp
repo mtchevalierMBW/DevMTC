@@ -1,0 +1,81 @@
+<!--
+    WMK, LLC (c) - 2018
+
+    Created By:    Alexander Miller
+    Created Date:  11/26/2018
+    Work Item:     W-000421
+    File Name:     ContentCreate.cmp
+
+    Modified By         Alias       Work Item       Date     Reason
+    __________________________________________________________________________________________________
+-->
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" controller="ContentLearningCreateContentController">
+    
+    <aura:attribute name="searchText" type="String" default=""/>
+
+    <aura:registerEvent name="contentSelected" type="c:ContentEvent"/>
+
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+
+    <aura:attribute name="contentTitle" type="String" />
+
+    <aura:attribute name="contentDescription" type="String" />
+
+    <aura:method name="closeModal" action="{!c.closeModel}" description="Function to properly close modal once all the apex actions are done" />
+    
+    <lightning:layout horizontalAlign="left">
+        <lightning:layoutItem size="10">
+            <center>
+                <lightning:input onkeyup="{!c.searchAction}" variant="label-hidden" value="{!v.searchText}" placeholder="Search" />
+            </center>
+        </lightning:layoutItem>
+        <lightning:layoutItem size="2">
+            <center>
+                <lightning:icon iconName="action:new" size="small" onclick="{!c.newRecordAction}" />
+            </center>
+        </lightning:layoutItem>
+    </lightning:layout>
+
+    <aura:if isTrue="{!v.isOpen}">
+        <!--###### MODAL BOX Start######--> 
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- ###### MODAL BOX HEADER Start ######-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                        onclick="{! c.closeModel }"
+                                        alternativeText="close"
+                                        variant="bare-inverse"
+                                        class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">New Content</h2>
+                </header>
+                <!--###### MODAL BOX BODY Part Start######-->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    
+                    <span onkeyup="{!c.setAttritbuteAction}">
+                        <lightning:input aura:id="titleInput" name="titleInput" label="Title" />
+                    </span>
+                    
+                    <span onkeyup="{!c.setAttritbuteAction}">
+                        <lightning:input aura:id="descriptionInput" name="descriptionInput" label="Description" />
+                    </span>
+                
+                </div>
+                <!--###### MODAL BOX FOOTER Part Start ######-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" 
+                                    label="Cancel"
+                                    title="Cancel"
+                                    onclick="{! c.closeModel }"/>
+                    <lightning:button variant="brand" 
+                                    label="Create Content"
+                                    title="Create Content"
+                                    onclick="{! c.closeModelAndCreateRecords }"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        <!--###### MODAL BOX Part END Here ######-->
+    </aura:if>
+
+</aura:component>

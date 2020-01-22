@@ -1,0 +1,29 @@
+<apex:page showHeader="true" sidebar="true" showChat="true" controller="SelectDealership">
+	<apex:sectionHeader id="cd" title="Select Dealership" subtitle="Choose your active Dealership Location" description="Choose the active dealerhip location from those you are currently authorized to work in. All records new records you create will display this location." />
+	<apex:pageMessages id="pgMessages" />
+	<apex:form id="selectLocation">
+		<apex:pageBlock mode="mainedit" id="me">
+			<apex:pageBlockTable id="locationTable" value="{!myDealerships}" var="dl">
+				<apex:column style="height:25px;">
+					<apex:facet name="header">Action</apex:facet>
+					<apex:commandLink action="{!chooseDealership}" value="Select" rendered="{!IF(dl.dealer__Company_Number__c!=$User.Division, true, false)}"  styleClass="btn" style="text-decoration:none;padding:4px;">
+						<apex:param name="selectDealership" assignTo="{!selectedDealershipId}" value="{!dl.Id}" />
+					</apex:commandLink>
+					<apex:commandButton value="Currently Selected" rendered="{!IF(dl.dealer__Company_Number__c==$User.Division, true, false)}" disabled="true"  />
+				</apex:column>
+				<apex:column value="{!dl.dealer__Company_Number__c}" />
+				<apex:column >
+					<apex:facet name="header">Location Name</apex:facet>
+					<apex:outputLink value="/{!dl.Id}"><apex:outputText value="{!dl.Name}" /></apex:outputLink>
+				</apex:column>
+				<apex:column value="{!dl.dealer__Street__c}" />
+				<apex:column value="{!dl.dealer__City__c}" />
+				<apex:column value="{!dl.dealer__State__c}" />
+				<apex:column value="{!dl.dealer__Postal_Code__c}" />
+				<apex:column value="{!dl.dealer__Main_Phone__c}" />
+
+			</apex:pageBlockTable>
+
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

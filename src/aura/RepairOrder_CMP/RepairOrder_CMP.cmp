@@ -1,0 +1,12 @@
+<!-- not currently needed - page works fine within lightning's VF page support -->
+<aura:component 
+	implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId">
+<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+<aura:attribute type="String" name="params" default=""/>
+<!-- ltng:require scripts=" { ! $Resource.jQuery+'/jquery.min.js'}" afterScriptsLoaded=" { ! c.initJS}"/ -->
+<div style="resize:vertical;overflow:hidden; min-height:600px;width:100%;padding-right:1em;">
+<iframe src="{!'/apex/ServiceRepairOrder2?id=' + v.recordId + v.params}" aura:id="id_iframe"
+	frameborder="1" style="overflow-x:hidden;height:100%;width:100%;min-height:4000px;border:1px solid white;">
+</iframe>
+</div>
+</aura:component>

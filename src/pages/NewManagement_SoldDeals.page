@@ -1,0 +1,1175 @@
+<apex:page showHeader="true" sidebar="true" title="Management Sold Deals" 
+	controller="ManagementDashboard" docType="html-5.0" >
+	<!--
+		Change Log:
+			12-8-1015	DR1		Display negative numbers in aggregate tempaltes
+			2015-12-29	B.Leaman	BLL1 get year selection values dynamically, this year + 1 through last 5 years;
+									Also changed Proposed_Delivery_Month__c to include year.
+			2016-05-20  D. Ray      DR2 - Adding Commercial Quote info
+			2017-03-21	B. Leaman	BLL2 - Fix for null store locations.
+			2017-05-15	B. Leaman	BLL3 - Correct for null GP values.
+			2017-05-18	B. Leaman	BLL4 IR-0012412 - Default to Vehicle only GP.
+			2017-08-24	B. Leaman	BLL5 Heap size too large issue.
+			2017-09-29	B. Leaman	BLL7 more heap size issues and anomolies when there is little data
+	DashboardTRS actions: read_cdeals_split
+			2017-12-21	B. Leaman	BLL8 - additional selection criteria; budgets are now separate entries in the cDealList;
+			2018-12-05	B. Leaman	W-000510 BLL9 - doc height needs to allow drop-down selections to show
+			2019-04-03	B. Leaman	W-000637 BLL10 replace KendoUI with dealer__Kendo2016a (unmarked)
+			2019-01-08	B. Leaman	W-000714 BLL13 - Add "Home Access" to proposal type picklist
+	-->
+
+    <!--  jQuery CDN -->
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+
+    <!-- INclude Namespaced Bootstrap 3.0 -->
+    <apex:includeScript value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/js/bootstrap.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/bootstrap.min.css')}"/>
+
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__BootstrapNS,'/bootstrap/css/dealerteam_bs.css')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.dealer__Kendo2016a,'/js/jszip.min.js')}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__Kendo2016a,'/js/kendo.all.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.core.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016a,'/styles/kendo.common-bootstrap.min.css')}"/>  
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.dealer__Kendo2016aFULL2015,'/styles/kendo.common.min.css')}"/> -->
+
+    <apex:includeScript value="{!URLFOR($Resource.dealer__MomentJS)}" />
+
+	<!-- BLL8a multiselect -->
+	<apex:stylesheet value="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/css/bootstrap-multiselect.css"/>
+	<apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/js/bootstrap-multiselect.js"/>
+	<apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/js/bootstrap-multiselect.min.js"/>
+	<!-- BLL8a end -->
+
+    <!-- FONT-AWESOME -->
+    <apex:stylesheet value="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+	<!-- BLL9 -->
+<style>
+	div#force {min-height:700px;}
+</style>
+	<!-- BLL9 -->
+
+	<div id="force">	
+
+<apex:form >
+
+	    <!-- Mangement Sold Deals -->
+	    <!-- <apex:outputPanel layout="none" rendered="{! NOT(showDashboard) }"> -->
+		    <h3>Management Sales Flash</h3>
+		    <!-- div id="reportParameters" class="row" style="margin-bottom: 10px;" -->
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-2" -->
+					<!-- BLL8d Report Month: <input type="text" id="reportMonth" value="11" /-->
+					<!-- BLL8a -->
+					<apex:outputLabel >Month&nbsp;&nbsp;</apex:outputLabel>
+					<apex:selectList value="{!reportMonth}" id="reportMonth" styleClass="bs-multiselect-one" size="1">
+						<apex:selectOption itemValue="1" itemLabel="01-Jan"/>
+						<apex:selectOption itemValue="2" itemLabel="02-Feb"/>
+						<apex:selectOption itemValue="3" itemLabel="03-Mar"/>
+						<apex:selectOption itemValue="4" itemLabel="04-Apr"/>
+						<apex:selectOption itemValue="5" itemLabel="05-May"/>
+						<apex:selectOption itemValue="6" itemLabel="06-Jun"/>
+						<apex:selectOption itemValue="7" itemLabel="07-Jul"/>
+						<apex:selectOption itemValue="8" itemLabel="08-Aug"/>
+						<apex:selectOption itemValue="9" itemLabel="09-Sep"/>
+						<apex:selectOption itemValue="10" itemLabel="10-Oct"/>
+						<apex:selectOption itemValue="11" itemLabel="11-Nov"/>
+						<apex:selectOption itemValue="12" itemLabel="12-Dec"/>
+					</apex:selectList>
+		    	</div>
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-2" -->
+					<!-- BLL8d Report Year: <input type="text" id="reportYear" value="2015" / -->
+					<!-- BLL8a -->
+					<apex:outputLabel >Year&nbsp;&nbsp;</apex:outputLabel>
+					<apex:selectList label="Year" id="reportYear" value="{!reportYear}" styleClass="bs-multiselect-one" size="1">
+					<apex:selectOptions value="{!recentYears}"/>
+					</apex:selectList>
+		    	</div>
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-2" -->
+		    		<!-- BLL8d Report Style: <input type="text" id="reportStyle" value="VEH Only GP" / --> <!-- BLL1c value="All GP" / -->
+					<!-- BLL8a -->
+					<apex:outputLabel >Proposal Type&nbsp;&nbsp;</apex:outputLabel>
+					<apex:selectList id="reportType" multiselect="true" value="{!selReportTypes}" size="1" styleClass="bs-multiselect">
+						<apex:SelectOption itemValue="conversion" itemLabel="Chassis/Conversion"/>
+						<apex:SelectOption itemValue="equipment" itemLabel="Equipment Only"/>
+						<apex:SelectOption itemValue="dme" itemLabel="DME/Other"/>
+						<apex:SelectOption itemValue="financial" itemLabel="Financial Products"/>
+						<apex:SelectOption itemValue="homeaccess" itemLabel="Home Access"/><!--BLL13-->
+						<apex:SelectOption itemValue="wholesale" itemLabel="Wholesale"/>
+					</apex:selectList>
+		    	</div>
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-2" -->
+		    		<!-- BLL8d Report Style: <input type="text" id="reportStyle" value="VEH Only GP" / --> <!-- BLL1c value="All GP" / -->
+					<!-- BLL8a -->
+					<apex:outputLabel >GP Type&nbsp;&nbsp;</apex:outputLabel>
+					<apex:selectList id="reportStyle" multiselect="true" value="{!selReportStyles}" size="1" styleClass="bs-multiselect">
+						<apex:SelectOption itemValue="veh" itemLabel="Veh & Equip"/>
+						<apex:SelectOption itemValue="esc" itemLabel="ESC"/>
+					</apex:selectList>
+		    	</div>
+		    	<!-- DR2a -->
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-4" -->
+					<!-- BLL8d <input type="radio" name="reportKind" id="doubleKind" value="doublekind" class="k-radio"/-->
+					<!-- BLL8d <label class="k-radio-label" for="doubleKind">Retail &amp; Commercial</label-->
+					<!-- BLL8d &nbsp;&nbsp;-->
+					<!-- BLL8d <input type="radio" name="reportKind" id="retailKind" value="retailkind" class="k-radio"  checked="checked" /-->
+					<!-- BLL8d <label class="k-radio-label" for="retailKind">Retail</label-->
+					<!-- BLL8d &nbsp;&nbsp;-->
+					<!-- BLL8d <input type="radio" name="reportKind" id="commercialKind" value="commercialkind" class="k-radio" /-->
+					<!-- BLL8d <label class="k-radio-label" for="commercialKind">Commercial</label-->
+					<!-- BLL8a -->
+					<apex:outputLabel >Division&nbsp;&nbsp;</apex:outputLabel>
+					<apex:selectList id="reportKind" multiselect="true" value="{!selReportKinds}" size="1" styleClass="bs-multiselect">
+						<apex:selectOption itemValue="retail" itemLabel="Retail"/>
+						<apex:selectOption itemValue="commercial" itemLabel="Commercial"/>
+					</apex:selectList>
+		    	</div>
+		    	<!-- END DR2a -->
+
+                <div style="display:inline-block; margin: 0 2em 6pt 0em;"> <!-- class="col-md-4" -->
+                	<apex:commandButton styleClass="btn-small" value="Refresh"
+                		onclick="refreshResults();"/>
+				</div>
+		    <!-- /div -->
+
+</apex:form>
+
+	    	<div class="row" id="tableDiv">
+		    	<div class="col-md-12">
+					<div id="dealsListFull" class="table"></div>
+		    	</div>
+		    </div>
+        <div id="test-div">   
+            
+        </div>
+        <button onclick='saveExcel();'>Export to Excel</button>
+        <a id="exportExcel1"></a>
+        <a id="exportExcel2"></a>
+        <progress id="progress" style = "margin-left:25%; width:50%;">
+        </progress>
+		<!-- </apex:outputPanel> -->
+
+    </div>
+
+    <!-- cDeal Templates -->
+	    <script type="text/x-kendo-template" id="cDealToolbarTemplate">
+	    	<span>Units Sold: #= cDealModel.deals.aggregates().Name.count # <br /> Total GP: #: kendo.toString( cDealModel.deals.aggregates().grandTotalGross.sum, "c")#</span>
+	    </script>
+	    <script type="text/x-kendo-template" id="cDealNameTemplate">
+	    	<a href="/#:Id#" target="_blank">#: Name ##: (typeof buyerName != 'undefined') ? kendo.toString(' - ' + buyerName) : '' #</a>
+	    </script>
+	    <!-- #: buyerName ##= (!buyerName==null)? ' - '+ buyerName : ''; # -->
+	    <script type="text/x-kendo-template" id="cDealCustTemplate">
+			# if(typeof buyerId == 'undefined') { #
+				#= kendo.toString('No Cust') #
+			# } else { #
+		    	<a href="/#:buyerId#" target="_blank">#: buyerName #</a>
+			# } #
+	    </script>
+	    <script type="text/x-kendo-template" id="hierarchyName">
+			# if( field == 'region' ) { #
+				#= field.toUpperCase() +" "+value  #
+			# } else { #
+		    	#: value #</a>
+			# } #
+	    </script>
+
+        <script type="text/x-kendo-template" id="detailTableTemplate">
+            <div class="detailTable"></div>
+        </script>
+
+
+	<script type="text/javascript">
+		$dt = jQuery.noConflict();
+		function saveExcel(){
+            var a         = document.getElementById('exportExcel1');
+            var b         = document.getElementById('exportExcel2');
+            a.click();
+            b.click();
+
+        }
+		// Default Year is Current Year
+		//var yearStr = moment().year();
+    	//var holdDate = new Date();
+    	//var monthStr = holdDate.getMonth() + 1; //Mtek
+		//BLL4d var styleStr = 'All GP';
+		//var styleStr = 'VEH Only GP';	// BLL4a
+		//var kindStr = 'retailkind'; // DR2b
+
+		//function yearChange(e) {
+        //    $dt("#tableDiv").hide();
+        //    $dt("#test-div").hide();
+        //    $dt("#reportParameters").hide();
+        //    $dt("#progress").show();
+		//	console.log( this.value() );
+		//	yearStr = this.value();
+		//
+		//	cDealModel.deals.read().then(function() {
+		//		renderCDealTable();
+		//	});
+		//}
+    //Mtek
+        //function monthChange(e) {
+        //    $dt("#tableDiv").hide();
+        //    $dt("#test-div").hide();
+        //    $dt("#reportParameters").hide();
+        //    $dt("#progress").show();
+        //        console.log( 'month changed: ' + this.value() );
+        //        monthStr = this.value();
+    	//		$dt("#reportMonth").val(this.value());
+        //        cDealModel.deals.read().then(function() {
+        //            renderCDealTable();
+        //        });
+        //    }
+    //Mtek - end
+		//function styleChange(e) {
+        //    $dt("#tableDiv").hide();
+        //    $dt("#test-div").hide();
+        //    $dt("#reportParameters").hide();
+        //    $dt("#progress").show();
+		//	console.log( this.value() );
+		//	styleStr = this.value();
+		//
+		//	cDealModel.deals.read().then(function() {
+		//		renderCDealTable();
+		//	});
+		//}
+
+		// BLL1a
+		//function getRecentYears() {
+		//	var yyyy = (new Date()).getFullYear();
+		//	var yearary = [];
+		//	for(y=yyyy+1; y>yyyy-5; --y) {
+		//	    yearary[yearary.length] = y+'';
+		//	}
+		//	return yearary;
+		//}
+		// BLL1a end
+
+		$dt(document).ready(function(){
+			// BLL8a
+			$dt(".bs-multiselect-one").multiselect({
+				onChange: function(event) {refreshResults();}
+			});
+			$dt(".bs-multiselect").multiselect({
+				/* includeSelectAllOption: true, causes onchange to not work when select all option is clicked */
+				onChange: function(event) {refreshResults();}
+			});
+			// BLL8a end
+			
+            //Mtek
+            //$dt("#reportMonth").kendoDropDownList({
+            //    dataSource: ['1','2','3','4','5','6','7','8','9','10','11','12'],
+            //    value: monthStr, 
+            //    change: monthChange
+            //});
+            //Mtek - end
+            //var years = getRecentYears(); // BLL1a
+			//$dt("#reportYear").kendoDropDownList({
+            //    dataSource: years,  // BLL1a
+            //    value: (new Date()).getFullYear()+'',  // BLL1a
+            //    change: yearChange
+            //});
+
+			//$dt("#reportStyle").kendoDropDownList({
+            //    // dataSource: ['2015'],
+            //    dataSource: ['All GP','F&I GP','VEH Only GP'],
+            //    //BLL4d value: 'All GP',
+            //    value: 'VEH Only GP', // BLL4a
+            //    index: 2,	//BLL4a
+            //    change: styleChange
+            //});
+
+			// DR2c
+			//$dt('input[type=radio][name=reportKind]').change(function() {
+            //    $dt("#tableDiv").hide();
+            //    $dt("#test-div").hide();
+            //    $dt("#reportParameters").hide();
+            // 	$dt("#progress").show();
+			//	kindStr = this.value;
+            //    //alert(kindStr);
+			//	cDealModel.deals.read().then(function() {
+			//		renderCDealTable();
+			//	});
+		    //});
+			// /DR2c
+		});
+
+		function refreshResults() {
+            $dt("#tableDiv").hide();
+            $dt("#test-div").hide();
+            //$dt("#reportParameters").hide();
+            $dt("#progress").show();
+			cDealModel.deals.read().then(function() {
+				renderCDealTable();
+			});
+		}
+
+		/************************
+			Management Sold Deals
+		 */
+		var cDealMoCols = [];
+		var cDealMoYYCols = [];
+
+		var emptyArray = [];
+		var cDealAggregatesHold = [ 
+			{field: "totalPrice", aggregate: "sum"},
+			{field: "deliveredGP", aggregate: "sum"},
+			{field: "forcastedGP", aggregate: "sum"},
+			{field: "Name", aggregate: "count"} ,
+			{field: "division", aggregate: "count"} ,
+			{field: "region", aggregate: "count"} ,
+			{field: "locName", aggregate: "count"} ,
+			{field: "salesPersonName", aggregate: "count"} ,
+			{field: "grandTotalGross", aggregate: "sum"},
+            {field: "budgetPercentage", aggregate: "sum"}
+		];
+		var cDealAggregates = emptyArray.concat(cDealAggregatesHold);
+
+		var cDealTable = null;
+
+		cDealModel = kendo.observable({
+	        deals: new kendo.data.DataSource({
+
+	            transport: {
+	                read: {
+                        cache:false,
+	                    url: "/apex/DashboardTRS",
+						data: {
+	                    	action: 'read_cdeals_split'	// BLL5c split retail & commercial to reduce heap size limitation issue
+	                    }
+	                },
+		            parameterMap: function(data, operation) {
+		            	var yearStr = $dt('[id$="reportYear"]').val();	// BLL8a
+		            	var monthStr = $dt('[id$="reportMonth"]').val();	// BLL8a
+		            	var styleStr = $dt('[id$="reportStyle"]').val().join(',');	// BLL8a
+		            	var kindStr = $dt('[id$="reportKind"]').val().join(',');	// BLL8a
+		            	var typeStr = $dt('[id$="reportType"]').val().join(',');	// BLL8a
+		            	if (console) console.log(data, operation);
+		                if(operation == "read") {
+		                	// this allows dynamic data for the read transport
+		                    data.reportYear = yearStr;
+                            data.reportMonth = monthStr;
+		                    data.reportStyle = styleStr;
+		                    data.reportKind = kindStr; // DR2d
+		                    data.reportType = typeStr;	// BLL8a
+		                }
+		                if (console) console.log(data);
+		                return data; 
+	            	}
+	            },
+	            schema: {
+					parse: function(response) {
+                        var recordCheck = false;
+                        //Set columns, dont add line break, will run later
+                        //var csvTab1 = 'Store Location,Delivered GP,Forecasted GP,Total GP,Budget,QtD Total,YtD Total\n';	
+                        var csvTab1;
+                        var csvTab2;			
+                        //End of line character /n
+
+                        var StoreLocation;
+                        var Salesperson = '';
+                        var ProposalName = '';
+                        var DlvGP = 0;
+                        var FrcGP = 0;
+                        var TtlGP = 0;
+                        var DeliveredGP = 0;
+                        var ForecastedGP = 0;	
+                        var TotalGP = 0;
+                        var Budget = 0;
+                        var BudgetPerc = 0;
+                        var qBudget = 0;
+                        var qBudgetPerc = 0;
+                        var yBudget = 0;
+                        var yBudgetPerc = 0;
+                        var QtD = 0;
+                        var YtD = 0;
+                        var LocationList = [];
+                        
+                        for(var ii = 0; ii< response.length; ii++) {
+                            	if(response[ii].isCurrentMonth == true){
+                                    recordCheck = true;
+                                }
+                            	if(ii == 0){
+                                    csvTab1 = 'Store Location,' + response[ii].currentMonthi + ' ' + response[ii].currentYeari + ' Delivered GP,' + response[ii].currentMonthi + ' ' + response[ii].currentYeari + ' Forecasted GP,' + response[ii].currentMonthi +' ' + response[ii].currentYeari + ' Total GP,' + response[ii].currentMonthi +' ' + response[ii].currentYeari + ' Budget Total,'+ response[ii].currentMonthi +' ' + response[ii].currentYeari + ' Budget Perc,QtD Total,QtD Percentage,YtD Total,YtD Percentage\n';	
+                                	csvTab2 = 'Store,Salesperson,Proposal,Status,Delivery Date,Delivered GP,Forecasted GP,Total GP\n';
+                                }
+                            StoreLocation = response[ii].locName;
+                            //StoreLocation = StoreLocation.replace(",", " - ");
+                            if(StoreLocation===null || typeof StoreLocation == 'undefined') StoreLocation='';    // BLL2a
+                            var locationFound = false;
+                            for(var abc = 0; abc < LocationList.length; abc++){
+                                	if(LocationList[abc] == StoreLocation){
+                                        locationFound = true;
+                                        abc = LocationList.length;
+                                    }
+                                }
+                            if(locationFound == false){
+                            	LocationList.push(StoreLocation);
+                                csvTab2 = csvTab2 + StoreLocation + '\n';
+                                 for(var w = 0; w< response.length; w++) {
+                                    if(response[w].locName == StoreLocation){
+                                        if(response[w].isCurrentMonth){
+                                            DlvGP = ((response[w].status === 'Won - Delivered'|| response[w].status === 'Won - Posted' ) ? response[w].grandTotalGross : 0);
+                                            FrcGP = ((response[w].status != 'Won - Delivered' && response[w].status != 'Won - Posted') ? response[w].grandTotalGross : 0);
+                                            TtlGP = response[w].grandTotalGross;
+											// BLL3a
+                                            if (DlvGP==null) {console.log('DlvGP is null:'+response[w].Name); DlvGP = 0.00; }
+                                            if (FrcGP==null) {console.log('FrcGP is null:'+response[w].Name); FrcGP = 0.00; }
+                                            if (TtlGP==null) {console.log('TtlGP is null:'+response[w].Name); TtlGP = 0.00; }
+											// BLL3a end
+                                            DeliveredGP = DeliveredGP + DlvGP;
+                                            ForecastedGP = ForecastedGP + FrcGP;
+                                            TotalGP = TotalGP + response[w].grandTotalGross;
+                                            Budget = Budget + (response[w].budgetPercentage != null ? response[w].budgetPercentage : 0);
+                                            //Temp fix for Customer created by RootStock
+                                            if(response[w].buyerName===null || typeof response[w].buyerName=='undefined') {
+                                                console.log(w);
+                                                console.log(response[w]);
+                                                response[w].buyerName='missing';
+                                            }
+                                            console.log(response[w].Id);	// BLL8a
+                                            if (response[w].Id != null) {	// BLL8a
+                                            csvTab2 = csvTab2 + ',' + response[w].salesPersonName + ',' + response[w].Name + ' - ' + response[w].buyerName.replace(',',' ') + ',' + response[w].status + ',' + response[w].deliveryDate + ',' + DlvGP.toFixed(0) + ',' + FrcGP.toFixed(0) + ',' + TtlGP.toFixed(0) + '\n';
+                                            }    // BLL8a
+                                        }
+                                        if(response[w].isCurrentMonth || response[w].isQuarterly){
+                                            QtD = QtD + response[w].grandTotalGross;
+                                            if(Budget == 0){
+                                                Budget = Budget + (response[w].budgetPercentage != null ? response[w].budgetPercentage : 0);
+                                                }
+                                            qBudget = qBudget + ( response[w].quarterPercentage != null ? response[w].quarterPercentage : 0);
+                                            }
+                                        if(response[w].isCurrentMonth || response[w].isQuarterly || response[w].isYearly){
+                                            YtD = YtD + response[w].grandTotalGross;
+                                            if(Budget == 0){
+                                                Budget = Budget + (response[w].budgetPercentage != null ? response[w].budgetPercentage : 0);
+                                                }
+                                            yBudget = yBudget + ( response[w].yearPercentage != null ? response[w].yearPercentage : 0);
+                                            }
+                                    }
+                            	}
+                                BudgetPerc = (TotalGP / Budget)*100;
+                                qBudgetPerc = (QtD / qBudget)*100;
+                                yBudgetPerc = (YtD / yBudget)*100;
+                                csvTab1 = csvTab1 + StoreLocation.replace(",", " - ") + ',' + DeliveredGP.toFixed(0) + ',' + ForecastedGP.toFixed(0) + ',' + TotalGP.toFixed(0) + ',' + Budget + ','+BudgetPerc.toFixed(0)+' %,' + QtD.toFixed(0) + ','+qBudgetPerc.toFixed(0)+' %,' + YtD.toFixed(0) +  ','+yBudgetPerc.toFixed(0)+' %';
+                                csvTab1 = csvTab1 + '\n'; 
+                                DeliveredGP = 0;
+                                ForecastedGP = 0;
+                                TotalGP = 0;
+                                Budget = 0;
+                                BudgetPerc = 0;
+                                qBudget = 0;
+                                qBudgetPerc = 0;
+                                yBudget = 0;
+                                yBudgetPerc = 0;
+                                QtD = 0;
+                                YtD = 0;
+                            }
+                               
+                        }
+						
+                        
+                  		
+				    	// Reset Monthly Columns
+				    	cDealMoYYCols = [];
+				    	cDealMoCols = [];
+						// reset aggregates
+						cDealAggregates = emptyArray.concat(cDealAggregatesHold);
+
+						// BLL5a set up columns
+						for (var i = 0; i < response.length; i++) {
+							if(response[i].isCurrentMonth) {
+								if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Dlv' ) == -1 ) {
+									cDealMoCols.push( response[i].deliveryMonth+'_Dlv' );
+									cDealMoYYCols.push( response[i].deliveryMonth+'_Dlv' );
+								}
+								if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Frcst' ) == -1 ) {
+									cDealMoCols.push( response[i].deliveryMonth+'_Frcst' );
+									cDealMoYYCols.push( response[i].deliveryMonth+'_Frcst' );
+								}
+								if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Total' ) == -1 ) {
+									cDealMoCols.push( response[i].deliveryMonth+'_Total' );
+									cDealMoYYCols.push( response[i].deliveryMonth+'_Total' );
+								}
+                                if( cDealMoCols.indexOf(response[i].deliveryMonth+ '_Budget' ) == -1 ) {
+									cDealMoCols.push( response[i].deliveryMonth+ '_Budget' );
+									cDealMoYYCols.push( response[i].deliveryMonth+ '_Budget' );
+								}
+								i = response.length;	// end loop
+							}
+						}
+						if( cDealMoCols.indexOf('QtD_Total' ) == -1 ) {
+							cDealMoCols.push( 'QtD_Total' );
+							cDealMoYYCols.push( 'QtD_Total' );
+						}
+						if( cDealMoCols.indexOf('YtD_Total' ) == -1 ) {
+							cDealMoCols.push( 'YtD_Total' );
+							cDealMoYYCols.push( 'YtD_Total' );
+						}
+						if( response.length==0 || cDealMoCols.indexOf('Rest_of_' + response[0].currentYeari ) == -1 ) {	// BLL7c length==0 || 
+							cDealMoCols.push( 'Rest_of_' + (response.length>0 ? response[0].currentYeari : '') );
+							cDealMoYYCols.push( 'Rest_of_' + (response.length>0 ? response[0].currentYeari : '') );
+						}
+						// BLL5a end set up columns		
+						// BLL7a set up aggregate columns
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === 'QtD_Total' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                    	cDealAggregates.push( {field: 'QtD_Total', aggregate: "sum"} );
+                                        cDealAggregates.push( {field: 'QtD_Total_budget', aggregate: "sum"} );
+							    	}
+
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === 'YtD_Total' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                   	var yeari = response.length>0 ? response[0].currentYeari : '';
+                                    if(!found) {
+                                    	cDealAggregates.push( {field: 'YtD_Total', aggregate: "sum"} );
+                                        cDealAggregates.push( {field: 'YtD_Total_budget', aggregate: "sum"} );
+                                        // BLL7a always ensure "Rest of" entries exist
+                                    	cDealAggregates.push( {field: 'Rest_of_' + yeari, aggregate: "sum"} );
+                                        //cDealAggregates.push( {field: 'Rest_of_' + yeari + '_Total_budget', aggregate: "sum"} );
+							    	}
+
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === 'Rest_of_' +yeari && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                    	cDealAggregates.push( {field: 'Rest_of_'+ yeari, aggregate: "sum"} );
+                                        //cDealAggregates.push( {field: 'Rest_of_'+yeari+'_Total_budget', aggregate: "sum"} );
+							    	}
+						// BLL7a end				
+  						
+						for (var i = 0; i < response.length; i++) {
+                            var found = false;
+							// Add salesperson field if not assigned.
+							if(typeof response[i].locName == 'undefined' || response[i].locName == null ) {
+								response[i].locName = '-missing-'
+							}
+
+							// Add salesperson field if not assigned.
+							if(typeof response[i].salesPersonId == 'undefined' || response[i].salesPersonId == null) {
+								response[i].salesPersonName = '-none-'
+							} 
+                            
+							// Create Monthly Gross Field
+                            //if(typeof response[i].deliveryMonth != 'undefined' || response[i].deliveryMonth == null) {
+                                if(response[i].isCurrentMonth){
+                                    response[i][response[i].deliveryMonth+'_Dlv'] = ( response[i].status === 'Won - Delivered'|| response[i].status === 'Won - Posted' ) ? response[i].grandTotalGross : 0;
+                                    response[i][response[i].deliveryMonth+'_Frcst'] = (response[i].status != 'Won - Delivered' && response[i].status != 'Won - Posted') ? response[i].grandTotalGross : 0;
+                                    response[i][response[i].deliveryMonth+'_Total'] = response[i].grandTotalGross;
+                                    if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Dlv' ) == -1 ) {
+                                        cDealMoCols.push( response[i].deliveryMonth+'_Dlv' );
+						    			cDealMoYYCols.push( response[i].deliveryMonth+'_Dlv' );
+                                    }
+                                    if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Frcst' ) == -1 ) {
+                                        cDealMoCols.push( response[i].deliveryMonth+'_Frcst' );
+						    			cDealMoYYCols.push( response[i].deliveryMonth+'_Frcst' );
+                                    }
+                                    if( cDealMoCols.indexOf( response[i].deliveryMonth+'_Total' ) == -1 ) {
+                                        cDealMoCols.push( response[i].deliveryMonth+'_Total' );
+						    			cDealMoYYCols.push( response[i].deliveryMonth+'_Total' );
+                                    }
+                                    
+                                    
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].deliveryMonth+'_Dlv' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+							    		cDealAggregates.push( {field: response[i].deliveryMonth+'_Dlv', aggregate: "sum"} );
+							    	}
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].deliveryMonth+'_Frcst' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+							    		cDealAggregates.push( {field: response[i].deliveryMonth+'_Frcst', aggregate: "sum"} );
+							    	}
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].deliveryMonth+'_Total' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                    	cDealAggregates.push( {field: response[i].deliveryMonth+'_Total', aggregate: "sum"} );
+							    	}
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].deliveryMonth+ '_Budget' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                        cDealAggregates.push( {field: response[i].deliveryMonth+ '_Budget', aggregate: "sum"} );
+                                    }
+                                }
+                            if(response[i].isCurrentMonth){
+                                response[i][response[i].deliveryMonth+'_Budget'] = ( response[i].budgetPercentage != null ? response[i].budgetPercentage : 0);
+                                if( cDealMoCols.indexOf(response[i].deliveryMonth+ '_Budget' ) == -1 ) {
+                                                cDealMoCols.push( response[i].deliveryMonth+ '_Budget' );
+                                                cDealMoYYCols.push( response[i].deliveryMonth+ '_Budget' );
+                                            }
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].deliveryMonth+ '_Budget' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                        cDealAggregates.push( {field: response[i].deliveryMonth+ '_Budget', aggregate: "sum"} );
+                                    }
+                                }else if(typeof response[i].currentMonthi != 'undefined' && response[i].currentYeari != 'undefined' && response[i].currentMonthi != null && response[i].currentYeari != null && recordCheck == true){
+                                    response[i][response[i].currentMonthi + '_' + response[i].currentYeari + '_Budget'] = ( response[i].budgetPercentage != null ? response[i].budgetPercentage : 0);
+                                    if( cDealMoCols.indexOf(response[i].currentMonthi + '_' + response[i].currentYeari+ '_Budget' ) == -1 ) {
+                                                cDealMoCols.push( response[i].currentMonthi + '_' + response[i].currentYeari+ '_Budget' );
+                                                cDealMoYYCols.push( response[i].currentMonthi + '_' + response[i].currentYeari+ '_Budget' );
+                                            }
+                                    found = false;
+                                    for(var a = 0; a < cDealAggregates.length; a++) {
+                                        if (cDealAggregates[a].field === response[i].currentMonthi + '_' + response[i].currentYeari+ '_Budget' && cDealAggregates[a].aggregate === 'sum') {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!found) {
+                                        cDealAggregates.push( {field: response[i].currentMonthi + '_' + response[i].currentYeari+ '_Budget', aggregate: "sum"} );
+                                    }
+                                }
+                            	if(response[i].isQuarterly == true || response[i].isCurrentMonth){
+                                    response[i]['QtD_Total'] = response[i].grandTotalGross;
+                                    response[i]['QtD_Total_budget'] = ( response[i].quarterPercentage != null ? response[i].quarterPercentage : 0);
+                                    if( cDealMoCols.indexOf('QtD_Total' ) == -1 ) {
+                                        cDealMoCols.push( 'QtD_Total' );
+						    			cDealMoYYCols.push( 'QtD_Total' );
+                                    }
+                                    //BLL7d found = false;
+                                    //BLL7d for(var a = 0; a < cDealAggregates.length; a++) {
+                                    //BLL7d     if (cDealAggregates[a].field === 'QtD_Total' && cDealAggregates[a].aggregate === 'sum') {
+                                    //BLL7d        found = true;
+                                    //BLL7d        break;
+                                    //BLL7d    }
+                                    //BLL7d }
+                                    //BLL7d if(!found) {
+                                    //BLL7d 	cDealAggregates.push( {field: 'QtD_Total', aggregate: "sum"} );
+                                    //BLL7d     cDealAggregates.push( {field: 'QtD_Total_budget', aggregate: "sum"} );
+							    	//BLL7d }
+                                }
+                            	if(response[i].isYearly == true || response[i].isQuarterly == true || response[i].isCurrentMonth){
+                                    response[i]['YtD_Total'] = response[i].grandTotalGross;
+                                    response[i]['YtD_Total_budget'] = ( response[i].yearPercentage != null ? response[i].yearPercentage : 0);
+                                    if( cDealMoCols.indexOf('YtD_Total' ) == -1 ) {
+                                        cDealMoCols.push( 'YtD_Total' );
+						    			cDealMoYYCols.push( 'YtD_Total' );
+                                    }
+                                    //BLL7d found = false;
+                                    //BLL7d for(var a = 0; a < cDealAggregates.length; a++) {
+                                    //BLL7d     if (cDealAggregates[a].field === 'YtD_Total' && cDealAggregates[a].aggregate === 'sum') {
+                                    //BLL7d         found = true;
+                                    //BLL7d         break;
+                                    //BLL7d     }
+                                    //BLL7d }
+                                    //BLL7d if(!found) {
+                                    //BLL7d 	cDealAggregates.push( {field: 'YtD_Total', aggregate: "sum"} );
+                                    //BLL7d     cDealAggregates.push( {field: 'YtD_Total_budget', aggregate: "sum"} );
+                                    //BLL7d     // BLL7a always ensure "Rest of" entries exist
+                                    //BLL7d 	cDealAggregates.push( {field: 'Rest_of_' + response[i].currentYeari, aggregate: "sum"} );
+                                    //BLL7d     //cDealAggregates.push( {field: 'Rest_of_' + response[i].currentYeari + '_Total_budget', aggregate: "sum"} );
+							    	//BLL7d }
+                                }
+                            	if (!response[i].isCurrentMonth && !response[i].isYearly && !response[i].isQuarterly){
+                                    response[i]['Rest_of_' + response[i].currentYeari] = response[i].grandTotalGross;
+                                    if( cDealMoCols.indexOf('Rest_of_' + response[i].currentYeari ) == -1 ) {
+                                        cDealMoCols.push( 'Rest_of_' + response[i].currentYeari );
+						    			cDealMoYYCols.push( 'Rest_of_' + response[i].currentYeari );
+                                    }
+                                    //BLL7d found = false;
+                                    //BLL7d for(var a = 0; a < cDealAggregates.length; a++) {
+                                    //BLL7d     if (cDealAggregates[a].field === 'Rest_of_' +response[i].currentYeari && cDealAggregates[a].aggregate === 'sum') {
+                                    //BLL7d         found = true;
+                                    //BLL7d         break;
+                                    //BLL7d     }
+                                    //BLL7d }
+                                    //BLL7d if(!found) {
+                                    //BLL7d 	cDealAggregates.push( {field: 'Rest_of_'+ response[i].currentYeari, aggregate: "sum"} );
+                                    //BLL7d     //cDealAggregates.push( {field: 'Rest_of_Total_budget', aggregate: "sum"} );
+							    	//BLL7d }
+                                 }
+							}
+
+                        // Finally Return
+				    	console.log(response);
+				    	// console.log(JSON.stringify(response));
+                        //$dt("#test-div").html(JSON.stringify(response).replace(/,/g,'<br/>'));
+                        //$dt("#test-div").show();
+
+                        if(recordCheck == true){
+                            $dt("#tableDiv").show();
+                            var a         = document.getElementById('exportExcel1');
+                            a.href        = 'data:attachment/csv,' +  encodeURIComponent(csvTab1);
+                            a.target      = '_blank';
+                            a.download    = 'salesFlash.csv';
+                            var b         = document.getElementById('exportExcel2');
+                            b.href        = 'data:attachment/csv,' +  encodeURIComponent(csvTab2);
+                            b.target      = '_blank';
+                            b.download    = 'salesFlash-detail.csv';
+                            //document.body.appendChild(a);
+                            //a.click();
+                        }else{
+                            $dt("#test-div").html('<h2 style="">No Records for selected Month.</h2>');
+                            $dt("#test-div").show();
+                        }
+                        $dt("#reportParameters").show();
+                        $dt("#progress").hide();
+						return response;
+					}
+	            },
+	        }),
+			companyData: function(){
+				var _dealList =  this.get('deals').view();
+				return _dealList;
+			},
+	        dealNameTemplate: kendo.template($dt("#cDealNameTemplate").html()),
+	        dealCustTemplate: kendo.template($dt("#cDealCustTemplate").html()),
+	        dealToolbarTemplate: kendo.template($dt("#cDealToolbarTemplate").html()),
+
+		});
+
+		function renderCDealTable(){
+			/*** Setup columns for Deal Detail tables ***/		    
+			var colArray = [ 
+	            { field: 'Name', title: 'Proposal', template: cDealModel.dealNameTemplate , width: 150}, 
+	            { field: 'buyerName', title: 'Customer', template: cDealModel.dealCustTemplate, width: 120, hidden: true },
+	            { field: 'model',title: 'Model' ,width: 120, hidden: true }, 
+	            { field: 'status',title: 'Status', width: 120 }, 
+	    		{ field: 'locName', title: 'Store', hidden: true, groupHeaderTemplate: "#= value # : (Deals: #= count#)" }, 
+	    		{ field: 'region', title: 'Region', hidden: true, groupHeaderTemplate: "Region  #= value# : (Deals: #= count#)" }, 
+				{ field: 'division', title: 'Division', hidden: true, groupHeaderTemplate: "Division  #= value# : (Deals: #= count#)" }, 
+	            { field: 'salesPersonName', title: 'CMC', width: 120, hidden: 'true', groupHeaderTemplate: "#= value # : (Deals: #= count#)"},
+	            // groupFooterTemplate: '#=kendo.toString(sum,"c") #',
+	            { field: 'totalPrice', title: 'Amt', format: '{0:c0}', width: 120, aggregates: ['sum'], groupFooterTemplate: '#=kendo.toString(sum,"c0") #', hidden: 'true' },
+	            { field: 'deliveryDate', title: 'Dlv. Date', template: "#= moment(deliveryDate).format('M/D/YYYY')  #" , width: 80, aggregates: ['sum'] },
+	            //, footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates().totalPrice.sum,"c") #'
+	    	];
+	    	 
+			if (console) console.log(cDealMoYYCols);	// BLL7a
+			
+			// Loop through the months array and create column strings
+		    $dt.each( cDealMoYYCols, function(i,col){
+                if(cDealMoCols[i].includes("Budget")){
+                  colArray.push(
+                       { field: col, hidden:true, title: col.replace(/_/g,' '), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #' }
+                  );
+    			}else if(cDealMoCols[i].includes("QtD_Total") || cDealMoCols[i].includes("YtD_Total"))
+                {
+                   colArray.push(
+                       { 
+                           field: col, hidden:true, title: col.replace(/_/g,' '), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #',
+                       	   field: col+'_budget', hidden:true, title: col.replace(/_/g,' '), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+'_budget != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+'_budget, \"c0\")#</span># } else { # #= " " # # } #'
+                       }
+                  ); 
+                }else{
+                    colArray.push(
+                       { field: col, title: col.replace(/_/g,' '), format: '{0:c0}', width: 120, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #' }
+                    );
+    			}
+		    });
+			
+		    /*** Setup columns for inner detail tables ***/
+		    var innerColArray = [
+                { title: 'Name', width: '104px', template: kendo.template($dt("#hierarchyName").html())}//,
+                //{ title: 'YTD GP', field: 'aggregates.deliveredGP.sum', format: '{0:c0}'}
+		    ];
+
+			// Loop through the months array and create column strings for detail format
+		    $dt.each( cDealMoYYCols, function(i,col){
+                if(cDealMoCols[i].includes("Budget")){
+                   	innerColArray.push(
+                   		{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'], hidden: true }
+		    		);
+                }else if (cDealMoCols[i].includes("QtD_Total") || cDealMoCols[i].includes("YtD_Total"))
+                {
+                   colArray.push(
+                       { 
+                           field: col, hidden:true, title: col.replace(/_/g,' '), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+' != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+', \"c0\")#</span># } else { # #= " " # # } #',
+                       	   field: col+'_budget', hidden:true, title: col.replace(/_/g,' '), format: '{0:c0}', width: 90, aggregates: ['sum'], template: '#if(typeof '+col+'_budget != "undefined") { #<span class="#=(status == "Won - Delivered" || status == "Won - Posted") ? "dgp" : "fgp" #">#=kendo.toString('+col+'_budget, \"c0\")#</span># } else { # #= " " # # } #'
+                       }
+                  );
+                }else if(cDealMoCols[i].includes("Dlv")){
+                   	innerColArray.push(
+                   		{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+		    		);
+                }else if(cDealMoCols[i].includes("Frcst")){
+                    innerColArray.push(
+                   		{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span class="fgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+		    		);
+                }else{
+                    innerColArray.push(
+		    			{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+		    		);   
+                }
+		    });
+			
+    		var outerColArray = [
+                { title: 'Name', width: '127px', template: kendo.template($dt("#hierarchyName").html())}//,
+                //{ title: 'YTD GP', field: 'aggregates.deliveredGP.sum', format: '{0:c0}'}
+		    ];
+
+			// Loop through the months array and create column strings for detail format
+		    $dt.each( cDealMoYYCols, function(i,col){
+				if(cDealMoCols[i].includes("Budget")){
+                    var budgetMon = cDealMoCols[i].slice(0,8);
+                   	outerColArray.push(
+                        //{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span><span>  (#= kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p\") #)</span>', aggregates: ['sum'] }
+                        { 
+                            title: cDealMoCols[i].replace(/_/g,' '), 
+							template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+budgetMon+'_Total.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'.sum, \"n\") != 0) { # # if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 0.90){ # <span class="red">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                            aggregates: ['sum'] 
+                        }
+                    );
+                }else if(cDealMoCols[i].includes("Dlv")){
+                   	outerColArray.push(
+                   		{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span style="width:107px" class="dgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+		    		);
+                }else if(cDealMoCols[i].includes("Frcst")){
+                    outerColArray.push(
+                   		{ title: cDealMoCols[i].replace(/_/g,' '), template: '<span style="width:107px" class="fgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+		    		);
+                }else if(cDealMoCols[i].includes("QtD_Total") || cDealMoCols[i].includes("YtD_Total"))
+                {
+                   outerColArray.push(
+                       { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+                           		template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+col+'.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'_budget.sum, \"n\") != 0) {# # if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 0.90){# <span class="red">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                                aggregates: ['sum']
+                           }
+                  	);
+                }else{
+                    outerColArray.push(
+                        { title: cDealMoCols[i].replace(/_/g,' '), template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',aggregates: ['sum'] }
+                    );   
+                }
+		    });
+    
+		    /*** Setup Tables for the wrapper table with Company Information ***/
+		    var CompanyColumns = [
+                { title: 'Name', width: '150px', template: kendo.template($dt("#hierarchyName").html())}//,
+                //{ title: 'YTD GP', field: 'aggregates.deliveredGP.sum', format: '{0:c0}', aggregates:['sum'], footerTemplate: '#= kendo.toString(cDealModel.deals.aggregates().deliveredGP.sum,\"c0\") #' }
+		    ];
+		    // Add Footer template to COMPANY COLUMNS
+		    $dt.each( cDealMoYYCols, function(i,col){
+
+                if(cDealMoCols[i].includes("Dlv")){
+                   CompanyColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+                                template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',  
+                                aggregates: ['sum'],
+                                footerTemplate : '<span class="dgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                           }
+                   );
+                }else if (cDealMoCols[i].includes("Frcst")){
+                   CompanyColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+                        		template: '<span class="fgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',  
+                                aggregates: ['sum'],
+                                footerTemplate : '<span class="fgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                           }
+                   );
+                }else if (cDealMoCols[i].includes("Budget")){
+                   var budgetMon = cDealMoCols[i].slice(0,8);
+                   CompanyColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+								template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+budgetMon+'_Total.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'.sum, \"n\") != 0) { # # if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 0.90){ # <span class="red">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                               //'<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span><span>  (#= kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span>',  
+                                aggregates: ['sum'],
+								footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span># if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum, \"p0\") != "" && kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") != 0){# # if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") < 0.90){ # <span class="red">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # }  # #  } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> #} #'                              }
+                   );                        
+
+                }else if (cDealMoCols[i].includes("QtD") || cDealMoCols[i].includes("YtD")){
+                   CompanyColumns.push(
+                       { 
+                           title: cDealMoCols[i].replace(/_/g,' '), 
+                           template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+col+'.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'_budget.sum, \"n\") != 0) {# # if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 0.90){# <span class="red">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                           aggregates: ['sum'],
+                           footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span># if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") != "" && kendo.toString(cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") != 0){# # if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") < 0.90){# <span class="red">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # }  # #  } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> #} #'                              
+                       }
+                    );
+                }else{
+                CompanyColumns.push(
+                    { 
+                    	title: cDealMoCols[i].replace(/_/g,' '), 
+                        template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\")#</span>',  
+                    	aggregates: ['sum'],
+                    	footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                        }
+                    );
+                    }
+            });
+			
+			var DivisionColumns = [
+                { title: 'Name', width: '170px', template: kendo.template($dt("#hierarchyName").html())}//,
+		    ];
+		    $dt.each( cDealMoYYCols, function(i,col){
+
+                if(cDealMoCols[i].includes("Dlv")){
+                   DivisionColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+                                template: '<span class="dgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',  
+                                aggregates: ['sum'],
+                                footerTemplate : '<span class="dgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                           }
+                   );
+                }else if (cDealMoCols[i].includes("Frcst")){
+                   DivisionColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+                        		template: '<span class="fgp">#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span>',  
+                                aggregates: ['sum'],
+                                footerTemplate : '<span class="fgp">#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                           }
+                   );
+                }else if (cDealMoCols[i].includes("Budget")){
+                   var budgetMon = cDealMoCols[i].slice(0,8);
+                   DivisionColumns.push(
+                           { 
+                                title: cDealMoCols[i].replace(/_/g,' '), 
+								template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+budgetMon+'_Total.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'.sum, \"n\") != 0) { # # if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 0.90){ # <span class="red">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                               //'<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span><span>  (#= kendo.toString(aggregates.'+budgetMon+'_Total.sum / aggregates.'+col+'.sum, \"p0\") #)</span>',  
+                                aggregates: ['sum'],
+								footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span># if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum, \"p0\") != "" && kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") != 0){# # if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") < 0.90){ # <span class="red">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(cDealModel.deals.aggregates()["'+budgetMon+'_Total"].sum / cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") #)</span> # }  # #  } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> #} #'                              }
+                   );                        
+
+                }else if (cDealMoCols[i].includes("QtD") || cDealMoCols[i].includes("YtD")){
+                   DivisionColumns.push(
+                       { 
+                           title: cDealMoCols[i].replace(/_/g,' '), 
+                           template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\") #</span># if (kendo.toString(aggregates.'+col+'.sum, \"p0\") != "" && kendo.toString(aggregates.'+col+'_budget.sum, \"n\") != 0) {# # if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 0.90){# <span class="red">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } else if (kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(aggregates.'+col+'.sum / aggregates.'+col+'_budget.sum, \"p0\") #)</span> # } # # } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> # } #',
+                           aggregates: ['sum'],
+                           footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span># if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"p0\") != "" && kendo.toString(cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") != 0){# # if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") < 0.90){# <span class="red">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") < 1.00){ # <span class="yellow">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # } else if (kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"n\") >= 1.00){ # <span class="green">  (#=kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum / cDealModel.deals.aggregates()["'+col+'_budget"].sum, \"p0\") #)</span> # }  # #  } else { # <span class="red">(#= kendo.toString( (0) , \"p0\") #)</span> #} #'                              
+                       }
+                    );
+                }else{
+                DivisionColumns.push(
+                    { 
+                    	title: cDealMoCols[i].replace(/_/g,' '), 
+                        template: '<span>#= kendo.toString(aggregates.'+col+'.sum, \"c0\")#</span>',  
+                    	aggregates: ['sum'],
+                    	footerTemplate : '<span>#= kendo.toString(cDealModel.deals.aggregates()["'+col+'"].sum, \"c0\") #</span>' 
+                        }
+                    );
+                    }
+            });
+    
+    //Add Month to Date and Year to Date Columns
+
+		    if(cDealTable != null) {
+	            cDealTable.destroy();
+	            $dt('#dealsListFull').html('');
+	            cDealTable = null;
+		    }
+
+		    // reset aggregates
+		    if (console) console.log(cDealAggregates);	// BLL7a
+		    cDealModel.deals.aggregate(cDealAggregates);
+		    cDealModel.deals.group([
+                    {field: 'division', aggregates: cDealAggregates},
+	            	{field: 'region', aggregates: cDealAggregates},
+	            	{field: 'locName', aggregates: cDealAggregates},
+	            	{field: 'salesPersonName', aggregates: cDealAggregates},
+	            ]);
+
+			// Render Custom Deal Grid - Region Level
+			cDealTable = $dt("#dealsListFull").kendoGrid({
+			    columns: DivisionColumns,
+                cache:false,
+			    dataSource: cDealModel.companyData(),
+			    // toolbar: [ { template: cDealModel.dealToolbarTemplate } ],
+			    detailTemplate: kendo.template($dt("#detailTableTemplate").html()),
+			    detailInit: function(e) {
+					var detailRow = e.detailRow;
+					var parentRow = e.data;
+					
+					//Region Level
+					detailRow.find(".detailTable").kendoGrid({
+						columns: CompanyColumns,
+						cache:false,
+						dataSource: parentRow.items,
+						// toolbar: [ { template: cDealModel.dealToolbarTemplate } ],
+						detailTemplate: kendo.template($dt("#detailTableTemplate").html()),
+						detailInit: function(e) {
+							var detailRow = e.detailRow;
+							var parentRow = e.data;
+
+							// Store Level
+							detailRow.find(".detailTable").kendoGrid({
+								columns: outerColArray,
+								cache:false,
+								detailTemplate: kendo.template($dt("#detailTableTemplate").html()),					 
+								dataSource: parentRow.items,
+								detailInit: function(e) {
+									var detailRow = e.detailRow;
+									var parentRow = e.data;
+
+							// SalesPerson Level
+									detailRow.find(".detailTable").kendoGrid({
+										columns: innerColArray,
+										cache:false,
+										detailTemplate: kendo.template($dt("#detailTableTemplate").html()),
+										dataSource: parentRow.items,
+										detailInit: function(e) {
+											var detailRow = e.detailRow;
+											var parentRow = e.data;
+
+											// Deal Level
+											detailRow.find(".detailTable").kendoGrid({
+												columns: colArray,
+												cache:false,
+												dataSource: {
+													data: parentRow.items,
+													sort: [{ field: 'deliveryDate', dir: "desc" }]
+												},
+												dataBound: function (e) {
+													console.log(e);
+													hideRows(this);
+												}
+										   });
+										}
+
+									});
+								}
+							});
+						}
+					});
+				},
+				dataBound: function(e) {
+					// Collapse rows by default
+				    if (this.dataSource.group().length > 0) {
+				        var GrpList = $dt(".k-grouping-row");
+
+				        for (var i = 0; i < GrpList.length; i++) {
+				            if (GrpList[i]) {
+				                this.collapseGroup(GrpList[i]);
+				            }
+				        }
+
+				    }
+				}
+			}).data("kendoGrid");
+		}
+		
+	    // READ data then create monthly gross columns
+		cDealModel.deals.read().then(function() {
+			renderCDealTable();
+		});
+
+
+
+/* fired when deal section is opened */
+function hideRows(me) {
+	dataView = me.dataSource.view();	// was this instead of me
+	var holdDate = new Date();
+	var monthStr = $dt('[id$="reportMonth"]').val(); 
+	for(var i = 0; i < dataView.length; i++) {
+		var delivDate = dataView[i].deliveryDate;
+		var delivArr = delivDate.split("-");
+		var propMonth = delivArr[1];
+		if(propMonth.charAt(0) == 0){
+			propMonth = delivArr[1].replace("0", '');
+		}
+		if(propMonth == monthStr && dataView[i].Id!=null ){	// BLL8c only render if there is a deal id
+		} else { 
+			var uid = dataView[i].uid;
+			$dt("tr[data-uid=" + uid + "]").css("style", "");
+			$dt("tr[data-uid=" + uid + "]").hide();
+		}	// end if else
+	}	// end for
+}
+
+	</script>
+
+	<style type="text/css">
+		.k-grid-content-locked {
+			overflow: visible;
+		}
+
+		#force h1,#force h2,#force h3,#force h4,#force h5 {
+			margin: 0 0 .25em 0;
+			display: block;
+		}
+
+		#force table {
+			font-size: 12px;
+		}
+
+		#force td, #force th {
+	        padding: .5em .6em .4em .6em; 
+		}
+
+		.dgp {
+			color: green;
+		}
+		.fgp {
+			color: #AF8417;
+		}
+        .green {
+        	color:green;
+        }
+        .yellow {
+        	color:#AF8417;
+        }
+        .red {
+        	color:red;
+        }
+
+		#force th.k-hierarchy-cell, .k-grid .k-hierarchy-col {
+			width: 50px;
+		}
+
+		.k-group ul li {
+			margin-left: 0;
+		}
+
+		.k-radio:checked+.k-radio-label:after {
+			top: 2px;
+			left: 2px;
+		}
+
+		#force label.k-radio-label {
+			margin-bottom: 0;
+			line-height: 1;
+			font-weight: normal;
+		}
+        
+        .k-grid .k-hierarchy-col {
+          width: 15px;
+        }
+	</style>
+</apex:page>
