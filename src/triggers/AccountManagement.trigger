@@ -91,7 +91,7 @@ trigger AccountManagement on Account (before insert, before update, after insert
 
 	// MTC29 start
 	if (Trigger.isBefore && Trigger.isUpdate) {
-		handler.handleBeforeUpdate(Trigger.old);
+		handler.handleBeforeUpdate(Trigger.new);
 	}
 	// MTC29 end
 
