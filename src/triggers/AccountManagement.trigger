@@ -39,13 +39,15 @@
  * 2018-07-06	B. Leaman	BLL26 - new and improved influencer support; move code to AccountProcess class.
  * 2019-10-08	B. Leaman	W-000764 BLL26 - only run store assignment on insert of a new account.
  * 2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
+ * 2020-01-23	M. Chevalier W-000813 MTC29 Set distance from closest store and assigned store on update on account.
  */
 trigger AccountManagement on Account (before insert, before update, after insert, after update, before delete) {
 
 	MW_TriggerControls__c accountCounty = MW_TriggerControls__c.getInstance('AccountCounty');	// BLL19a
 	MW_TriggerControls__c accountRcdType = MW_TriggerControls__c.getInstance('AccountRcdType');	// BLL24a
 	MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
-	
+
+	AccountTriggerHandler handler = new AccountTriggerHandler();
 
     if (Trigger.isBefore && !Trigger.isDelete) {	// BLL26c 
 		if (Trigger.isUpdate) AccountProcess.RestrictRecordTypeChanges(Trigger.new, Trigger.oldMap);	// BLL26c add if stmt
@@ -86,6 +88,12 @@ trigger AccountManagement on Account (before insert, before update, after insert
 		}
 	}
 	// BLL19a end
+
+	// MTC29 start
+	if (Trigger.isBefore && Trigger.isUpdate) {
+		handler.handleBeforeUpdate(Trigger.new);
+	}
+	// MTC29 end
 
 
 }

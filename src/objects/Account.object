@@ -1140,6 +1140,21 @@ IF(ISBLANK(BillingPostalCode),&quot;&quot;,BillingPostalCode)
         <visibleLines>5</visibleLines>
     </fields>
     <fields>
+        <fullName>Closest_Store_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The store closest to the the customer&apos;s address</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The store closest to the the customer&apos;s address</inlineHelpText>
+        <label>Closest Store Location</label>
+        <referenceTo>dealer__Dealer_Location__c</referenceTo>
+        <relationshipLabel>Accounts (Location)</relationshipLabel>
+        <relationshipName>Customers</relationshipName>
+        <required>false</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <trackHistory>false</trackHistory>
+        <type>Lookup</type>
+    </fields>
+    <fields>
         <fullName>Competitor__c</fullName>
         <defaultValue>false</defaultValue>
         <externalId>false</externalId>
@@ -2438,6 +2453,43 @@ IF(AND (NOT(ISBLANK(Email__c)), dealer__Billing_Email__c&lt;&gt;Email__c),Email_
                 </value>
             </valueSetDefinition>
         </valueSet>
+    </fields>
+    <fields>
+        <fullName>Miles_To_Assigned_Store__c</fullName>
+        <description>The distance between the customer&apos;s billing address and their assigned store</description>
+        <externalId>false</externalId>
+        <formula>DISTANCE(BillingAddress,  Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>The distance between the customer&apos;s billing address and their assigned store</inlineHelpText>
+        <label>Miles To Assigned Store</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Miles_To_Closest_Store__c</fullName>
+        <description>The distance from the customer&apos;s billing address to the store they are closest to.</description>
+        <externalId>false</externalId>
+        <formula>IF(
+				OR(
+								ISNULL(BillingAddress),
+								ISNULL(Closest_Store_Location__r.dealer__Physical_Location__c)
+				), 
+				NULL,
+				DISTANCE(BillingAddress, Closest_Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)
+)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>The distance from the customer&apos;s billing address to the store they are closest to.</inlineHelpText>
+        <label>Miles To Closest Store</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
     </fields>
     <fields>
         <fullName>Multiline_address__c</fullName>

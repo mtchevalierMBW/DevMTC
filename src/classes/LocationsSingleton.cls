@@ -1,24 +1,29 @@
 /**
  * LocationsSingleton
- * Tested by: VehicleUnitTest, AccountManagement_TEST	// ? LocationsSingleton_TEST
+ * Tested by: AccountManagement_TEST, FFATests, VehicleTransfer_TEST
  * Date: Jan 2, 2018
  * Programmer: Bryan Leaman
  *
  * Code Coverage:
- *	2018-01-03	86% (38/44)
- * 
- *	2018-01-24	B. Leaman	BLL1 - new routine for finding by name; reduce code size by re-using set routines for lists;	
- *	2019-04-12	B. Leaman	W-000575 BLL2 - reduce soqls in test methods
+ *  2018-01-03  86% (38/44)
+ *  2020-01-24  83%  (76/91)
+ *
+ *  2018-01-24  B. Leaman  BLL1 - new routine for finding by name; reduce code size by re-using set routines for lists;
+ *  2019-04-12  B. Leaman  W-000575 BLL2 - reduce soqls in test methods
+ *  2020-01-24  B. Leaman  W-000813 BLL3 - Fix potential flaw in RetrieveAllLocations logic when used in a trigger context.
  */
 public with sharing class LocationsSingleton {
 
 	public static LocationsSingleton ls;
 	public Set<Id> locationIds;
 	public Set<String> locationAbbrevs;
-	public Set<String> locationNames;	// BLL1a
+	public Set<String> locationNames;  // BLL1a
 	public Map<Id,dealer__Dealer_Location__c> locationIdMap;
 	public Map<String,dealer__Dealer_Location__c> locationAbbrevMap;
 	public Map<String,dealer__Dealer_Location__c> locationNameMap;
+	// BLL3
+	public static boolean AllLocationsRetrieved = false;
+	// BLL3
 
 	// LocationsSingleton
 	//---------------------------------------
@@ -27,14 +32,14 @@ public with sharing class LocationsSingleton {
 		locationAbbrevs = new Set<String>();
 		locationNames = new Set<String>();
 	}
-	
+
 	public static LocationsSingleton getInstance() {
 		if (ls==null) ls = new LocationsSingleton();
 		return ls;
 	}
 
 	public void addLocationIds(List<Id> ids) {
-		addLocationIds(new Set<Id>(ids));	// BLL1a
+		addLocationIds(new Set<Id>(ids));  // BLL1a
 		//System.debug(ids);
 		//if (locationIdMap!=null && !locationIdMap.keySet().containsAll(ids)) locationIdMap=null;
 		//locationIds.addAll(ids);
@@ -49,16 +54,16 @@ public with sharing class LocationsSingleton {
 		System.debug(locationIdMap);
 		System.debug(locationIds);
 	}
-	
+
 	public void addLocationAbbrevs(List<String> abbrevs) {
-		addLocationAbbrevs(new Set<String>(abbrevs));	// BLL1a
+		addLocationAbbrevs(new Set<String>(abbrevs));  // BLL1a
 		//System.debug(abbrevs);
 		//if (locationAbbrevMap!=null && !locationAbbrevMap.keySet().containsAll(abbrevs)) locationIdMap = null;
 		//locationAbbrevs.addAll(abbrevs);
 		//System.debug(locationIdMap);
 		//System.debug(locationAbbrevs);
 	}
-	
+
 	public void addLocationAbbrevs(Set<String> abbrevs) {
 		System.debug(abbrevs);
 		if (locationAbbrevMap!=null && !locationAbbrevMap.keySet().containsAll(abbrevs)) locationIdMap = null;
@@ -71,7 +76,7 @@ public with sharing class LocationsSingleton {
 	public void addLocationNames(List<String> names) {
 		addLocationNames(new Set<String>(names));
 	}
-	
+
 	public void addLocationNames(Set<String> names) {
 		System.debug(names);
 		Set<String> nameslc = new Set<String>();
@@ -88,7 +93,7 @@ public with sharing class LocationsSingleton {
 		System.debug(locationIds);
 		System.debug(locationAbbrevs);
 		if (locationIdMap==null) {
-	   		// Select all fields from dealer__Dealer_Location__c
+			// Select all fields from dealer__Dealer_Location__c
 			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
 			List<String> dlFieldList = new List<String>();
 			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
@@ -118,24 +123,24 @@ public with sharing class LocationsSingleton {
 			System.debug(loclist);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
-			locationNameMap = new Map<String,dealer__Dealer_Location__c>();	// BLL1a
-			for(dealer__Dealer_Location__c dl : locList) { 
+			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a
+			for(dealer__Dealer_Location__c dl : locList) {
 				locationIdMap.put(dl.Id, dl);
 				locationAbbrevMap.put(dl.dealer__Company_Number__c, dl);
-				locationNameMap.put(dl.Name.toLowerCase(), dl);	// BLL1a
-			} 
-			// BLL2 - if requested name, id or abbrev is NOT in the results, store it as a null location to 
+				locationNameMap.put(dl.Name.toLowerCase(), dl);  // BLL1a
+			}
+			// BLL2 - if requested name, id or abbrev is NOT in the results, store it as a null location to
 			// prevent re-querying for same missing location later in the request cycle.
 			for(String k : locationNames) {
-				if (!locationNameMap.containsKey(k)) 
+				if (!locationNameMap.containsKey(k))
 					locationNameMap.put(k.toLowerCase(), null);
 			}
 			for(String k : locationAbbrevs) {
-				if (!locationAbbrevMap.containsKey(k)) 
+				if (!locationAbbrevMap.containsKey(k))
 					locationAbbrevMap.put(k, null);
 			}
 			for(String k : locationIds) {
-				if (!locationIdMap.containsKey(k)) 
+				if (!locationIdMap.containsKey(k))
 					locationIdMap.put(k, null);
 			}
 			// BLL2 end
@@ -153,27 +158,36 @@ public with sharing class LocationsSingleton {
 	// BLL2
 	public void retrieveAllLocations() {
 		System.debug('retrieveAllLocations');
-		if (locationIdMap==null) {
-	   		// Select all fields from dealer__Dealer_Location__c
+		// BLL3
+		//if (locationIdMap==null) {
+		if (AllLocationsRetrieved==false) {
+			// BLL3 end
+			// Select all fields from dealer__Dealer_Location__c
 			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
 			List<String> dlFieldList = new List<String>();
 			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
 			String dlfields = String.join(dlFieldList,',');
 
-			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
+			// BLL3 - ignore closed locations
+			//String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
+			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c where dealer__IsClosed__c=false ';
+			// BLL3 end
 			System.debug('retrieveLocations: (soql) ' + soql);
 			List<dealer__Dealer_Location__c> loclist = Database.query(soql);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
-			locationNameMap = new Map<String,dealer__Dealer_Location__c>();	// BLL1a
-			for(dealer__Dealer_Location__c dl : locList) { 
+			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a
+			for(dealer__Dealer_Location__c dl : locList) {
 				locationIdMap.put(dl.Id, dl);
 				locationAbbrevMap.put(dl.dealer__Company_Number__c, dl);
-				locationNameMap.put(dl.Name.toLowerCase(), dl);	// BLL1a
-			} 
+				locationNameMap.put(dl.Name.toLowerCase(), dl);  // BLL1a
+			}
 			locationIds.addAll(locationIdMap.keySet());
 			locationAbbrevs.addAll(locationAbbrevMap.keySet());
 			locationNames.addAll(locationNameMap.keySet());
+			// BLL3
+			AllLocationsRetrieved = true;
+			// BLL3 end
 		}
 	}
 	// BLL2 end
@@ -185,7 +199,7 @@ public with sharing class LocationsSingleton {
 	}
 
 	public dealer__Dealer_Location__c getLocationByAbbrev(String abbrev) {
-		if (locationIdMap==null) retrieveLocations();	// the id map controls whether retrieval has run & is up-to-date 
+		if (locationIdMap==null) retrieveLocations();  // the id map controls whether retrieval has run & is up-to-date
 		System.debug(abbrev); System.debug(locationAbbrevMap.get(abbrev));
 		return locationAbbrevMap.get(abbrev);
 	}
@@ -193,7 +207,7 @@ public with sharing class LocationsSingleton {
 	// BLL1a
 	public dealer__Dealer_Location__c getLocationByName(String locname) {
 		if (locname!=null) locname = locname.toLowerCase();
-		if (locationIdMap==null) retrieveLocations();	// the id map controls whether retrieval has run & is up-to-date 
+		if (locationIdMap==null) retrieveLocations();  // the id map controls whether retrieval has run & is up-to-date
 		System.debug(locname); System.debug(locationNameMap.get(locname));
 		return locationNameMap.get(locname);
 	}
