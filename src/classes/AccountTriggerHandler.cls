@@ -9,7 +9,25 @@
  */
 
 public with sharing class AccountTriggerHandler {
-    // MTC1 start
+
+    MW_TriggerControls__c accountCounty = MW_TriggerControls__c.getInstance('AccountCounty');	// BLL19a
+    MW_TriggerControls__c accountRcdType = MW_TriggerControls__c.getInstance('AccountRcdType');	// BLL24a
+    MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
+
+    public void handleBeforeNotDelete () {
+
+    }
+    public void handleAfterUpdate () {
+
+    }
+    public void handleBeforeDelete () {
+
+    }
+    public void handleAfterNotDelete (List<Account> customers) {
+        if ((accountCounty==null || accountCounty.Enabled__c) && Trigger.new.size()<5 && !UserInfo.getName().contains('DealerTeam')) {
+            AccountProcess.AssignCountyJurisdiction(customers);
+        }
+    }
     public void handleBeforeUpdate (List<Account> customers) {
         updateClosestStorePerCustomer (customers);
     }

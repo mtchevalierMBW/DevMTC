@@ -83,9 +83,7 @@ trigger AccountManagement on Account (before insert, before update, after insert
 	// AFTER trigger submit future method to assign lat/lng (and county of residence)	
 	// BLL19a
 	if (Trigger.isAfter && !Trigger.isDelete) {
-		if ((accountCounty==null || accountCounty.Enabled__c) && Trigger.new.size()<5 && !UserInfo.getName().contains('DealerTeam')) {	// BLL22c
-			AccountProcess.AssignCountyJurisdiction(Trigger.new);
-		}
+		handler.handleAfterNotDelete(Trigger.new);
 	}
 	// BLL19a end
 
