@@ -2,11 +2,14 @@
  * AccountTriggerHandler
  * Tested by: AccountTriggerHandler_TEST.cls
  *
- * 2020-01-23 M. Chevalier
+ * * Coverage:
+ * 2020-01-24	100%    (31/31)
+ *
+ * 2020-01-23 M. Chevalier MTC1 Implemented updateClosestStorePerCustomer
  */
 
 public with sharing class AccountTriggerHandler {
-
+    // MTC1 start
     public void handleBeforeUpdate (List<Account> customers) {
         updateClosestStorePerCustomer (customers);
     }
@@ -44,6 +47,7 @@ public with sharing class AccountTriggerHandler {
         customer.Closest_Store_Location__c = getClosestStoreId(customerLocation, storeLocations);
     }
 
+    @TestVisible
     private Id getClosestStoreId(Location customerLocation, List<dealer__Dealer_Location__c> storeLocations) {
         Id closestStoreId = null;
         Double minimumDistance = null;
@@ -56,4 +60,6 @@ public with sharing class AccountTriggerHandler {
         }
         return closestStoreId;
     }
+    // MTC1 end
+
 }
