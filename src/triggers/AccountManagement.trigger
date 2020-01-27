@@ -49,9 +49,25 @@ trigger AccountManagement on Account (before insert, before update, after insert
 
 	AccountTriggerHandler handler = new AccountTriggerHandler();
 
-    if (Trigger.isBefore && !Trigger.isDelete) {	// BLL26c
-		handler.handleBeforeNotDelete(Trigger.isUpdate, Trigger.isInsert, Trigger.new, Trigger.oldMap);
-    }
+	if (Trigger.isBefore) {
+		if (Trigger.isInsert) {
+			handler.handleBeforeInsert(Trigger.new, Trigger.newMap);
+		}
+		if (Trigger.isInsert) {
+			handler.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
+		}
+/*		if (Trigger.isInsert) {
+			handler.handleBeforeDelete();
+		}*/
+	}
+/*	if (Trigger.isAfter) {
+		if (Trigger.isInsert) {
+			handler.handleAfterInsert();
+		}
+		if (Trigger.isInsert) {
+			handler.handleAfterUpdate();
+		}
+	}*/
 
 	// AFTER trigger: When account owner changes, update open tasks, open solution opportunities & open opportunities to new owner
 	if (Trigger.isAfter && Trigger.isUpdate) {

@@ -15,29 +15,27 @@ public with sharing class AccountTriggerHandler {
     MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
 
     public void handleBeforeInsert(List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-
+        AccountProcess.DefaultCompanyAssignment(customersNew);
+        buildDefaultDataValuesValidationsSummaries (customersNew, customersByIdOld);
     }
-
-    public void handleBeforeNotDelete (Boolean isUpdate, Boolean isInsert, List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-        if (isUpdate) {AccountProcess.RestrictRecordTypeChanges(customersNew, customersByIdOld);} // sequence first call
-        if (isInsert) {AccountProcess.DefaultCompanyAssignment(customersNew);} // sequence first call
-
+    public void handleBeforeUpdate(List<Account> customersNew, Map<Id, Account> customersByIdOld) {
+        AccountProcess.RestrictRecordTypeChanges(customersNew, customersByIdOld);
+        buildDefaultDataValuesValidationsSummaries (customersNew, customersByIdOld);
+    }
+    private void buildDefaultDataValuesValidationsSummaries  (List<Account> customersNew, Map<Id, Account> customersByIdOld) {
         AccountProcess.AddInfluencerAssociation(customersNew);
-
         // upload location & owner by name rather than by Id
         MW_TriggerControls__c uploadHelper = MW_TriggerControls__c.getInstance('uploadAccountHelper');
-        if (uploadHelper==null || uploadHelper.Enabled__c) AccountProcess.UploadReferencesByName(customersNew);
-
+        if (uploadHelper==null || uploadHelper.Enabled__c){ AccountProcess.UploadReferencesByName(customersNew);}
         AccountProcess.StandardizePersonName(customersNew);
         AccountProcess.SynchFFTaxFields(customersNew, customersByIdOld);
         AccountProcess.RequiredFieldDefaults(customersNew);
         AccountProcess.AppendNewStockNumber(customersNew, customersByIdOld);
-        if (accountRcdType==null || accountRcdType.Enabled__c) AccountProcess.SyncPersonAccountFields(customersNew, customersByIdOld);
+        if (accountRcdType==null || accountRcdType.Enabled__c){ AccountProcess.SyncPersonAccountFields(customersNew, customersByIdOld);}
         AccountProcess.ClearFieldsOnAddressChange(customersNew, customersByIdOld);
-        // BLL28
-        if (accountRLCounts==null || accountRLCounts.Enabled__c) AccountProcess.RecordRelatedRcdCounts(customersNew);
-        // BLL28 end
+        if (accountRLCounts==null || accountRLCounts.Enabled__c){ AccountProcess.RecordRelatedRcdCounts(customersNew);}
     }
+
     public void handleAfterUpdate (List<Account> customersNew, Map<Id, Account> customersByIdOld) {
         AccountProcess.UpdateRelatedObjectOwners(customersNew, customersByIdOld);
     }
