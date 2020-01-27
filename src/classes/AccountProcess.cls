@@ -888,15 +888,77 @@ System.debug(newownermap);
 	
 	// AssignCountyJurisdiction	
 	//------------------------------------------
-	public static void AssignCountyJurisdiction(List<Account> newlist) {
-		List<Id> needCounty = new List<Id>();
-		for(Account a : newlist) {
-			if (String.isBlank(a.PersonMailingCounty__c) && !String.isBlank(a.BillingStreet) && !String.isBlank(a.BillingCity)
-				&& (!String.isBlank(a.BillingState) || !String.isBlank(a.BillingPostalCode))) needCounty.add(a.Id);
+	public static void AssignCountyJurisdiction(List<Account> newlist, Boolean accountCountyEnabled) {
+		if (accountCountyEnabled && newlist.size()<5 && !UserInfo.getName().contains('DealerTeam')) {
+			List<Id> needCounty = new List<Id>();
+			for(Account a : newlist) {
+				if (String.isBlank(a.PersonMailingCounty__c) && !String.isBlank(a.BillingStreet) && !String.isBlank(a.BillingCity)
+						&& (!String.isBlank(a.BillingState) || !String.isBlank(a.BillingPostalCode))) needCounty.add(a.Id);
+			}
+			System.debug(needCounty.size());
+			if (needCounty.size()>0 && !System.isBatch() && !System.isFuture()) ClosestStoreFuture.Account_LocateAddress(needCounty);
 		}
-		System.debug(needCounty.size());
-		if (needCounty.size()>0 && !System.isBatch() && !System.isFuture()) ClosestStoreFuture.Account_LocateAddress(needCounty);
 	}
+
+	public static void BuildDefaultDataValuesValidationsSummaries (List<Account> accountsNew, Map<Id, Account> accountsOldMap, Map<String, Boolean> controlFeatures) {
+		AccountProcess.AddInfluencerAssociation(accountsNew);
+		if (controlFeatures.get('uploadHelperEnabled')){ AccountProcess.UploadReferencesByName(accountsNew);}
+		AccountProcess.StandardizePersonName(accountsNew);
+		AccountProcess.SynchFFTaxFields(accountsNew, accountsOldMap);
+		AccountProcess.RequiredFieldDefaults(accountsNew);
+		AccountProcess.AppendNewStockNumber(accountsNew, accountsOldMap);
+		if (controlFeatures.get('accountRcdTypeEnabled')){ AccountProcess.SyncPersonAccountFields(accountsNew, accountsOldMap);}
+		AccountProcess.ClearFieldsOnAddressChange(accountsNew, accountsOldMap);
+		if (controlFeatures.get('accountRLCountsEnabled')){ AccountProcess.RecordRelatedRcdCounts(accountsNew);}
+	}
+
+	public static void updateClosestStorePerAccount (List<Account> accounts) {
+		List<dealer__Dealer_Location__c> storeLocations = getStoreLocations();
+		for(Account account : accounts) {
+			setClosestStore(account, storeLocations);
+		}
+	}
+
+	private static List<dealer__Dealer_Location__c> getStoreLocations () {
+		List<dealer__Dealer_Location__c> storeLocationsAll = invokeLocationSingletonToFetchAllLocations();
+		List<dealer__Dealer_Location__c> storeLocationsValid = new List<dealer__Dealer_Location__c>();
+		for(dealer__Dealer_Location__c loc : storeLocationsAll) {
+			if(locationFulfillsBusinessRequirements(loc)) {
+				storeLocationsValid.add(loc);
+			}
+		}
+		return storeLocationsValid;
+	}
+
+	private static Boolean locationFulfillsBusinessRequirements (dealer__Dealer_Location__c loc) {
+		return loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE;
+	}
+
+	private static List<dealer__Dealer_Location__c> invokeLocationSingletonToFetchAllLocations() {
+		LocationsSingleton locationsSingletonInstance = LocationsSingleton.getInstance();
+		locationsSingletonInstance.retrieveAllLocations();
+		return locationsSingletonInstance.locationIdMap.values();
+	}
+
+	private static void setClosestStore (Account account, List<dealer__Dealer_Location__c> storeLocations) {
+		Location accountLocation = Location.newInstance(account.BillingLatitude, account.BillingLongitude);
+		account.Closest_Store_Location__c = getClosestStoreId(accountLocation, storeLocations);
+	}
+
+	@TestVisible
+	private static Id getClosestStoreId(Location accountLocation, List<dealer__Dealer_Location__c> storeLocations) {
+		Id closestStoreId = null;
+		Double minimumDistance = null;
+		for(dealer__Dealer_Location__c storeLocation : storeLocations) {
+			Double distance = Location.getDistance(accountLocation, storeLocation.dealer__Physical_Location__c, 'mi');
+			if(minimumDistance == null || distance < minimumDistance) {
+				minimumDistance = distance;
+				closestStoreId = storeLocation.Id;
+			}
+		}
+		return closestStoreId;
+	}
+
 
 //	// AMM7
 //	public static void updateChildOpportunitiesCustomerMasterEnabled(List<Account> newlist, Map<Id, Account> oldMap, Map<Id, Account> newMap)

@@ -41,56 +41,29 @@
  * 2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  * 2020-01-23	M. Chevalier W-000813 MTC29 Set distance from closest store and assigned store on update on account.
  */
-trigger AccountManagement on Account (before insert, before update, after insert, after update, before delete) {
+trigger AccountManagement on Account (before insert, before update, before delete, after insert, after update) {
+	new AccountTriggerHandler().run();
 
-	MW_TriggerControls__c accountCounty = MW_TriggerControls__c.getInstance('AccountCounty');	// BLL19a
-	MW_TriggerControls__c accountRcdType = MW_TriggerControls__c.getInstance('AccountRcdType');	// BLL24a
-	MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
 
-	AccountTriggerHandler handler = new AccountTriggerHandler();
+/*	AccountTriggerHandler handler = new AccountTriggerHandler();
 
 	if (Trigger.isBefore) {
 		if (Trigger.isInsert) {
-			handler.handleBeforeInsert(Trigger.new, Trigger.newMap);
+			handler.handleBeforeInsert(Trigger.new);
 		}
 		if (Trigger.isInsert) {
 			handler.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
 		}
-/*		if (Trigger.isInsert) {
-			handler.handleBeforeDelete();
-		}*/
-	}
-/*	if (Trigger.isAfter) {
 		if (Trigger.isInsert) {
-			handler.handleAfterInsert();
+			handler.handleBeforeDelete(Trigger.old);
+		}
+	}
+	if (Trigger.isAfter) {
+		if (Trigger.isInsert) {
+			handler.handleAfterInsert(Trigger.new);
 		}
 		if (Trigger.isInsert) {
-			handler.handleAfterUpdate();
+			handler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
 		}
 	}*/
-
-	// AFTER trigger: When account owner changes, update open tasks, open solution opportunities & open opportunities to new owner
-	if (Trigger.isAfter && Trigger.isUpdate) {
-		handler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
-	}
-
-	// BEFORE trigger on delete
-	if (Trigger.isBefore && Trigger.isDelete) {
-		handler.handleBeforeDelete(Trigger.old);
-	}
-
-	// AFTER trigger submit future method to assign lat/lng (and county of residence)	
-	// BLL19a
-	if (Trigger.isAfter && !Trigger.isDelete) {
-		handler.handleAfterNotDelete(Trigger.new);
-	}
-	// BLL19a end
-
-	// MTC29 start
-	if (Trigger.isBefore && Trigger.isUpdate) {
-		handler.handleBeforeUpdate(Trigger.new);
-	}
-	// MTC29 end
-
-
 }

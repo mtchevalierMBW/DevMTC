@@ -5,99 +5,55 @@
  * * Coverage:
  * 2020-01-24	100%    (31/31)
  *
- * 2020-01-23 M. Chevalier MTC1 Implemented updateClosestStorePerCustomer
+ * 2020-01-23 M. Chevalier MTC1 Implemented updateClosestStorePerAccount
  */
 
-public with sharing class AccountTriggerHandler {
+public with sharing class AccountTriggerHandler extends TriggerHandler {
 
-    MW_TriggerControls__c accountCounty = MW_TriggerControls__c.getInstance('AccountCounty');	// BLL19a
-    MW_TriggerControls__c accountRcdType = MW_TriggerControls__c.getInstance('AccountRcdType');	// BLL24a
-    MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
+    private List<Account>        accountsOld;
+    private List<Account>        accountsNew;
+    private Map<Id, Account>     accountsOldMap;
+    private Map<Id, Account>     accountsNewMap;
+    private Map<String, Boolean> controlFeatures;
 
-    public void handleBeforeInsert(List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-        AccountProcess.DefaultCompanyAssignment(customersNew);
-        buildDefaultDataValuesValidationsSummaries (customersNew, customersByIdOld);
-    }
-    public void handleBeforeUpdate(List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-        AccountProcess.RestrictRecordTypeChanges(customersNew, customersByIdOld);
-        buildDefaultDataValuesValidationsSummaries (customersNew, customersByIdOld);
-    }
-    private void buildDefaultDataValuesValidationsSummaries  (List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-        AccountProcess.AddInfluencerAssociation(customersNew);
-        // upload location & owner by name rather than by Id
-        MW_TriggerControls__c uploadHelper = MW_TriggerControls__c.getInstance('uploadAccountHelper');
-        if (uploadHelper==null || uploadHelper.Enabled__c){ AccountProcess.UploadReferencesByName(customersNew);}
-        AccountProcess.StandardizePersonName(customersNew);
-        AccountProcess.SynchFFTaxFields(customersNew, customersByIdOld);
-        AccountProcess.RequiredFieldDefaults(customersNew);
-        AccountProcess.AppendNewStockNumber(customersNew, customersByIdOld);
-        if (accountRcdType==null || accountRcdType.Enabled__c){ AccountProcess.SyncPersonAccountFields(customersNew, customersByIdOld);}
-        AccountProcess.ClearFieldsOnAddressChange(customersNew, customersByIdOld);
-        if (accountRLCounts==null || accountRLCounts.Enabled__c){ AccountProcess.RecordRelatedRcdCounts(customersNew);}
+    public AccountTriggerHandler() {
+        this.accountsOld = (List<Account>) Trigger.old;
+        this.accountsNew = (List<Account>) Trigger.new;
+        this.accountsOldMap = (Map<Id, Account>) Trigger.oldMap;
+        this.accountsNewMap = (Map<Id, Account>) Trigger.newMap;
+        MW_TriggerControls__c accountCounty   = MW_TriggerControls__c.getInstance('AccountCounty');
+        MW_TriggerControls__c accountRcdType  = MW_TriggerControls__c.getInstance('AccountRcdType');
+        MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts');
+        MW_TriggerControls__c uploadHelper    = MW_TriggerControls__c.getInstance('uploadAccountHelper');
+        this.controlFeatures = new Map<String, Boolean>{
+            'accountCountyEnabled'  => (accountCounty != null)   ? accountCounty.Enabled__c   : false,
+            'accountRcdTypeEnabled' => (accountRcdType != null)  ? accountRcdType.Enabled__c  : false,
+            'accountRLCountsEnabled'=> (accountRLCounts != null) ? accountRLCounts.Enabled__c : false,
+            'uploadHelperEnabled'   => (uploadHelper != null)    ? uploadHelper.Enabled__c    : false
+        };
     }
 
-    public void handleAfterUpdate (List<Account> customersNew, Map<Id, Account> customersByIdOld) {
-        AccountProcess.UpdateRelatedObjectOwners(customersNew, customersByIdOld);
-    }
-    public void handleBeforeDelete (List<Account> customers) {
-        System.debug(customers);
-        AccountProcess.CleanUpInfluencerAssociations(customers);
-    }
-    public void handleAfterNotDelete (List<Account> customers) {
-        if ((accountCounty==null || accountCounty.Enabled__c) && Trigger.new.size()<5 && !UserInfo.getName().contains('DealerTeam')) {
-            AccountProcess.AssignCountyJurisdiction(customers);
-        }
-    }
-    public void handleBeforeUpdate (List<Account> customers) {
-        updateClosestStorePerCustomer (customers);
+    public override void beforeInsert() {
+        AccountProcess.DefaultCompanyAssignment(accountsNew);
+        AccountProcess.BuildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap, controlFeatures);
     }
 
-    private void updateClosestStorePerCustomer (List<Account> customers) {
-        List<dealer__Dealer_Location__c> storeLocations = getStoreLocations();
-        for(Account customer : customers) {
-            setClosestStore(customer, storeLocations);
-        }
+    public override void beforeUpdate() {
+        AccountProcess.RestrictRecordTypeChanges(accountsNew, accountsOldMap);
+        AccountProcess.BuildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap, controlFeatures);
+        AccountProcess.updateClosestStorePerAccount(accountsNew);
     }
 
-    private List<dealer__Dealer_Location__c> getStoreLocations () {
-        List<dealer__Dealer_Location__c> storeLocationsAll = invokeLocationSingletonToFetchAllLocations();
-        List<dealer__Dealer_Location__c> storeLocationsValid = new List<dealer__Dealer_Location__c>();
-        for(dealer__Dealer_Location__c loc : storeLocationsAll) {
-            if(locationFulfillsBusinessRequirements(loc)) {
-                storeLocationsValid.add(loc);
-            }
-        }
-        return storeLocationsValid;
+    public override void beforeDelete() {
+        AccountProcess.CleanUpInfluencerAssociations(accountsOld);
     }
 
-    private Boolean locationFulfillsBusinessRequirements (dealer__Dealer_Location__c loc) {
-        return loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE;
+    public override void afterInsert() {
+        AccountProcess.AssignCountyJurisdiction(accountsNew, controlFeatures.get('accountCountyEnabled'));
     }
 
-    private List<dealer__Dealer_Location__c> invokeLocationSingletonToFetchAllLocations() {
-        LocationsSingleton locationsSingletonInstance = LocationsSingleton.getInstance();
-        locationsSingletonInstance.retrieveAllLocations();
-        return locationsSingletonInstance.locationIdMap.values();
+    public override void afterUpdate() {
+        AccountProcess.UpdateRelatedObjectOwners(accountsNew, accountsOldMap);
+        AccountProcess.AssignCountyJurisdiction(accountsNew, controlFeatures.get('accountCountyEnabled'));
     }
-
-    private void setClosestStore (Account customer, List<dealer__Dealer_Location__c> storeLocations) {
-        Location customerLocation = Location.newInstance(customer.BillingLatitude, customer.BillingLongitude);
-        customer.Closest_Store_Location__c = getClosestStoreId(customerLocation, storeLocations);
-    }
-
-    @TestVisible
-    private Id getClosestStoreId(Location customerLocation, List<dealer__Dealer_Location__c> storeLocations) {
-        Id closestStoreId = null;
-        Double minimumDistance = null;
-        for(dealer__Dealer_Location__c storeLocation : storeLocations) {
-            Double distance = Location.getDistance(customerLocation, storeLocation.dealer__Physical_Location__c, 'mi');
-            if(minimumDistance == null || distance < minimumDistance) {
-                minimumDistance = distance;
-                closestStoreId = storeLocation.Id;
-            }
-        }
-        return closestStoreId;
-    }
-    // MTC1 end
-
 }
