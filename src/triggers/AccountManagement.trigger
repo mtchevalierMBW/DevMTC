@@ -49,35 +49,18 @@ trigger AccountManagement on Account (before insert, before update, after insert
 
 	AccountTriggerHandler handler = new AccountTriggerHandler();
 
-    if (Trigger.isBefore && !Trigger.isDelete) {	// BLL26c 
-		if (Trigger.isUpdate) AccountProcess.RestrictRecordTypeChanges(Trigger.new, Trigger.oldMap);	// BLL26c add if stmt
-		AccountProcess.AddInfluencerAssociation(Trigger.new);
-
-		// upload location & owner by name rather than by Id
-        MW_TriggerControls__c uploadHelper = MW_TriggerControls__c.getInstance('uploadAccountHelper');
-		if (uploadHelper==null || uploadHelper.Enabled__c) AccountProcess.UploadReferencesByName(Trigger.new);
-
-		if (Trigger.isInsert) AccountProcess.DefaultCompanyAssignment(Trigger.new);	// BLL26c add if stmt
-		AccountProcess.StandardizePersonName(Trigger.new);
-		AccountProcess.SynchFFTaxFields(Trigger.new, Trigger.oldMap);
-		AccountProcess.RequiredFieldDefaults(Trigger.new);
-		AccountProcess.AppendNewStockNumber(Trigger.new, Trigger.oldMap);
-		if (accountRcdType==null || accountRcdType.Enabled__c) AccountProcess.SyncPersonAccountFields(Trigger.new, Trigger.oldMap);
-		AccountProcess.ClearFieldsOnAddressChange(Trigger.new, Trigger.oldMap);
-		// BLL28
-		if (accountRLCounts==null || accountRLCounts.Enabled__c) AccountProcess.RecordRelatedRcdCounts(Trigger.new);
-		// BLL28 end
+    if (Trigger.isBefore && !Trigger.isDelete) {	// BLL26c
+		handler.handleBeforeNotDelete(Trigger.isUpdate, Trigger.isInsert, Trigger.new, Trigger.oldMap);
     }
 
 	// AFTER trigger: When account owner changes, update open tasks, open solution opportunities & open opportunities to new owner
 	if (Trigger.isAfter && Trigger.isUpdate) {
-		AccountProcess.UpdateRelatedObjectOwners(Trigger.new, Trigger.oldMap);
+		handler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
 	}
 
 	// BEFORE trigger on delete
 	if (Trigger.isBefore && Trigger.isDelete) {
-		System.debug(Trigger.old);
-		AccountProcess.CleanUpInfluencerAssociations(Trigger.old);
+		handler.handleBeforeDelete(Trigger.old);
 	}
 
 	// AFTER trigger submit future method to assign lat/lng (and county of residence)	
