@@ -11,26 +11,36 @@
 
 public with sharing class AccountTriggerHandler extends TriggerHandler {
 
+    @TestVisible
     private List<Account>        accountsOld;
+    @TestVisible
     private List<Account>        accountsNew;
+    @TestVisible
     private Map<Id, Account>     accountsOldMap;
+    @TestVisible
     private Map<Id, Account>     accountsNewMap;
+    @TestVisible
     private Map<String, Boolean> controlFeatures;
 
     public AccountTriggerHandler() {
-        this.accountsOld = (List<Account>) Trigger.old;
-        this.accountsNew = (List<Account>) Trigger.new;
+        this.accountsOld    = (List<Account>) Trigger.old;
+        this.accountsNew    = (List<Account>) Trigger.new;
         this.accountsOldMap = (Map<Id, Account>) Trigger.oldMap;
         this.accountsNewMap = (Map<Id, Account>) Trigger.newMap;
+        setupControlFeatures();
+    }
+
+    @TestVisible
+    private void setupControlFeatures() {
         MW_TriggerControls__c accountCounty   = MW_TriggerControls__c.getInstance('AccountCounty');
         MW_TriggerControls__c accountRcdType  = MW_TriggerControls__c.getInstance('AccountRcdType');
         MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts');
         MW_TriggerControls__c uploadHelper    = MW_TriggerControls__c.getInstance('uploadAccountHelper');
         this.controlFeatures = new Map<String, Boolean>{
-            'accountCountyEnabled'  => (accountCounty != null)   ? accountCounty.Enabled__c   : false,
-            'accountRcdTypeEnabled' => (accountRcdType != null)  ? accountRcdType.Enabled__c  : false,
-            'accountRLCountsEnabled'=> (accountRLCounts != null) ? accountRLCounts.Enabled__c : false,
-            'uploadHelperEnabled'   => (uploadHelper != null)    ? uploadHelper.Enabled__c    : false
+                'accountCountyEnabled'  => (accountCounty != null)   ? accountCounty.Enabled__c   : false,
+                'accountRcdTypeEnabled' => (accountRcdType != null)  ? accountRcdType.Enabled__c  : false,
+                'accountRLCountsEnabled'=> (accountRLCounts != null) ? accountRLCounts.Enabled__c : false,
+                'uploadHelperEnabled'   => (uploadHelper != null)    ? uploadHelper.Enabled__c    : false
         };
     }
 
