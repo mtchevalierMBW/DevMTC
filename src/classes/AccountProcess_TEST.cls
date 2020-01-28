@@ -51,35 +51,6 @@ private class AccountProcess_TEST {
 				update(sv);
 			} catch(Exception e) {}		// BLL1a
 		}
-/*		dealer__Dealer_Location__c location1 = new dealer__Dealer_Location__c(
-				Name = 'Kent Free Library',
-				dealer__Physical_Location__Latitude__s = 41.153520,
-				dealer__Physical_Location__Longitude__s = -81.360890,
-				dealer__City__c = 'Kent',
-				dealer__Company_Number__c = 'KFL',
-				dealer__State__c = 'OH',
-				dealer__Postal_Code__c = '44240',
-				AutoAssignRetail__c = true
-		);
-		insert location1;
-		dealer__Dealer_Location__c location2 = new dealer__Dealer_Location__c(
-				Name = 'Stow Munroe Falls Library',
-				dealer__Physical_Location__Latitude__s = 41.160860,
-				dealer__Physical_Location__Longitude__s = -81.441040,
-				dealer__City__c = 'Stow',
-				dealer__Company_Number__c = 'SMFL',
-				dealer__State__c = 'OH',
-				dealer__Postal_Code__c = '44224',
-				AutoAssignRetail__c = true
-		);
-		insert  location2;
-		Account customer = new Account(
-				Name = 'Drake Chevalier',
-				BillingLatitude = 41.155330,
-				BillingLongitude = -81.420850,
-				Store_Location__c = location1.Id
-		);
-		insert customer;*/
 	}
 
 	// accountUpdate
@@ -669,34 +640,10 @@ System.debug(FFadata.TestUser.Id);
 
     @IsTest
     static void updateClosestStorePerAccount_givenSingleCustomer_returnsVoid() {
-//        List<Account> customers = [SELECT BillingAddress, BillingLatitude, BillingLongitude, Store_Location__c, Name FROM Account WHERE Name = 'Drake Chevalier'];
 		List<Account> accts = new List<Account>{
 				(Account) new sfab_FabricatedSObject(Account.class)
-						.setField(Account.Name, 'Drake Chevalier')
 						.setField(Account.BillingLatitude, 41.155330)
 						.setField(Account.BillingLongitude, -81.420850)
-						.setParent('Store_Location__c',
-								new sfab_FabricatedSObject(dealer__Dealer_Location__c.class)
-										.setField( dealer__Dealer_Location__c.Name,                                    'Kent Free Library')
-										.setField( dealer__Dealer_Location__c.dealer__Physical_Location__Latitude__s,  41.153520)
-										.setField( dealer__Dealer_Location__c.dealer__Physical_Location__Longitude__s, -81.360890)
-										.setField( dealer__Dealer_Location__c.dealer__City__c,                         'Kent')
-										.setField( dealer__Dealer_Location__c.dealer__Company_Number__c,               'KFL')
-										.setField( dealer__Dealer_Location__c.dealer__State__c,                        'OH')
-										.setField( dealer__Dealer_Location__c.dealer__Postal_Code__c,                  '44220')
-										.setField( dealer__Dealer_Location__c.AutoAssignRetail__c,                     true)
-						)
-						.setParent('Closest_Store_Location__c',
-								new sfab_FabricatedSObject(dealer__Dealer_Location__c.class)
-										.setField( dealer__Dealer_Location__c.Name,                                    'Stow Munroe Falls Library')
-										.setField( dealer__Dealer_Location__c.dealer__Physical_Location__Latitude__s,  41.160860)
-										.setField( dealer__Dealer_Location__c.dealer__Physical_Location__Longitude__s, -81.441040)
-										.setField( dealer__Dealer_Location__c.dealer__City__c,                         'Stow')
-										.setField( dealer__Dealer_Location__c.dealer__Company_Number__c,               'SMFL')
-										.setField( dealer__Dealer_Location__c.dealer__State__c,                        'OH')
-										.setField( dealer__Dealer_Location__c.dealer__Postal_Code__c,                  '44224')
-										.setField( dealer__Dealer_Location__c.AutoAssignRetail__c,                     true)
-						)
 						.toSObject()
 		};
         Test.startTest();

@@ -14,6 +14,8 @@
  */
 public with sharing class LocationsSingleton {
 
+	private static DealerLocationDAInterface dealerLocationDA;
+
 	public static LocationsSingleton ls;
 	public Set<Id> locationIds;
 	public Set<String> locationAbbrevs;
@@ -31,6 +33,11 @@ public with sharing class LocationsSingleton {
 		locationIds = new Set<Id>();
 		locationAbbrevs = new Set<String>();
 		locationNames = new Set<String>();
+		if(Test.isRunningTest()) {
+			dealerLocationDA = new DealerLocationDAMock();
+		} else {
+			dealerLocationDA = new DealerLocationDA();
+		}
 	}
 
 	public static LocationsSingleton getInstance() {
@@ -87,39 +94,22 @@ public with sharing class LocationsSingleton {
 		System.debug(locationNames);
 	}
 	// BLL1a end
+	private Boolean queryFilterCriteriaIsEmpty(){
+		return locationIds.isEmpty() && locationAbbrevs.isEmpty() && locationNames.isEmpty();
+	}
 
 	public void retrieveLocations() {
 		System.debug('retrieveLocations');
 		System.debug(locationIds);
 		System.debug(locationAbbrevs);
 		if (locationIdMap==null) {
-			// Select all fields from dealer__Dealer_Location__c
-			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
-			List<String> dlFieldList = new List<String>();
-			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
-			String dlfields = String.join(dlFieldList,',');
+			List<dealer__Dealer_Location__c> loclist;
+			if(queryFilterCriteriaIsEmpty()) {
+				loclist = dealerLocationDA.getAllLocations();
+			} else {
+				loclist = dealerLocationDA.getConditionallyFilteredLocations(locationIds, locationAbbrevs, locationNames);
 
-			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
-			String junct = ' WHERE ';
-			if (locationIds.size()>0) {
-				System.debug(locationIds);
-				soql += junct + ' Id in :locationIds ';
-				junct = ' or ';
 			}
-			if (locationAbbrevs.size()>0) {
-				System.debug(locationAbbrevs);
-				soql += junct + ' dealer__Company_Number__c in :locationAbbrevs ';
-				junct = ' or ';
-			}
-			// BLL1a
-			if (locationNames.size()>0) {
-				System.debug(locationNames);
-				soql += junct + ' Name in :locationNames ';
-				junct = ' or ';
-			}
-			// BLL1a end
-			System.debug('retrieveLocations: (soql) ' + soql);
-			List<dealer__Dealer_Location__c> loclist = Database.query(soql);
 			System.debug(loclist);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
@@ -162,18 +152,7 @@ public with sharing class LocationsSingleton {
 		//if (locationIdMap==null) {
 		if (AllLocationsRetrieved==false) {
 			// BLL3 end
-			// Select all fields from dealer__Dealer_Location__c
-			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
-			List<String> dlFieldList = new List<String>();
-			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
-			String dlfields = String.join(dlFieldList,',');
-
-			// BLL3 - ignore closed locations
-			//String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
-			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c where dealer__IsClosed__c=false ';
-			// BLL3 end
-			System.debug('retrieveLocations: (soql) ' + soql);
-			List<dealer__Dealer_Location__c> loclist = Database.query(soql);
+			List<dealer__Dealer_Location__c> loclist = dealerLocationDA.getAllNonClosedLocations();
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
 			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a

@@ -948,6 +948,7 @@ System.debug(newownermap);
 		account.Closest_Store_Location__c = getClosestStoreId(accountLocation, storeLocations);
 	}
 
+	@TestVisible
 	private static Id getClosestStoreId(Location accountLocation, List<dealer__Dealer_Location__c> storeLocations) {
 		Id closestStoreId = null;
 		Double minimumDistance = null;
