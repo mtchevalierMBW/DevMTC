@@ -697,7 +697,7 @@ System.debug(FFadata.TestUser.Id);
 										.setField( dealer__Dealer_Location__c.dealer__Postal_Code__c,                  '44224')
 										.setField( dealer__Dealer_Location__c.AutoAssignRetail__c,                     true)
 						)
-						.toSObject();
+						.toSObject()
 		};
         Test.startTest();
 			AccountProcess.updateClosestStorePerAccount(accts);
