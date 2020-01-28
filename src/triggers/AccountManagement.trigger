@@ -40,6 +40,7 @@
  * 2019-10-08	B. Leaman	W-000764 BLL26 - only run store assignment on insert of a new account.
  * 2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  * 2020-01-23	M. Chevalier W-000813 MTC29 Set distance from closest store and assigned store on update on account.
+ * 2020-01-28	M. Chevalier MTC30 refactored using TriggerHandler framework
  */
 trigger AccountManagement on Account (before insert, before update, before delete, after insert, after update) {
 	new AccountTriggerHandler().run();
