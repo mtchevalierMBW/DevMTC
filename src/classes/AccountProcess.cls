@@ -9,6 +9,7 @@
  *	2019-01-15	92%	(350/380)
  *	2019-01-21	91% (343/373)
  *	2019-08-09	86% (not currently testing AMM7 new routine)
+ * 	2020-01-28	4 tests failing (100% test coverage for new development lines 904-960)
  * 
  * Modification log:
  *	2017-02-09	B. Leaman	BLL1 - Change how last sale types are determinied due to change in commercial process.
@@ -28,6 +29,7 @@
  *	2019-10-08	B. Leaman	W-000764 BLL27 - newly-created accounts are not always getting the creating user's store assigned to them.
  *	2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  *								Also record last Home Access sale date.
+*	2020-01-28	M. Chevalier MTC29 Added updateClosestStorePerAccount call stack and BuildDefaultDataValuesValidationsSummaries
 */
 public with sharing class AccountProcess {
 
@@ -900,6 +902,7 @@ System.debug(newownermap);
 		}
 	}
 
+	// MTC29 start
 	public static void BuildDefaultDataValuesValidationsSummaries (List<Account> accountsNew, Map<Id, Account> accountsOldMap, Map<String, Boolean> controlFeatures) {
 		AccountProcess.AddInfluencerAssociation(accountsNew);
 		if (controlFeatures.get('uploadHelperEnabled')){ AccountProcess.UploadReferencesByName(accountsNew);}
@@ -945,7 +948,6 @@ System.debug(newownermap);
 		account.Closest_Store_Location__c = getClosestStoreId(accountLocation, storeLocations);
 	}
 
-	@TestVisible
 	private static Id getClosestStoreId(Location accountLocation, List<dealer__Dealer_Location__c> storeLocations) {
 		Id closestStoreId = null;
 		Double minimumDistance = null;
@@ -958,6 +960,7 @@ System.debug(newownermap);
 		}
 		return closestStoreId;
 	}
+	// MTC29 end
 
 
 //	// AMM7

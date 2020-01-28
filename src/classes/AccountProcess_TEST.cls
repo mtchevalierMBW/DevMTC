@@ -4,12 +4,15 @@
  * Date: Apr 11, 2016
  * Programmer: Bryan Leaman
  *
+
+ *
  *	2016-12-22	B. Leaman	BLL1 - Ignore error of not finding service vehicle created for inventnory vehicle.
  *	2018-07-16	B. Leaman	BLL2 - merge influencer association tests into this class as most function
  *							is now in the AccountProcess class.
  *	2019-01-21	B. Leaman	W-000560 BLL3 - no longer moving opportunities with acct owner change.
  *  2019-03-28  A. Miller   W-000555 AMM4 Update to handle sycning the Mobile and Other phone numbers
- *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!
+ *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!\
+ *	2020-01-29	M. Chevalier MTC5 - Wrote tests for updateClosestStorePerAccount and BuildDefaultDataValuesValidationsSummaries
  */
 @isTest
 private class AccountProcess_TEST {
@@ -48,6 +51,35 @@ private class AccountProcess_TEST {
 				update(sv);
 			} catch(Exception e) {}		// BLL1a
 		}
+		dealer__Dealer_Location__c location1 = new dealer__Dealer_Location__c(
+				Name = 'Kent Free Library',
+				dealer__Physical_Location__Latitude__s = 41.153520,
+				dealer__Physical_Location__Longitude__s = -81.360890,
+				dealer__City__c = 'Kent',
+				dealer__Company_Number__c = 'KFL',
+				dealer__State__c = 'OH',
+				dealer__Postal_Code__c = '44240',
+				AutoAssignRetail__c = true
+		);
+		insert location1;
+		dealer__Dealer_Location__c location2 = new dealer__Dealer_Location__c(
+				Name = 'Stow Munroe Falls Library',
+				dealer__Physical_Location__Latitude__s = 41.160860,
+				dealer__Physical_Location__Longitude__s = -81.441040,
+				dealer__City__c = 'Stow',
+				dealer__Company_Number__c = 'SMFL',
+				dealer__State__c = 'OH',
+				dealer__Postal_Code__c = '44224',
+				AutoAssignRetail__c = true
+		);
+		insert  location2;
+		Account customer = new Account(
+				Name = 'Drake Chevalier',
+				BillingLatitude = 41.155330,
+				BillingLongitude = -81.420850,
+				Store_Location__c = location1.Id
+		);
+		insert customer;
 	}
 
 	// accountUpdate
@@ -610,4 +642,37 @@ System.debug(FFadata.TestUser.Id);
 		System.assertEquals(testPhoneNumber, p.BusinessOtherPhone__c);
 	}
 	// AMM4
+
+	// MTC4 start
+	@IsTest
+	static void BuildDefaultDataValuesValidationsSummaries_givenAccountListAccountMapBooleanMapByString_returnsVoid () {
+	    Map<String, Boolean> controlFeatures = new Map<String, Boolean>{
+				'accountCountyEnabled'  => true,
+				'accountRcdTypeEnabled' => true,
+				'accountRLCountsEnabled'=> true,
+				'uploadHelperEnabled'   => true
+		};
+		Test.startTest();
+	    {
+	        AccountProcess.BuildDefaultDataValuesValidationsSummaries(new List<Account>(), new Map<Id, Account>(), controlFeatures);
+	    }
+	    Test.stopTest();
+	    //System.debug('expected', 'actual');
+	}
+
+    @IsTest
+    static void updateClosestStorePerAccount_givenEmptyList_returnsVoid() {
+        Test.startTest();
+            AccountProcess.updateClosestStorePerAccount(new List<Account>());
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void updateClosestStorePerAccount_givenSingleCustomer_returnsVoid() {
+        List<Account> customers = [SELECT BillingAddress, BillingLatitude, BillingLongitude, Store_Location__c, Name FROM Account WHERE Name = 'Drake Chevalier'];
+        Test.startTest();
+			AccountProcess.updateClosestStorePerAccount(customers);
+        Test.stopTest();
+    }
+	// MTC4 end
 }
