@@ -1,4 +1,7 @@
 public virtual class TriggerHandler {
+/*
+  https://github.com/kevinohara80/sfdc-trigger-framework
+*/
 
   // static map of handlername, times run() was invoked
   private static Map<String, LoopCount> loopCountMap;

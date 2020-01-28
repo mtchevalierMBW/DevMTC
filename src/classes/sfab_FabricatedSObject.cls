@@ -1,4 +1,7 @@
 public virtual class sfab_FabricatedSObject {
+/*
+    https://github.com/mattaddy/SObjectFabricator
+*/
     private Type sType;
     @testVisible private List<sfab_FabricatedSObjectNode> nodes = new List<sfab_FabricatedSObjectNode>();
 
