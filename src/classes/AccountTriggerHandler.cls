@@ -6,6 +6,7 @@
  * 2020-01-24	100%    (31/31)
  *
  * 2020-01-23 M. Chevalier MTC1 Implemented updateClosestStorePerAccount
+ * 2020-01-27 M. Chevalier MTC2 Refactored trigger and implemented trigger handler framework
  */
 
 public with sharing class AccountTriggerHandler extends TriggerHandler {
