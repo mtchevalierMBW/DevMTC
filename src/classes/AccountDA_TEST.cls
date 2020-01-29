@@ -15,4 +15,14 @@ private class AccountDA_TEST {
         }
         Test.stopTest();
     }
+
+    @IsTest
+    static void callAllMockMethods () {
+        AccountDAMock instance = new AccountDAMock();
+        Test.startTest();
+        {
+            instance.getAccountsWithRAsAndROsFromAccountIds(new Set<Id>());
+        }
+        Test.stopTest();
+    }
 }
