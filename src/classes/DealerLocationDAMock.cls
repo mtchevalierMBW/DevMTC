@@ -8,11 +8,11 @@
 *   2020-01-28  M. Chevalier W-000813 MTC1 - Wrote mock methods for coverage in AccountProcess.cls
 */
 
-public with sharing class DealerLocationDAMock implements DealerLocationDAInterface{
+public inherited sharing class DealerLocationDAMock implements DealerLocationDAInterface{
     public List<dealer__Dealer_Location__c> getAllLocations() {
         return buildNonClosedLocationRecords();
     }
-    public List<dealer__Dealer_Location__c> getConditionallyFilteredLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
+    public List<dealer__Dealer_Location__c> getSelectedLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
         return buildNonClosedLocationRecords();
     }
     public List<dealer__Dealer_Location__c> getAllNonClosedLocations() {

@@ -631,7 +631,10 @@ System.debug(FFadata.TestUser.Id);
 						.toSObject()
 		};
         Test.startTest();
+		{
+			LocationsSingleton.setDealerLocationDAToMock();
 			AccountProcess.updateClosestStorePerAccount(accts);
+		}
         Test.stopTest();
     }
 	// MTC5 end

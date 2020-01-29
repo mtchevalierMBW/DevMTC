@@ -6,22 +6,22 @@
 private class DealerLocationDA_TEST {
 
     @IsTest
-    static void getConditionallyFilteredLocations_givenVoid_returnsEmptyDealerLocationList () {
+    static void getSelectedLocations_givenVoid_returnsEmptyDealerLocationList () {
         DealerLocationDA instance = new DealerLocationDA();
         Test.startTest();
         {
-            List<dealer__Dealer_Location__c> res = instance.getConditionallyFilteredLocations(new Set<Id>(), new Set<String>(), new Set<String>());
+            List<dealer__Dealer_Location__c> res = instance.getSelectedLocations(new Set<Id>(), new Set<String>(), new Set<String>());
             System.assertEquals(0, res.size());
         }
         Test.stopTest();
     }
 
     @IsTest
-    static void getConditionallyFilteredLocations_givenVoid_returnsDealerLocationList () {
+    static void getSelectedLocations_givenVoid_returnsDealerLocationList () {
         DealerLocationDA instance = new DealerLocationDA();
         Test.startTest();
         {
-            List<dealer__Dealer_Location__c> res = instance.getConditionallyFilteredLocations(new Set<Id>(), new Set<String>{'a'}, new Set<String>{'b'});
+            List<dealer__Dealer_Location__c> res = instance.getSelectedLocations(new Set<Id>(), new Set<String>{'a'}, new Set<String>{'b'});
             System.assertEquals(0, res.size());
         }
         Test.stopTest();

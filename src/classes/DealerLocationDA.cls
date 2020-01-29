@@ -9,9 +9,9 @@
 *
 *   2020-01-28  M. Chevalier W-000813 MTC1 - Ported DealerLocation queries out of LocationsSingleton into this class
 */
-public with sharing class DealerLocationDA implements DealerLocationDAInterface{
+public inherited sharing class DealerLocationDA implements DealerLocationDAInterface{
 
-    public List<dealer__Dealer_Location__c> getConditionallyFilteredLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
+    public List<dealer__Dealer_Location__c> getSelectedLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
         //Per the SOLID principle of single responsibility, this query should do one thing: query a subset of records based on the passed in parameters
         //but due to the structure of the query, if all of the passed in parameters are empty, then the query would return all records
         //Therefore if all of the parameters are empty, this query will return an empty list

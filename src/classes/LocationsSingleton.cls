@@ -7,16 +7,22 @@
  * Code Coverage:
  *  2018-01-03  86% (38/44)
  *  2020-01-24  83%  (76/91)
- *  2020-01-28	90%	(71/79)
+ *  2020-01-28	97%	(77/79)
  *
  *  2018-01-24  B. Leaman  BLL1 - new routine for finding by name; reduce code size by re-using set routines for lists;
  *  2019-04-12  B. Leaman  W-000575 BLL2 - reduce soqls in test methods
  *  2020-01-24  B. Leaman  W-000813 BLL3 - Fix potential flaw in RetrieveAllLocations logic when used in a trigger context.
  *  2020-01-28	M. Chevalier W-000813 MTC4 - Ported queries out to DealerLocationDA.cls
  */
-public with sharing class LocationsSingleton {
+public with sharing class LocationsSingleton{
 
-	private static DealerLocationDAInterface dealerLocationDA; // MTC4
+	// MTC4
+	private static DealerLocationDAInterface dealerLocationDA = new DealerLocationDA();
+	@TestVisible
+	private static void setDealerLocationDAToMock() {
+		dealerLocationDA = new DealerLocationDAMock();
+	}
+	// MTC4 end
 
 	public static LocationsSingleton ls;
 	public Set<Id> locationIds;
@@ -35,13 +41,6 @@ public with sharing class LocationsSingleton {
 		locationIds = new Set<Id>();
 		locationAbbrevs = new Set<String>();
 		locationNames = new Set<String>();
-		// MTC4
-		if(Test.isRunningTest()) {
-			dealerLocationDA = new DealerLocationDAMock();
-		} else {
-			dealerLocationDA = new DealerLocationDA();
-		}
-		// MTC4
 	}
 
 	public static LocationsSingleton getInstance() {
@@ -98,9 +97,6 @@ public with sharing class LocationsSingleton {
 		System.debug(locationNames);
 	}
 	// BLL1a end
-	private Boolean queryFilterCriteriaIsEmpty(){
-		return locationIds.isEmpty() && locationAbbrevs.isEmpty() && locationNames.isEmpty();
-	}
 
 	public void retrieveLocations() {
 		System.debug('retrieveLocations');
@@ -112,10 +108,10 @@ public with sharing class LocationsSingleton {
 			if(queryFilterCriteriaIsEmpty()) {
 				loclist = dealerLocationDA.getAllLocations();
 			} else {
-				loclist = dealerLocationDA.getConditionallyFilteredLocations(locationIds, locationAbbrevs, locationNames);
+				loclist = dealerLocationDA.getSelectedLocations(locationIds, locationAbbrevs, locationNames);
 
 			}
-			// MTC4
+			// MTC4 end
 			System.debug(loclist);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
@@ -160,7 +156,7 @@ public with sharing class LocationsSingleton {
 			// BLL3 end
 			// MTC4
 			List<dealer__Dealer_Location__c> loclist = dealerLocationDA.getAllNonClosedLocations();
-			// MTC4
+			// MTC4 end
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
 			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a
@@ -200,4 +196,9 @@ public with sharing class LocationsSingleton {
 	}
 	// BLL1a end
 
+	// MTC4
+	private Boolean queryFilterCriteriaIsEmpty(){
+		return locationIds.isEmpty() && locationAbbrevs.isEmpty() && locationNames.isEmpty();
+	}
+	// MTC4 end
 }

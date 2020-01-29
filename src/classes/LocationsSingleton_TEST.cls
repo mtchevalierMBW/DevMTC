@@ -7,7 +7,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void addLocationIds_givenIdList_returnsVoid () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.addLocationIds(new List<Id>());
@@ -17,7 +17,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void addLocationIds_givenIdSet_returnsVoid () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.addLocationIds(new Set<Id>());
@@ -27,7 +27,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void addLocationNames_givenStringList_returnsVoid () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.addLocationNames(new List<String>());
@@ -37,7 +37,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void addLocationNames_givenStringSet_returnsVoid () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.addLocationNames(new Set<String>());
@@ -47,7 +47,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void getLocationByName_givenStringSet_returnsLocation () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.getLocationByName('Kent Free Library');
@@ -57,7 +57,7 @@ private class LocationsSingleton_TEST {
 
     @IsTest
     static void retrieveAllLocations_givenVoid_returnsVoid () {
-        LocationsSingleton instance = new LocationsSingleton();
+        LocationsSingleton instance = LocationsSingleton.getInstance();
         Test.startTest();
         {
             instance.retrieveAllLocations();
