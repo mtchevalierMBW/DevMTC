@@ -4,7 +4,6 @@
  * Date: Apr 11, 2016
  * Programmer: Bryan Leaman
  *
-
  *
  *	2016-12-22	B. Leaman	BLL1 - Ignore error of not finding service vehicle created for inventnory vehicle.
  *	2018-07-16	B. Leaman	BLL2 - merge influencer association tests into this class as most function
@@ -13,6 +12,7 @@
  *  2019-03-28  A. Miller   W-000555 AMM4 Update to handle sycning the Mobile and Other phone numbers
  *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!\
  *	2020-01-29	M. Chevalier MTC5 - Wrote tests for updateClosestStorePerAccount and BuildDefaultDataValuesValidationsSummaries
+ *	2020-01-28	M. Chevalier MTC6 - rewrote test for updateClosestStorePerAccount using SObjectFabricator class
  */
 @isTest
 private class AccountProcess_TEST {
@@ -637,7 +637,7 @@ System.debug(FFadata.TestUser.Id);
             AccountProcess.updateClosestStorePerAccount(new List<Account>());
         Test.stopTest();
     }
-
+	// MTC5 start
     @IsTest
     static void updateClosestStorePerAccount_givenSingleCustomer_returnsVoid() {
 		List<Account> accts = new List<Account>{
@@ -650,5 +650,6 @@ System.debug(FFadata.TestUser.Id);
 			AccountProcess.updateClosestStorePerAccount(accts);
         Test.stopTest();
     }
+	// MTC5 end
 	// MTC4 end
 }

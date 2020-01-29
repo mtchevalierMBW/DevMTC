@@ -11,10 +11,11 @@
  *  2018-01-24  B. Leaman  BLL1 - new routine for finding by name; reduce code size by re-using set routines for lists;
  *  2019-04-12  B. Leaman  W-000575 BLL2 - reduce soqls in test methods
  *  2020-01-24  B. Leaman  W-000813 BLL3 - Fix potential flaw in RetrieveAllLocations logic when used in a trigger context.
+ *  2020-01-28	M. Chevalier W-000813 MTC4 - Ported queries out to DealerLocationDA.cls
  */
 public with sharing class LocationsSingleton {
 
-	private static DealerLocationDAInterface dealerLocationDA;
+	private static DealerLocationDAInterface dealerLocationDA; // MTC4
 
 	public static LocationsSingleton ls;
 	public Set<Id> locationIds;
@@ -33,11 +34,13 @@ public with sharing class LocationsSingleton {
 		locationIds = new Set<Id>();
 		locationAbbrevs = new Set<String>();
 		locationNames = new Set<String>();
+		// MTC4
 		if(Test.isRunningTest()) {
 			dealerLocationDA = new DealerLocationDAMock();
 		} else {
 			dealerLocationDA = new DealerLocationDA();
 		}
+		// MTC4
 	}
 
 	public static LocationsSingleton getInstance() {
@@ -103,6 +106,7 @@ public with sharing class LocationsSingleton {
 		System.debug(locationIds);
 		System.debug(locationAbbrevs);
 		if (locationIdMap==null) {
+			// MTC4
 			List<dealer__Dealer_Location__c> loclist;
 			if(queryFilterCriteriaIsEmpty()) {
 				loclist = dealerLocationDA.getAllLocations();
@@ -110,6 +114,7 @@ public with sharing class LocationsSingleton {
 				loclist = dealerLocationDA.getConditionallyFilteredLocations(locationIds, locationAbbrevs, locationNames);
 
 			}
+			// MTC4
 			System.debug(loclist);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
@@ -152,7 +157,9 @@ public with sharing class LocationsSingleton {
 		//if (locationIdMap==null) {
 		if (AllLocationsRetrieved==false) {
 			// BLL3 end
+			// MTC4
 			List<dealer__Dealer_Location__c> loclist = dealerLocationDA.getAllNonClosedLocations();
+			// MTC4
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
 			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a

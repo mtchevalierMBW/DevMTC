@@ -1,9 +1,15 @@
 /**
- * Created by Matthew.Chevalier on 1/28/2020.
- */
-
+* DealerLocationDA
+* Tested by: DealerLocationDA_TEST
+* Date: Jan 28, 2020
+* Programmer: Matthew Chevalier
+*
+* Code Coverage:
+*   2020-01-28  86% (23/26)
+*
+*   2020-01-28  M. Chevalier W-000813 MTC1 - Ported DealerLocation queries out of LocationsSingleton into this class
+*/
 public with sharing class DealerLocationDA implements DealerLocationDAInterface{
-
 
     public List<dealer__Dealer_Location__c> getConditionallyFilteredLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
         //Per the SOLID principle of single responsibility, this query should do one thing: query a subset of records based on the passed in parameters

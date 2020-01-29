@@ -1,6 +1,12 @@
 /**
- * Created by Matthew.Chevalier on 1/28/2020.
- */
+* DealerLocationDAMock
+* Tested by: N/A
+*   (this class should be invoked while testing any class that queries for dealer__Dealer_Location__c records)
+* Date: Jan 28, 2020
+* Programmer: Matthew Chevalier
+*
+*   2020-01-28  M. Chevalier W-000813 MTC1 - Wrote mock methods for coverage in AccountProcess.cls
+*/
 
 public with sharing class DealerLocationDAMock implements DealerLocationDAInterface{
     public List<dealer__Dealer_Location__c> getAllLocations() {
