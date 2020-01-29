@@ -30,10 +30,13 @@
  *	2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  *								Also record last Home Access sale date.
 *	2020-01-28	M. Chevalier MTC29 Added updateClosestStorePerAccount call stack and BuildDefaultDataValuesValidationsSummaries
+*	2020-01-29	M. Cheavlier MTC30 Moved all queries to corresponding DataAccessor classes
 */
 public with sharing class AccountProcess {
 
 	static Map<Id, Account> acctRLMap;
+	@TestVisible
+	private static AccountDAInterface accountDA = new AccountDA();
 
 	// BLL28
 	public static void RecordRelatedRcdCounts(List<Account> newList) {
@@ -44,13 +47,7 @@ public with sharing class AccountProcess {
 		if (acctRLMap==null) acctRLMap = new Map<Id, Account>();
 		if (acctIds.size()>0 && !acctRLMap.keySet().containsAll(acctIds)) {
 			acctIds.addAll(acctRLMap.keySet());	// ensure previously-read records are included too
-			acctRLMap = new Map<Id, Account>([
-				select Id, Name,
-					(select Id, Name, Account__c, dealer__Agreement_Status__c, dealer__Return_Date__c from Rental_Agreements2__r where dealer__Agreement_Status__c='Paid' order by dealer__Return_Date__c),
-					(select Id, Name, dealer__Customer__c, dealer__Status__c, dealer__Posted_Date_Time__c from dealer__Service_Repair_Orders__r where dealer__Customer_Charges__c>0 and dealer__Status__c='Posted')
-				from Account
-				where Id in :acctIds
-			]);
+			acctRLMap = new Map<Id, Account>(accountDA.getAccountsWithRAsAndROsFromAccountIds(acctIds));
 		}
 		for(Account a : newList) {
 			if (a.Id!=null) {

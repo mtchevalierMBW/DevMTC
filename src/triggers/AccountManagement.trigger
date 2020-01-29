@@ -44,27 +44,4 @@
  */
 trigger AccountManagement on Account (before insert, before update, before delete, after insert, after update) {
 	new AccountTriggerHandler().run();
-
-
-/*	AccountTriggerHandler handler = new AccountTriggerHandler();
-
-	if (Trigger.isBefore) {
-		if (Trigger.isInsert) {
-			handler.handleBeforeInsert(Trigger.new);
-		}
-		if (Trigger.isInsert) {
-			handler.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
-		}
-		if (Trigger.isInsert) {
-			handler.handleBeforeDelete(Trigger.old);
-		}
-	}
-	if (Trigger.isAfter) {
-		if (Trigger.isInsert) {
-			handler.handleAfterInsert(Trigger.new);
-		}
-		if (Trigger.isInsert) {
-			handler.handleAfterUpdate(Trigger.new, Trigger.oldMap);
-		}
-	}*/
 }
