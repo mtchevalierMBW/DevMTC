@@ -38,21 +38,21 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts');
         MW_TriggerControls__c uploadHelper    = MW_TriggerControls__c.getInstance('uploadAccountHelper');
         this.controlFeatures = new Map<String, Boolean>{
-                'accountCountyEnabled'  => (accountCounty != null)   ? accountCounty.Enabled__c   : false,
-                'accountRcdTypeEnabled' => (accountRcdType != null)  ? accountRcdType.Enabled__c  : false,
-                'accountRLCountsEnabled'=> (accountRLCounts != null) ? accountRLCounts.Enabled__c : false,
-                'uploadHelperEnabled'   => (uploadHelper != null)    ? uploadHelper.Enabled__c    : false
+                'accountCountyEnabled'  => (accountCounty != null)   ? accountCounty.Enabled__c   : true,
+                'accountRcdTypeEnabled' => (accountRcdType != null)  ? accountRcdType.Enabled__c  : true,
+                'accountRLCountsEnabled'=> (accountRLCounts != null) ? accountRLCounts.Enabled__c : true,
+                'uploadHelperEnabled'   => (uploadHelper != null)    ? uploadHelper.Enabled__c    : true
         };
     }
 
     public override void beforeInsert() {
         AccountProcess.DefaultCompanyAssignment(accountsNew);
-        AccountProcess.BuildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap, controlFeatures);
+        buildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap);
     }
 
     public override void beforeUpdate() {
         AccountProcess.RestrictRecordTypeChanges(accountsNew, accountsOldMap);
-        AccountProcess.BuildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap, controlFeatures);
+        buildDefaultDataValuesValidationsSummaries(accountsNew, accountsOldMap);
         AccountProcess.updateClosestStorePerAccount(accountsNew);
     }
 
@@ -67,5 +67,18 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
     public override void afterUpdate() {
         AccountProcess.UpdateRelatedObjectOwners(accountsNew, accountsOldMap);
         AccountProcess.AssignCountyJurisdiction(accountsNew, controlFeatures.get('accountCountyEnabled'));
+    }
+
+    @TestVisible
+    private void buildDefaultDataValuesValidationsSummaries (List<Account> accountsNew, Map<Id, Account> accountsOldMap) {
+        AccountProcess.AddInfluencerAssociation(accountsNew);
+        if (controlFeatures.get('uploadHelperEnabled')){ AccountProcess.UploadReferencesByName(accountsNew);}
+        AccountProcess.StandardizePersonName(accountsNew);
+        AccountProcess.SynchFFTaxFields(accountsNew, accountsOldMap);
+        AccountProcess.RequiredFieldDefaults(accountsNew);
+        AccountProcess.AppendNewStockNumber(accountsNew, accountsOldMap);
+        if (controlFeatures.get('accountRcdTypeEnabled')){ AccountProcess.SyncPersonAccountFields(accountsNew, accountsOldMap);}
+        AccountProcess.ClearFieldsOnAddressChange(accountsNew, accountsOldMap);
+        if (controlFeatures.get('accountRLCountsEnabled')){ AccountProcess.RecordRelatedRcdCounts(accountsNew);}
     }
 }

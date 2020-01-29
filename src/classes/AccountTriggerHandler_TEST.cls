@@ -72,4 +72,15 @@ private class AccountTriggerHandler_TEST {
         //System.debug('expected', 'actual');
     }
 
+    @IsTest
+    static void buildDefaultDataValuesValidationsSummaries_givenAccountListAccountMapBooleanMapByString_returnsVoid () {
+        AccountTriggerHandler instance = setupInstance();
+        Test.startTest();
+        {
+            instance.buildDefaultDataValuesValidationsSummaries(new List<Account>(), new Map<Id, Account>());
+        }
+        Test.stopTest();
+        //System.debug('expected', 'actual');
+    }
+
 }

@@ -615,22 +615,6 @@ System.debug(FFadata.TestUser.Id);
 	// AMM4
 
 	// MTC4 start
-	@IsTest
-	static void BuildDefaultDataValuesValidationsSummaries_givenAccountListAccountMapBooleanMapByString_returnsVoid () {
-	    Map<String, Boolean> controlFeatures = new Map<String, Boolean>{
-				'accountCountyEnabled'  => true,
-				'accountRcdTypeEnabled' => true,
-				'accountRLCountsEnabled'=> true,
-				'uploadHelperEnabled'   => true
-		};
-		Test.startTest();
-	    {
-	        AccountProcess.BuildDefaultDataValuesValidationsSummaries(new List<Account>(), new Map<Id, Account>(), controlFeatures);
-	    }
-	    Test.stopTest();
-	    //System.debug('expected', 'actual');
-	}
-
     @IsTest
     static void updateClosestStorePerAccount_givenEmptyList_returnsVoid() {
         Test.startTest();

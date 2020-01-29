@@ -903,18 +903,6 @@ System.debug(newownermap);
 	}
 
 	// MTC29 start
-	public static void BuildDefaultDataValuesValidationsSummaries (List<Account> accountsNew, Map<Id, Account> accountsOldMap, Map<String, Boolean> controlFeatures) {
-		AccountProcess.AddInfluencerAssociation(accountsNew);
-		if (controlFeatures.get('uploadHelperEnabled')){ AccountProcess.UploadReferencesByName(accountsNew);}
-		AccountProcess.StandardizePersonName(accountsNew);
-		AccountProcess.SynchFFTaxFields(accountsNew, accountsOldMap);
-		AccountProcess.RequiredFieldDefaults(accountsNew);
-		AccountProcess.AppendNewStockNumber(accountsNew, accountsOldMap);
-		if (controlFeatures.get('accountRcdTypeEnabled')){ AccountProcess.SyncPersonAccountFields(accountsNew, accountsOldMap);}
-		AccountProcess.ClearFieldsOnAddressChange(accountsNew, accountsOldMap);
-		if (controlFeatures.get('accountRLCountsEnabled')){ AccountProcess.RecordRelatedRcdCounts(accountsNew);}
-	}
-
 	public static void updateClosestStorePerAccount (List<Account> accounts) {
 		List<dealer__Dealer_Location__c> storeLocations = getStoreLocations();
 		for(Account account : accounts) {
