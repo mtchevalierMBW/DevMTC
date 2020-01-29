@@ -35,12 +35,14 @@
 public with sharing class AccountProcess {
 
 	static Map<Id, Account> acctRLMap;
+	// MTC30
 	@TestVisible
 	private static AccountDAInterface accountDA = new AccountDA();
 	@TestVisible
 	private static TaskDAInterface taskDA = new TaskDA();
 	@TestVisible
 	private static InfluencerAssociationDAInterface influencerAssociationDA = new InfluencerAssociationDA();
+	// MTC30 end
 
 	// BLL28
 	public static void RecordRelatedRcdCounts(List<Account> newList) {
@@ -51,7 +53,7 @@ public with sharing class AccountProcess {
 		if (acctRLMap==null) acctRLMap = new Map<Id, Account>();
 		if (acctIds.size()>0 && !acctRLMap.keySet().containsAll(acctIds)) {
 			acctIds.addAll(acctRLMap.keySet());	// ensure previously-read records are included too
-			acctRLMap = new Map<Id, Account>(accountDA.getAccountsWithRAsAndROsFromAccountIds(acctIds));
+			acctRLMap = new Map<Id, Account>(accountDA.getAccountsWithRAsAndROsFromAccountIds(acctIds)); 	// MTC30
 		}
 		for(Account a : newList) {
 			if (a.Id!=null) {
@@ -238,8 +240,8 @@ System.debug(newownermap);
 	   	    	
 	    	// Tasks
 	    	List<Task> updTasks = new List<Task>();
-	    	for(Task t : taskDA.getIncompleteTasksFromAccountIds(accountIds)) {
-	    		Id newOwnerId = newownermap.get(t.WhatId);	// BLL2a
+	    	for(Task t : taskDA.getIncompleteTasksFromAccountIds(accountIds)) { 	// MTC30
+				Id newOwnerId = newownermap.get(t.WhatId);	// BLL2a
 	    		Id oldOwnerId = oldownermap.get(t.WhatId);	// BLL2a
 	    		System.debug('Change owner ' + oldOwnerId + ' to ' + newOwnerId + '? Task owner='+t.ownerId);
 	    		if (newOwnerId!=null && oldOwnerId==t.ownerId) {	// BLL2a
@@ -336,7 +338,7 @@ System.debug(newownermap);
 		Set<Id> accountIds = new Set<Id>();
 		for(Account a : oldlist) accountIds.add(a.Id);
 		if (accountIds.size()>0) {
-			ia2List = influencerAssociationDA.getAllFromAccountIds(accountIds);
+			ia2List = influencerAssociationDA.getAllFromAccountIds(accountIds); 	// MTC30
 			if (ia2List.size()>0) delete(ia2List);
 		}
 	}	// end CleanUpInfluencerAssociations
