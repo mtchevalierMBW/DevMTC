@@ -37,6 +37,8 @@ public with sharing class AccountProcess {
 	static Map<Id, Account> acctRLMap;
 	@TestVisible
 	private static AccountDAInterface accountDA = new AccountDA();
+	@TestVisible
+	private static TaskDAInterface taskDA = new TaskDA();
 
 	// BLL28
 	public static void RecordRelatedRcdCounts(List<Account> newList) {
@@ -234,7 +236,7 @@ System.debug(newownermap);
 	   	    	
 	    	// Tasks
 	    	List<Task> updTasks = new List<Task>();
-	    	for(Task t : [select Id, Subject, OwnerId, WhatId from Task where WhatId in :accountIds and Status!='Completed']) {
+	    	for(Task t : taskDA.getIncompleteTasksFromAccountIds(accountIds)) {
 	    		Id newOwnerId = newownermap.get(t.WhatId);	// BLL2a
 	    		Id oldOwnerId = oldownermap.get(t.WhatId);	// BLL2a
 	    		System.debug('Change owner ' + oldOwnerId + ' to ' + newOwnerId + '? Task owner='+t.ownerId);
