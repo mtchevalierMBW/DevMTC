@@ -39,6 +39,8 @@ public with sharing class AccountProcess {
 	private static AccountDAInterface accountDA = new AccountDA();
 	@TestVisible
 	private static TaskDAInterface taskDA = new TaskDA();
+	@TestVisible
+	private static InfluencerAssociationDAInterface influencerAssociationDA = new InfluencerAssociationDA();
 
 	// BLL28
 	public static void RecordRelatedRcdCounts(List<Account> newList) {
@@ -334,7 +336,7 @@ System.debug(newownermap);
 		Set<Id> accountIds = new Set<Id>();
 		for(Account a : oldlist) accountIds.add(a.Id);
 		if (accountIds.size()>0) {
-			ia2List = [select Id, Name from InfluencerAssociation2__c where InfluencedAccount__c in :accountIds or (InfluencerAccount__c in :accountIds and InfluencerContact__c=null) limit 2000];
+			ia2List = influencerAssociationDA.getAllFromAccountIds(accountIds);
 			if (ia2List.size()>0) delete(ia2List);
 		}
 	}	// end CleanUpInfluencerAssociations
