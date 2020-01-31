@@ -7,12 +7,22 @@
  * Code Coverage:
  *  2018-01-03  86% (38/44)
  *  2020-01-24  83%  (76/91)
+ *  2020-01-28	97%	(77/79)
  *
  *  2018-01-24  B. Leaman  BLL1 - new routine for finding by name; reduce code size by re-using set routines for lists;
  *  2019-04-12  B. Leaman  W-000575 BLL2 - reduce soqls in test methods
  *  2020-01-24  B. Leaman  W-000813 BLL3 - Fix potential flaw in RetrieveAllLocations logic when used in a trigger context.
+ *  2020-01-28	M. Chevalier W-000813 MTC4 - Ported queries out to DealerLocationDA.cls
  */
-public with sharing class LocationsSingleton {
+public with sharing class LocationsSingleton{
+
+	// MTC4
+	private static DealerLocationDAInterface dealerLocationDA = new DealerLocationDA();
+	@TestVisible
+	private static void setDealerLocationDAToMock() {
+		dealerLocationDA = new DealerLocationDAMock();
+	}
+	// MTC4 end
 
 	public static LocationsSingleton ls;
 	public Set<Id> locationIds;
@@ -93,33 +103,15 @@ public with sharing class LocationsSingleton {
 		System.debug(locationIds);
 		System.debug(locationAbbrevs);
 		if (locationIdMap==null) {
-			// Select all fields from dealer__Dealer_Location__c
-			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
-			List<String> dlFieldList = new List<String>();
-			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
-			String dlfields = String.join(dlFieldList,',');
+			// MTC4
+			List<dealer__Dealer_Location__c> loclist;
+			if(queryFilterCriteriaIsEmpty()) {
+				loclist = dealerLocationDA.getAllLocations();
+			} else {
+				loclist = dealerLocationDA.getSelectedLocations(locationIds, locationAbbrevs, locationNames);
 
-			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
-			String junct = ' WHERE ';
-			if (locationIds.size()>0) {
-				System.debug(locationIds);
-				soql += junct + ' Id in :locationIds ';
-				junct = ' or ';
 			}
-			if (locationAbbrevs.size()>0) {
-				System.debug(locationAbbrevs);
-				soql += junct + ' dealer__Company_Number__c in :locationAbbrevs ';
-				junct = ' or ';
-			}
-			// BLL1a
-			if (locationNames.size()>0) {
-				System.debug(locationNames);
-				soql += junct + ' Name in :locationNames ';
-				junct = ' or ';
-			}
-			// BLL1a end
-			System.debug('retrieveLocations: (soql) ' + soql);
-			List<dealer__Dealer_Location__c> loclist = Database.query(soql);
+			// MTC4 end
 			System.debug(loclist);
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
@@ -162,18 +154,9 @@ public with sharing class LocationsSingleton {
 		//if (locationIdMap==null) {
 		if (AllLocationsRetrieved==false) {
 			// BLL3 end
-			// Select all fields from dealer__Dealer_Location__c
-			Map<String, Schema.SObjectField> dlFieldMap =  Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
-			List<String> dlFieldList = new List<String>();
-			for(string f : dlFieldMap.keySet()) /* if (trsFieldMap.get(f).getDescribe().isAccessible()) */ dlFieldList.add(f);
-			String dlfields = String.join(dlFieldList,',');
-
-			// BLL3 - ignore closed locations
-			//String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c ';
-			String soql = 'select ' + dlfields + ' from dealer__Dealer_Location__c where dealer__IsClosed__c=false ';
-			// BLL3 end
-			System.debug('retrieveLocations: (soql) ' + soql);
-			List<dealer__Dealer_Location__c> loclist = Database.query(soql);
+			// MTC4
+			List<dealer__Dealer_Location__c> loclist = dealerLocationDA.getAllNonClosedLocations();
+			// MTC4 end
 			locationIdMap = new Map<Id,dealer__Dealer_Location__c>();
 			locationAbbrevMap = new Map<String,dealer__Dealer_Location__c>();
 			locationNameMap = new Map<String,dealer__Dealer_Location__c>();  // BLL1a
@@ -213,4 +196,9 @@ public with sharing class LocationsSingleton {
 	}
 	// BLL1a end
 
+	// MTC4
+	private Boolean queryFilterCriteriaIsEmpty(){
+		return locationIds.isEmpty() && locationAbbrevs.isEmpty() && locationNames.isEmpty();
+	}
+	// MTC4 end
 }

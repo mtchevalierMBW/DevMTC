@@ -6,10 +6,12 @@
  * 	2015-10-30	B. Leaman	BLL2 - Test setting Do Not Call, Email or Mail flags on Deceased accounts.
  *	2016-01-05	B. Leaman	BLL3 - Test concatenation of Desired_Vehicles__c field (from Pardot).
  *	2016-05-02	B. Leaman	BLL4 - Also test contact's Desired_Vehicles__c process.
+ *  2020-01-28	M. Chevalier MTC1 - rewrote emptytest after implementing TriggerHandler framework
  */
 @isTest
 private class AccountManagement_TEST {
 	static testmethod void emptytest() {
+		insert new Account(Name='testAccount');
 	}
 /**	
    @isTest

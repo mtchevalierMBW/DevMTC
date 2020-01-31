@@ -40,60 +40,8 @@
  * 2019-10-08	B. Leaman	W-000764 BLL26 - only run store assignment on insert of a new account.
  * 2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  * 2020-01-23	M. Chevalier W-000813 MTC29 Set distance from closest store and assigned store on update on account.
+ * 2020-01-28	M. Chevalier MTC30 refactored using TriggerHandler framework
  */
-trigger AccountManagement on Account (before insert, before update, after insert, after update, before delete) {
-
-	MW_TriggerControls__c accountCounty = MW_TriggerControls__c.getInstance('AccountCounty');	// BLL19a
-	MW_TriggerControls__c accountRcdType = MW_TriggerControls__c.getInstance('AccountRcdType');	// BLL24a
-	MW_TriggerControls__c accountRLCounts = MW_TriggerControls__c.getInstance('AccountRLCounts'); // BLL28
-
-	AccountTriggerHandler handler = new AccountTriggerHandler();
-
-    if (Trigger.isBefore && !Trigger.isDelete) {	// BLL26c 
-		if (Trigger.isUpdate) AccountProcess.RestrictRecordTypeChanges(Trigger.new, Trigger.oldMap);	// BLL26c add if stmt
-		AccountProcess.AddInfluencerAssociation(Trigger.new);
-
-		// upload location & owner by name rather than by Id
-        MW_TriggerControls__c uploadHelper = MW_TriggerControls__c.getInstance('uploadAccountHelper');
-		if (uploadHelper==null || uploadHelper.Enabled__c) AccountProcess.UploadReferencesByName(Trigger.new);
-
-		if (Trigger.isInsert) AccountProcess.DefaultCompanyAssignment(Trigger.new);	// BLL26c add if stmt
-		AccountProcess.StandardizePersonName(Trigger.new);
-		AccountProcess.SynchFFTaxFields(Trigger.new, Trigger.oldMap);
-		AccountProcess.RequiredFieldDefaults(Trigger.new);
-		AccountProcess.AppendNewStockNumber(Trigger.new, Trigger.oldMap);
-		if (accountRcdType==null || accountRcdType.Enabled__c) AccountProcess.SyncPersonAccountFields(Trigger.new, Trigger.oldMap);
-		AccountProcess.ClearFieldsOnAddressChange(Trigger.new, Trigger.oldMap);
-		// BLL28
-		if (accountRLCounts==null || accountRLCounts.Enabled__c) AccountProcess.RecordRelatedRcdCounts(Trigger.new);
-		// BLL28 end
-    }
-
-	// AFTER trigger: When account owner changes, update open tasks, open solution opportunities & open opportunities to new owner
-	if (Trigger.isAfter && Trigger.isUpdate) {
-		AccountProcess.UpdateRelatedObjectOwners(Trigger.new, Trigger.oldMap);
-	}
-
-	// BEFORE trigger on delete
-	if (Trigger.isBefore && Trigger.isDelete) {
-		System.debug(Trigger.old);
-		AccountProcess.CleanUpInfluencerAssociations(Trigger.old);
-	}
-
-	// AFTER trigger submit future method to assign lat/lng (and county of residence)	
-	// BLL19a
-	if (Trigger.isAfter && !Trigger.isDelete) {
-		if ((accountCounty==null || accountCounty.Enabled__c) && Trigger.new.size()<5 && !UserInfo.getName().contains('DealerTeam')) {	// BLL22c
-			AccountProcess.AssignCountyJurisdiction(Trigger.new);
-		}
-	}
-	// BLL19a end
-
-	// MTC29 start
-	if (Trigger.isBefore && Trigger.isUpdate) {
-		handler.handleBeforeUpdate(Trigger.new);
-	}
-	// MTC29 end
-
-
+trigger AccountManagement on Account (before insert, before update, before delete, after insert, after update) {
+	new AccountTriggerHandler().run();
 }

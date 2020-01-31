@@ -4,12 +4,15 @@
  * Date: Apr 11, 2016
  * Programmer: Bryan Leaman
  *
+ *
  *	2016-12-22	B. Leaman	BLL1 - Ignore error of not finding service vehicle created for inventnory vehicle.
  *	2018-07-16	B. Leaman	BLL2 - merge influencer association tests into this class as most function
  *							is now in the AccountProcess class.
  *	2019-01-21	B. Leaman	W-000560 BLL3 - no longer moving opportunities with acct owner change.
  *  2019-03-28  A. Miller   W-000555 AMM4 Update to handle sycning the Mobile and Other phone numbers
- *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!
+ *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!\
+ *	2020-01-29	M. Chevalier MTC5 - Wrote tests for updateClosestStorePerAccount and BuildDefaultDataValuesValidationsSummaries
+ *	2020-01-28	M. Chevalier MTC6 - rewrote test for updateClosestStorePerAccount using SObjectFabricator class
  */
 @isTest
 private class AccountProcess_TEST {
@@ -610,4 +613,30 @@ System.debug(FFadata.TestUser.Id);
 		System.assertEquals(testPhoneNumber, p.BusinessOtherPhone__c);
 	}
 	// AMM4
+
+	// MTC4 start
+    @IsTest
+    static void updateClosestStorePerAccount_givenEmptyList_returnsVoid() {
+        Test.startTest();
+            AccountProcess.updateClosestStorePerAccount(new List<Account>());
+        Test.stopTest();
+    }
+	// MTC5 start
+    @IsTest
+    static void updateClosestStorePerAccount_givenSingleCustomer_returnsVoid() {
+		List<Account> accts = new List<Account>{
+				(Account) new sfab_FabricatedSObject(Account.class)
+						.setField(Account.BillingLatitude, 41.155330)
+						.setField(Account.BillingLongitude, -81.420850)
+						.toSObject()
+		};
+        Test.startTest();
+		{
+			LocationsSingleton.setDealerLocationDAToMock();
+			AccountProcess.updateClosestStorePerAccount(accts);
+		}
+        Test.stopTest();
+    }
+	// MTC5 end
+	// MTC4 end
 }

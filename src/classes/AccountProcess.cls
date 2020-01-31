@@ -9,6 +9,7 @@
  *	2019-01-15	92%	(350/380)
  *	2019-01-21	91% (343/373)
  *	2019-08-09	86% (not currently testing AMM7 new routine)
+ * 	2020-01-28	4 tests failing (100% test coverage for new development lines 904-960)
  * 
  * Modification log:
  *	2017-02-09	B. Leaman	BLL1 - Change how last sale types are determinied due to change in commercial process.
@@ -28,10 +29,20 @@
  *	2019-10-08	B. Leaman	W-000764 BLL27 - newly-created accounts are not always getting the creating user's store assigned to them.
  *	2019-12-04	B. Leaman	W-000799 BLL28 Count Customer Pay ROs and Rentals and store on account.
  *								Also record last Home Access sale date.
+*	2020-01-28	M. Chevalier MTC29 Added updateClosestStorePerAccount call stack and BuildDefaultDataValuesValidationsSummaries
+*	2020-01-29	M. Cheavlier MTC30 Moved all queries to corresponding DataAccessor classes
 */
 public with sharing class AccountProcess {
 
 	static Map<Id, Account> acctRLMap;
+	// MTC30
+	@TestVisible
+	private static AccountDAInterface accountDA = new AccountDA();
+	@TestVisible
+	private static TaskDAInterface taskDA = new TaskDA();
+	@TestVisible
+	private static InfluencerAssociationDAInterface influencerAssociationDA = new InfluencerAssociationDA();
+	// MTC30 end
 
 	// BLL28
 	public static void RecordRelatedRcdCounts(List<Account> newList) {
@@ -42,13 +53,7 @@ public with sharing class AccountProcess {
 		if (acctRLMap==null) acctRLMap = new Map<Id, Account>();
 		if (acctIds.size()>0 && !acctRLMap.keySet().containsAll(acctIds)) {
 			acctIds.addAll(acctRLMap.keySet());	// ensure previously-read records are included too
-			acctRLMap = new Map<Id, Account>([
-				select Id, Name,
-					(select Id, Name, Account__c, dealer__Agreement_Status__c, dealer__Return_Date__c from Rental_Agreements2__r where dealer__Agreement_Status__c='Paid' order by dealer__Return_Date__c),
-					(select Id, Name, dealer__Customer__c, dealer__Status__c, dealer__Posted_Date_Time__c from dealer__Service_Repair_Orders__r where dealer__Customer_Charges__c>0 and dealer__Status__c='Posted')
-				from Account
-				where Id in :acctIds
-			]);
+			acctRLMap = new Map<Id, Account>(accountDA.getAccountsWithRAsAndROsFromAccountIds(acctIds)); 	// MTC30
 		}
 		for(Account a : newList) {
 			if (a.Id!=null) {
@@ -235,8 +240,8 @@ System.debug(newownermap);
 	   	    	
 	    	// Tasks
 	    	List<Task> updTasks = new List<Task>();
-	    	for(Task t : [select Id, Subject, OwnerId, WhatId from Task where WhatId in :accountIds and Status!='Completed']) {
-	    		Id newOwnerId = newownermap.get(t.WhatId);	// BLL2a
+	    	for(Task t : taskDA.getIncompleteTasksFromAccountIds(accountIds)) { 	// MTC30
+				Id newOwnerId = newownermap.get(t.WhatId);	// BLL2a
 	    		Id oldOwnerId = oldownermap.get(t.WhatId);	// BLL2a
 	    		System.debug('Change owner ' + oldOwnerId + ' to ' + newOwnerId + '? Task owner='+t.ownerId);
 	    		if (newOwnerId!=null && oldOwnerId==t.ownerId) {	// BLL2a
@@ -333,7 +338,7 @@ System.debug(newownermap);
 		Set<Id> accountIds = new Set<Id>();
 		for(Account a : oldlist) accountIds.add(a.Id);
 		if (accountIds.size()>0) {
-			ia2List = [select Id, Name from InfluencerAssociation2__c where InfluencedAccount__c in :accountIds or (InfluencerAccount__c in :accountIds and InfluencerContact__c=null) limit 2000];
+			ia2List = influencerAssociationDA.getAllFromAccountIds(accountIds); 	// MTC30
 			if (ia2List.size()>0) delete(ia2List);
 		}
 	}	// end CleanUpInfluencerAssociations
@@ -888,15 +893,67 @@ System.debug(newownermap);
 	
 	// AssignCountyJurisdiction	
 	//------------------------------------------
-	public static void AssignCountyJurisdiction(List<Account> newlist) {
-		List<Id> needCounty = new List<Id>();
-		for(Account a : newlist) {
-			if (String.isBlank(a.PersonMailingCounty__c) && !String.isBlank(a.BillingStreet) && !String.isBlank(a.BillingCity)
-				&& (!String.isBlank(a.BillingState) || !String.isBlank(a.BillingPostalCode))) needCounty.add(a.Id);
+	public static void AssignCountyJurisdiction(List<Account> newlist, Boolean accountCountyEnabled) {
+		if (accountCountyEnabled && newlist.size()<5 && !UserInfo.getName().contains('DealerTeam')) {
+			List<Id> needCounty = new List<Id>();
+			for(Account a : newlist) {
+				if (String.isBlank(a.PersonMailingCounty__c) && !String.isBlank(a.BillingStreet) && !String.isBlank(a.BillingCity)
+						&& (!String.isBlank(a.BillingState) || !String.isBlank(a.BillingPostalCode))) needCounty.add(a.Id);
+			}
+			System.debug(needCounty.size());
+			if (needCounty.size()>0 && !System.isBatch() && !System.isFuture()) ClosestStoreFuture.Account_LocateAddress(needCounty);
 		}
-		System.debug(needCounty.size());
-		if (needCounty.size()>0 && !System.isBatch() && !System.isFuture()) ClosestStoreFuture.Account_LocateAddress(needCounty);
 	}
+
+	// MTC29 start
+	public static void updateClosestStorePerAccount (List<Account> accounts) {
+		List<dealer__Dealer_Location__c> storeLocations = getStoreLocations();
+		for(Account account : accounts) {
+			setClosestStore(account, storeLocations);
+		}
+	}
+
+	private static List<dealer__Dealer_Location__c> getStoreLocations () {
+		List<dealer__Dealer_Location__c> storeLocationsAll = invokeLocationSingletonToFetchAllLocations();
+		List<dealer__Dealer_Location__c> storeLocationsValid = new List<dealer__Dealer_Location__c>();
+		for(dealer__Dealer_Location__c loc : storeLocationsAll) {
+			if(locationFulfillsBusinessRequirements(loc)) {
+				storeLocationsValid.add(loc);
+			}
+		}
+		return storeLocationsValid;
+	}
+
+	private static Boolean locationFulfillsBusinessRequirements (dealer__Dealer_Location__c loc) {
+		return loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE;
+	}
+
+	private static List<dealer__Dealer_Location__c> invokeLocationSingletonToFetchAllLocations() {
+		LocationsSingleton locationsSingletonInstance = LocationsSingleton.getInstance();
+		locationsSingletonInstance.retrieveAllLocations();
+		return locationsSingletonInstance.locationIdMap.values();
+	}
+
+	private static void setClosestStore (Account account, List<dealer__Dealer_Location__c> storeLocations) {
+		Location accountLocation = Location.newInstance(account.BillingLatitude, account.BillingLongitude);
+		account.Closest_Store_Location__c = getClosestStoreId(accountLocation, storeLocations);
+	}
+
+	@TestVisible
+	private static Id getClosestStoreId(Location accountLocation, List<dealer__Dealer_Location__c> storeLocations) {
+		Id closestStoreId = null;
+		Double minimumDistance = null;
+		for(dealer__Dealer_Location__c storeLocation : storeLocations) {
+			Double distance = Location.getDistance(accountLocation, storeLocation.dealer__Physical_Location__c, 'mi');
+			if(minimumDistance == null || distance < minimumDistance) {
+				minimumDistance = distance;
+				closestStoreId = storeLocation.Id;
+			}
+		}
+		return closestStoreId;
+	}
+	// MTC29 end
+
 
 //	// AMM7
 //	public static void updateChildOpportunitiesCustomerMasterEnabled(List<Account> newlist, Map<Id, Account> oldMap, Map<Id, Account> newMap)
