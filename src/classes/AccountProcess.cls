@@ -925,7 +925,7 @@ System.debug(newownermap);
 	}
 
 	private static Boolean locationFulfillsBusinessRequirements (dealer__Dealer_Location__c loc) {
-		return loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE;
+		return (loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE && (loc.dealer__Physical_Location__c != null));
 	}
 
 	private static List<dealer__Dealer_Location__c> invokeLocationSingletonToFetchAllLocations() {
