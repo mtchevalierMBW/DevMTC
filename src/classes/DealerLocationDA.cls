@@ -10,14 +10,14 @@
 *   2020-01-28  M. Chevalier W-000813 MTC1 - Ported DealerLocation queries out of LocationsSingleton into this class
 *   2020-02-06	M. Chevalier Updated api version to 47.0
 */
-public with sharing class DealerLocationDA implements DealerLocationDAInterface{
+public inherited sharing class DealerLocationDA implements DealerLocationDAInterface{
 
     public List<dealer__Dealer_Location__c> getSelectedLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
         //Per the SOLID principle of single responsibility, this query should do one thing: query a subset of records based on the passed in parameters
         //but due to the structure of the query, if all of the passed in parameters are empty, then the query would return all records
         //Therefore if all of the parameters are empty, this query will return an empty list
         Boolean queryWillReturnAllLocations = true;
-        String soql = 'select ' + buildDealerLocationFieldsString() + ' from dealer__Dealer_Location__c ';
+        String soql = 'select ' + buildDealerLocationFieldsString() + ' LastViewedDate ' + ' from dealer__Dealer_Location__c ';
         String junct = ' WHERE ';
         if (locationIds.size()>0) {
             queryWillReturnAllLocations = false;
@@ -34,6 +34,8 @@ public with sharing class DealerLocationDA implements DealerLocationDAInterface{
             soql += junct + ' Name in :locationNames ';
             junct = ' or ';
         }
+        System.debug('*** getSelectedLocations soql statement');
+        System.debug('***' + soql);
         return (queryWillReturnAllLocations ? new List<dealer__Dealer_Location__c>() : Database.query(soql));
     }
 
