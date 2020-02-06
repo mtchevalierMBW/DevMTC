@@ -13,6 +13,7 @@
  *  2019-04-12  B. Leaman  W-000575 BLL2 - reduce soqls in test methods
  *  2020-01-24  B. Leaman  W-000813 BLL3 - Fix potential flaw in RetrieveAllLocations logic when used in a trigger context.
  *  2020-01-28	M. Chevalier W-000813 MTC4 - Ported queries out to DealerLocationDA.cls
+ *  2020-02-06	M. Chevalier Updated api version to 47.0
  */
 public with sharing class LocationsSingleton{
 

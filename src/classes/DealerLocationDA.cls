@@ -8,6 +8,7 @@
 *   2020-01-28  86% (23/26)
 *
 *   2020-01-28  M. Chevalier W-000813 MTC1 - Ported DealerLocation queries out of LocationsSingleton into this class
+*   2020-02-06	M. Chevalier Updated api version to 47.0
 */
 public with sharing class DealerLocationDA implements DealerLocationDAInterface{
 
