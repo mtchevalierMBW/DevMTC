@@ -13,6 +13,7 @@
  *	2019-10-08	B. Leaman	W-000764 BLL4 - Ensure locations are being assigned to accounts when created!\
  *	2020-01-29	M. Chevalier MTC5 - Wrote tests for updateClosestStorePerAccount and BuildDefaultDataValuesValidationsSummaries
  *	2020-01-28	M. Chevalier MTC6 - rewrote test for updateClosestStorePerAccount using SObjectFabricator class
+ *  2020-02-06	M. Chevalier Updated api version to 47.0
  */
 @isTest
 private class AccountProcess_TEST {

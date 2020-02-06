@@ -31,6 +31,7 @@
  *								Also record last Home Access sale date.
 *	2020-01-28	M. Chevalier MTC29 Added updateClosestStorePerAccount call stack and BuildDefaultDataValuesValidationsSummaries
 *	2020-01-29	M. Cheavlier MTC30 Moved all queries to corresponding DataAccessor classes
+*	2020-02-06	M. Chevalier Updated api version to 47.0
 */
 public with sharing class AccountProcess {
 
