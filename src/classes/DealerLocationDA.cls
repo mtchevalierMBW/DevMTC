@@ -12,12 +12,14 @@
 */
 public inherited sharing class DealerLocationDA implements DealerLocationDAInterface{
 
+    static final private Set<String> BLACKLISTED_FIELD_NAMES = new Set<String> {'lastvieweddate', 'lastreferenceddate'};
+
     public List<dealer__Dealer_Location__c> getSelectedLocations(Set<Id> locationIds, Set<String> locationAbbrevs, Set<String> locationNames) {
         //Per the SOLID principle of single responsibility, this query should do one thing: query a subset of records based on the passed in parameters
         //but due to the structure of the query, if all of the passed in parameters are empty, then the query would return all records
         //Therefore if all of the parameters are empty, this query will return an empty list
         Boolean queryWillReturnAllLocations = true;
-        String soql = 'select ' + buildDealerLocationFieldsString() + ' LastViewedDate ' + ' from dealer__Dealer_Location__c ';
+        String soql = 'select ' + buildDealerLocationFieldsString() + ' from dealer__Dealer_Location__c ';
         String junct = ' WHERE ';
         if (locationIds.size()>0) {
             queryWillReturnAllLocations = false;
@@ -34,8 +36,6 @@ public inherited sharing class DealerLocationDA implements DealerLocationDAInter
             soql += junct + ' Name in :locationNames ';
             junct = ' or ';
         }
-        System.debug('*** getSelectedLocations soql statement');
-        System.debug('***' + soql);
         return (queryWillReturnAllLocations ? new List<dealer__Dealer_Location__c>() : Database.query(soql));
     }
 
@@ -51,7 +51,12 @@ public inherited sharing class DealerLocationDA implements DealerLocationDAInter
 
     private String buildDealerLocationFieldsString() {
         Map<String, Schema.SObjectField> dlFieldMap = Schema.dealer__Dealer_Location__c.SObjectType.getDescribe().fields.getMap();
-        return String.join(new List<String>(dlFieldMap.keySet()),',');
+        Set<String> validFieldNames = dlFieldMap.keySet();
+        validFieldNames.removeAll(BLACKLISTED_FIELD_NAMES);
+        String fieldsToSelect = String.join(new List<String>(validFieldNames), ',');
+        return fieldsToSelect;
     }
+
+
 
 }
