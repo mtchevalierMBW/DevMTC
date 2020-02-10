@@ -955,8 +955,6 @@ System.debug(newownermap);
 		return closestStoreId;
 	}
 
-	public class ExampleException extends Exception{
-	}
 	// MTC29 end
 
 
