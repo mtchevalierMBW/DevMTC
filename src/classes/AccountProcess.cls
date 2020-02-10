@@ -926,7 +926,7 @@ System.debug(newownermap);
 	}
 
 	private static Boolean locationFulfillsBusinessRequirements (dealer__Dealer_Location__c loc) {
-		return (loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE && (loc.dealer__Physical_Location__c != null));
+		return (loc.AutoAssignRetail__c == TRUE && loc.dealer__IsClosed__c == FALSE && (loc.dealer__Physical_Location__Latitude__s != null) && (loc.dealer__Physical_Location__Longitude__s != null));
 	}
 
 	private static List<dealer__Dealer_Location__c> invokeLocationSingletonToFetchAllLocations() {
@@ -945,13 +945,17 @@ System.debug(newownermap);
 		Id closestStoreId = null;
 		Double minimumDistance = null;
 		for(dealer__Dealer_Location__c storeLocation : storeLocations) {
-			Double distance = Location.getDistance(accountLocation, storeLocation.dealer__Physical_Location__c, 'mi');
+			Location stdStoreLocation = Location.newInstance(storeLocation.dealer__Physical_Location__Latitude__s, storeLocation.dealer__Physical_Location__Longitude__s);
+			Decimal distance = Location.getDistance(accountLocation, stdStoreLocation, 'mi');
 			if(minimumDistance == null || distance < minimumDistance) {
 				minimumDistance = distance;
 				closestStoreId = storeLocation.Id;
 			}
 		}
 		return closestStoreId;
+	}
+
+	public class ExampleException extends Exception{
 	}
 	// MTC29 end
 
