@@ -2458,7 +2458,15 @@ IF(AND (NOT(ISBLANK(Email__c)), dealer__Billing_Email__c&lt;&gt;Email__c),Email_
         <fullName>Miles_To_Assigned_Store__c</fullName>
         <description>The distance between the customer&apos;s billing address and their assigned store</description>
         <externalId>false</externalId>
-        <formula>DISTANCE(BillingAddress,  Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)</formula>
+        <formula>IF(
+  OR(
+    ISNULL(BillingLatitude),
+    ISNULL(BillingLongitude),
+    ISNULL(Store_Location__r.dealer__Physical_Location__c)
+  ),
+  NULL,
+  DISTANCE(GEOLOCATION(BillingLatitude, BillingLongitude), Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)
+)</formula>
         <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
         <inlineHelpText>The distance between the customer&apos;s billing address and their assigned store</inlineHelpText>
         <label>Miles To Assigned Store</label>
@@ -2474,12 +2482,13 @@ IF(AND (NOT(ISBLANK(Email__c)), dealer__Billing_Email__c&lt;&gt;Email__c),Email_
         <description>The distance from the customer&apos;s billing address to the store they are closest to.</description>
         <externalId>false</externalId>
         <formula>IF(
-				OR(
-								ISNULL(BillingAddress),
-								ISNULL(Closest_Store_Location__r.dealer__Physical_Location__c)
-				), 
-				NULL,
-				DISTANCE(BillingAddress, Closest_Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)
+  OR(
+    ISNULL(BillingLatitude),
+    ISNULL(BillingLongitude),
+    ISNULL(Closest_Store_Location__r.dealer__Physical_Location__c)
+  ),
+  NULL,
+  DISTANCE(GEOLOCATION(BillingLatitude, BillingLongitude), Closest_Store_Location__r.dealer__Physical_Location__c, &apos;mi&apos;)
 )</formula>
         <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
         <inlineHelpText>The distance from the customer&apos;s billing address to the store they are closest to.</inlineHelpText>
